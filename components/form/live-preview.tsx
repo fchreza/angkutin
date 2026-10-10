@@ -20,7 +20,7 @@ export function LivePreview({
   harga,
   gratis,
   kondisi,
-  klusterNama,
+  wilayahNama,
   patokan,
   tenggat,
 }: {
@@ -29,7 +29,7 @@ export function LivePreview({
   harga: string;
   gratis: boolean;
   kondisi: string;
-  klusterNama: string;
+  wilayahNama: string;
   patokan: string;
   tenggat: string;
 }) {
@@ -89,7 +89,7 @@ export function LivePreview({
           <div className="flex items-center gap-1 text-[11.5px] text-ink-secondary">
             <IconPin size={12} />
             <span className="truncate">
-              {patokan || klusterNama || "Patokan lokasi belum diisi"}
+              {patokan || wilayahNama || "Patokan lokasi belum diisi"}
             </span>
           </div>
 

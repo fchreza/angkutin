@@ -7,14 +7,14 @@ import { cn } from "@/lib/cn";
  * - kondisi: abu lembut
  * - taken  : monokrom #4B5563 "SUDAH DIAMBIL"
  */
-type Varian = "gratis" | "harga" | "kondisi" | "taken" | "kluster" | "netral";
+type Varian = "gratis" | "harga" | "kondisi" | "taken" | "wilayah" | "netral";
 
 const gaya: Record<Varian, string> = {
   gratis: "bg-primary text-white font-bold",
   harga: "bg-white text-ink font-bold border border-line",
   kondisi: "bg-appbg text-ink-secondary border border-line",
   taken: "bg-ink-mono text-white font-semibold",
-  kluster: "bg-primary-soft text-primary-dark border border-primary-500/30",
+  wilayah: "bg-primary-soft text-primary-dark border border-primary-500/30",
   netral: "bg-appbg text-ink-secondary border border-line",
 };
 

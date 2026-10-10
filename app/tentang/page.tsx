@@ -21,7 +21,7 @@ const CARA = [
   {
     judul: "Untuk yang mencari barang",
     langkah: [
-      "Pilih kluster kampusmu, telusuri katalog.",
+      "Pilih kota/kabupatenmu, telusuri katalog.",
       "Tekan tombol WhatsApp untuk menghubungi pemilik.",
       "Jemput sendiri barangnya sesuai patokan lokasi.",
     ],

@@ -33,7 +33,7 @@ export function tampilkanWhatsApp(nomor: string): string {
 export type OpsiLinkWA = {
   sellerName: string;
   itemTitle: string;
-  clusterName: string;
+  wilayahNama: string;
   sellerWhatsapp: string;
   planDay?: string;
   planTime?: string;
@@ -46,7 +46,7 @@ export type OpsiLinkWA = {
 export function buildWhatsAppLink(opts: OpsiLinkWA): string {
   const msg =
     `Halo kak ${opts.sellerName}, saya lihat postingan ${opts.itemTitle} ` +
-    `di Angkutin area ${opts.clusterName}. Apakah barangnya masih bisa ` +
+    `di Angkutin area ${opts.wilayahNama}. Apakah barangnya masih bisa ` +
     `diambil? Saya berencana ambil hari ${opts.planDay ?? "[Hari]"} jam ` +
     `${opts.planTime ?? "[Jam]"}. Terima kasih.`;
   const digits = normalizeWhatsApp(opts.sellerWhatsapp);

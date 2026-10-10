@@ -24,7 +24,7 @@ export type DataKelola = {
   access_notes: string | null;
   sellerName: string;
   sellerWhatsapp: string;
-  clusterName: string | null;
+  wilayahNama: string | null;
   categoryName: string | null;
   created_at: string;
   images: { image_url: string; display_order: number }[];
@@ -97,7 +97,7 @@ export function KelolaClient({
             Listing berhasil tayang
           </h1>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
-            Barangmu sudah bisa dilihat orang di kluster {data.clusterName ?? "—"}.
+            Barangmu sudah bisa dilihat orang di {data.wilayahNama ?? "—"}.
           </p>
         </div>
       </div>
@@ -143,7 +143,7 @@ export function KelolaClient({
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               varian={
-                sudahDiambil ? "taken" : status === "EXPIRED" ? "netral" : "kluster"
+                sudahDiambil ? "taken" : status === "EXPIRED" ? "netral" : "wilayah"
               }
             >
               {LABEL_STATUS[status] ?? status}
@@ -175,7 +175,7 @@ export function KelolaClient({
           <dl className="space-y-2.5 text-[13px]">
             <Baris label="Kondisi" nilai={LABEL_KONDISI[data.condition] ?? data.condition} />
             <Baris label="Kategori" nilai={data.categoryName ?? "—"} />
-            <Baris label="Kluster" nilai={data.clusterName ?? "—"} />
+            <Baris label="Lokasi" nilai={data.wilayahNama ?? "—"} />
             <Baris label="Patokan" nilai={data.pickup_landmark} />
             {data.access_notes && <Baris label="Catatan akses" nilai={data.access_notes} />}
             <Baris

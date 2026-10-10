@@ -16,6 +16,15 @@ import { hashIp } from "@/lib/token";
 const BATAS = 5;
 const JENDELA_JAM = 1;
 
+/**
+ * Periksa kuota TANPA memakainya.
+ *
+ * PENTING — kenapa dipisah dari `catatRateLimit`:
+ * Dulu fungsi ini langsung mencatat percobaan. Akibatnya pengguna yang salah
+ * mengetik nomor WhatsApp 5 kali akan terkunci 1 jam, padahal tidak satu pun
+ * listing-nya tersimpan. Sekarang kuota hanya dipotong setelah listing BENAR
+ * tersimpan (lihat catatRateLimit).
+ */
 export async function cekRateLimit(
   ip: string,
   aksi = "create_listing",
@@ -35,10 +44,16 @@ export async function cekRateLimit(
     );
 
   if (jumlah >= BATAS) return { boleh: false, sisa: 0 };
+  return { boleh: true, sisa: BATAS - jumlah };
+}
 
+/** Catat satu percobaan yang BERHASIL. Panggil setelah data tersimpan. */
+export async function catatRateLimit(
+  ip: string,
+  aksi = "create_listing",
+): Promise<void> {
+  const ipHash = await hashIp(ip);
   await db.insert(rateLimits).values({ ipHash, action: aksi });
-
-  return { boleh: true, sisa: BATAS - jumlah - 1 };
 }
 
 /** Bersihkan catatan lama (dipanggil dari cron harian). */

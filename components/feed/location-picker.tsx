@@ -10,20 +10,15 @@ import {
   IconAlert,
   IconCheck,
 } from "@/components/shared/icons";
-import { PROVINSI, kabupatenDari, type Wilayah } from "@/lib/wilayah";
+import { PROVINSI, kabupatenDari } from "@/lib/wilayah";
 import { deteksiLokasi } from "@/lib/geo";
 
-export type KlusterRingkas = {
-  id: string;
-  name: string;
-  city: string;
-  province_code: string | null;
-  province_name: string | null;
-  regency_code: string | null;
-  regency_name: string | null;
-  latitude: string | null;
-  longitude: string | null;
-  jumlah_aktif: number;
+/** Wilayah yang punya barang, dari GET /api/v1/wilayah. */
+export type WilayahAdaBarang = {
+  province_code: string;
+  province_name: string;
+  jumlah: number;
+  kabupaten: { regency_code: string; regency_name: string; jumlah: number }[];
 };
 
 export type PilihanLokasi = {
@@ -34,24 +29,25 @@ export type PilihanLokasi = {
 };
 
 /**
- * Panel pemilih lokasi (Fase 1-4).
+ * Panel pemilih lokasi.
  *
  * Aturan yang dipegang:
  *  - Default "Semua Lokasi" — seluruh katalog terlihat.
  *  - Pilihan TIDAK diterapkan otomatis dari kunjungan sebelumnya; hanya
  *    muncul sebagai chip cepat yang harus ditekan.
- *  - Tombol "Gunakan Lokasi Saya" hanya jalan saat ditekan, tidak pernah
- *    otomatis. Kalau izin ditolak, katalog tetap seperti semula.
- *  - Wilayah tanpa kluster ditandai, supaya pengguna tidak memilih wilayah
- *    mati lalu melihat katalog kosong tanpa penjelasan.
+ *  - "Gunakan Lokasi Saya" hanya jalan saat ditekan, tidak pernah otomatis.
+ *  - Hanya wilayah yang PUNYA barang yang ditampilkan, supaya pengguna tidak
+ *    memilih wilayah kosong lalu bingung. Wilayah kosong tetap bisa dicari.
+ *  - Filter berhenti di KABUPATEN/KOTA. Kecamatan tidak ditampilkan di sini —
+ *    pembeli mencari barang, bukan alamat.
  */
 export function LocationPicker({
-  kluster,
+  wilayah,
   nilai,
   onPilih,
   onTutup,
 }: {
-  kluster: KlusterRingkas[];
+  wilayah: WilayahAdaBarang[];
   nilai: PilihanLokasi;
   onPilih: (p: PilihanLokasi) => void;
   onTutup: () => void;
@@ -63,90 +59,47 @@ export function LocationPicker({
     | { status: "memuat" }
     | { status: "pesan"; jenis: "galat" | "info"; teks: string }
   >({ status: "diam" });
-  const [ragu, setRagu] = useState<Wilayah[] | null>(null);
-
-  // Hitung jumlah kluster + listing per wilayah, sekali saja.
-  const perKabupaten = useMemo(() => {
-    const m = new Map<string, { kluster: number; listing: number }>();
-    for (const k of kluster) {
-      if (!k.regency_code) continue;
-      const s = m.get(k.regency_code) ?? { kluster: 0, listing: 0 };
-      s.kluster += 1;
-      s.listing += k.jumlah_aktif;
-      m.set(k.regency_code, s);
-    }
-    return m;
-  }, [kluster]);
-
-  const perProvinsi = useMemo(() => {
-    const m = new Map<string, { kluster: number; listing: number }>();
-    for (const k of kluster) {
-      if (!k.province_code) continue;
-      const s = m.get(k.province_code) ?? { kluster: 0, listing: 0 };
-      s.kluster += 1;
-      s.listing += k.jumlah_aktif;
-      m.set(k.province_code, s);
-    }
-    return m;
-  }, [kluster]);
+  const [raguKandidat, setRaguKandidat] = useState<
+    { kabupatenKode: string; kabupatenNama: string }[] | null
+  >(null);
 
   const totalListing = useMemo(
-    () => kluster.reduce((a, k) => a + k.jumlah_aktif, 0),
-    [kluster],
+    () => wilayah.reduce((a, w) => a + w.jumlah, 0),
+    [wilayah],
   );
 
-  // Provinsi: HANYA yang punya barang, diurutkan dari barang terbanyak.
-  //
-  // Kenapa hanya yang ada barangnya: dengan sedikit kluster, banyak wilayah
-  // akan kosong. Menampilkan wilayah kosong membuat pengguna memilih lalu
-  // menemukan katalog kosong tanpa alasan jelas. Wilayah tanpa barang tetap
-  // bisa ditemukan lewat kotak pencarian.
-  const provinsiUrut = useMemo(() => {
-    return PROVINSI.filter((p) => (perProvinsi.get(p.kode)?.listing ?? 0) > 0).sort(
-      (a, b) => {
-        const la = perProvinsi.get(a.kode)?.listing ?? 0;
-        const lb = perProvinsi.get(b.kode)?.listing ?? 0;
-        if (la !== lb) return lb - la;
-        return a.nama.localeCompare(b.nama, "id");
-      },
-    );
-  }, [perProvinsi]);
+  /** Peta kode kabupaten -> jumlah barang (untuk hasil pencarian). */
+  const perKabupaten = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of wilayah) {
+      for (const k of p.kabupaten) m.set(k.regency_code, k.jumlah);
+    }
+    return m;
+  }, [wilayah]);
 
-  /** Ada barang sama sekali? Kalau tidak, panel menampilkan pesan jujur. */
   const adaBarang = totalListing > 0;
 
-  // Pencarian: cocokkan nama kabupaten/kota di seluruh Indonesia.
-  // Wilayah yang sudah ada barangnya ditampilkan lebih dulu supaya mudah
-  // ditemukan; wilayah kosong tetap muncul (pengguna mungkin ingin memasang
-  // barang pertama di sana).
+  // Pencarian: seluruh kabupaten/kota Indonesia (514). Wilayah yang sudah ada
+  // barangnya didahulukan; wilayah kosong tetap muncul karena pengguna mungkin
+  // ingin memasang barang pertama di sana.
   const hasilCari = useMemo(() => {
     const t = cari.trim().toLowerCase();
     if (t.length < 2) return [];
-    const out: {
-      kode: string;
-      nama: string;
-      provinsi: string;
-      provKode: string;
-      listing: number;
-      kluster: number;
-    }[] = [];
+    const out: { kode: string; nama: string; provinsi: string; jumlah: number }[] = [];
     for (const p of PROVINSI) {
       for (const k of kabupatenDari(p.kode)) {
         if (k.nama.toLowerCase().includes(t)) {
-          const s = perKabupaten.get(k.kode);
           out.push({
             kode: k.kode,
             nama: k.nama,
             provinsi: p.nama,
-            provKode: p.kode,
-            listing: s?.listing ?? 0,
-            kluster: s?.kluster ?? 0,
+            jumlah: perKabupaten.get(k.kode) ?? 0,
           });
         }
       }
     }
     out.sort((a, b) => {
-      if (a.listing !== b.listing) return b.listing - a.listing;
+      if (a.jumlah !== b.jumlah) return b.jumlah - a.jumlah;
       return a.nama.localeCompare(b.nama, "id");
     });
     return out.slice(0, 40);
@@ -162,13 +115,13 @@ export function LocationPicker({
   }, [onTutup]);
 
   async function pakaiLokasiSaya() {
-    setRagu(null);
+    setRaguKandidat(null);
     setGps({ status: "memuat" });
     const h = await deteksiLokasi();
 
     if (h.status === "ok") {
-      const hit = perKabupaten.get(h.wilayah.kabupatenKode);
-      if (!hit || hit.kluster === 0) {
+      const jumlah = perKabupaten.get(h.wilayah.kabupatenKode) ?? 0;
+      if (jumlah === 0) {
         setGps({
           status: "pesan",
           jenis: "info",
@@ -185,12 +138,24 @@ export function LocationPicker({
     }
 
     if (h.status === "ragu") {
-      setRagu(h.kandidat);
+      // Nama wilayah ambigu (mis. "Bandung" bisa Kota atau Kabupaten).
+      // Jangan menebak — tanyakan, dan dahulukan yang punya barang.
+      const urut = [...h.kandidat].sort(
+        (a, b) =>
+          (perKabupaten.get(b.kabupatenKode) ?? 0) -
+          (perKabupaten.get(a.kabupatenKode) ?? 0),
+      );
       setGps({
         status: "pesan",
         jenis: "info",
         teks: "Lokasimu terdeteksi di nama wilayah yang ambigu. Pilih yang benar:",
       });
+      setRaguKandidat(
+        urut.map((w) => ({
+          kabupatenKode: w.kabupatenKode,
+          kabupatenNama: w.kabupatenNama,
+        })),
+      );
       return;
     }
 
@@ -217,7 +182,6 @@ export function LocationPicker({
 
   return (
     <div className="rounded-md border border-line bg-surface shadow-card">
-      {/* Kepala */}
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <h2 className="text-[13px] font-bold uppercase tracking-wider text-ink-secondary">
           Pilih lokasi
@@ -279,7 +243,6 @@ export function LocationPicker({
           Lokasi hanya dibaca saat kamu menekan tombol ini.
         </p>
 
-        {/* Pesan hasil GPS */}
         {gps.status === "pesan" && (
           <div
             className={cn(
@@ -294,10 +257,10 @@ export function LocationPicker({
           </div>
         )}
 
-        {/* Kalau ambigu: tanyakan */}
-        {ragu && (
+        {/* Nama wilayah ambigu: tanyakan, jangan menebak */}
+        {raguKandidat && (
           <div className="mb-3 space-y-1.5">
-            {ragu.map((w) => (
+            {raguKandidat.map((w) => (
               <button
                 key={w.kabupatenKode}
                 type="button"
@@ -324,7 +287,7 @@ export function LocationPicker({
         <input
           value={cari}
           onChange={(e) => setCari(e.target.value)}
-          placeholder="Contoh: Sleman, Bandung, Depok…"
+          placeholder="Contoh: Sleman, Bandung, Jakarta Utara…"
           className="mb-3 h-10 w-full rounded-md border border-line px-3 text-[13.5px] focus:border-primary focus:outline-none"
         />
 
@@ -344,10 +307,10 @@ export function LocationPicker({
                 <span
                   className={cn(
                     "shrink-0 text-[11px]",
-                    h.listing > 0 ? "font-medium text-primary" : "text-ink-secondary",
+                    h.jumlah > 0 ? "font-medium text-primary" : "text-ink-secondary",
                   )}
                 >
-                  {h.listing > 0 ? `${h.listing} barang` : "belum ada barang"}
+                  {h.jumlah > 0 ? `${h.jumlah} barang` : "belum ada barang"}
                 </span>
               </button>
             ))}
@@ -368,27 +331,23 @@ export function LocationPicker({
           <span className="h-px flex-1 bg-line" />
         </div>
 
-        {/* Katalog kosong: jangan tampilkan wilayah kosong tanpa penjelasan */}
         {!adaBarang && (
           <div className="rounded-md border border-line bg-appbg px-3.5 py-3 text-[12.5px] leading-relaxed text-ink-secondary">
             <b className="text-ink">Belum ada barang di mana pun.</b>
             <br />
-            Filter lokasi akan muncul di sini begitu ada yang memasang barang.
-            Kamu bisa jadi yang pertama — pilih &quot;Pasang Barang&quot;.
+            Filter lokasi akan muncul di sini begitu ada yang memasang barang. Kamu
+            bisa jadi yang pertama — pilih &quot;Pasang Barang&quot;.
           </div>
         )}
 
         <div className="space-y-1">
-          {provinsiUrut.map((p) => {
-            const s = perProvinsi.get(p.kode);
-            const terbuka = provinsiTerbuka === p.kode;
-            const kab = terbuka ? kabupatenDari(p.kode) : [];
-
+          {wilayah.map((p) => {
+            const terbuka = provinsiTerbuka === p.province_code;
             return (
-              <div key={p.kode}>
+              <div key={p.province_code}>
                 <button
                   type="button"
-                  onClick={() => setProvinsiTerbuka(terbuka ? null : p.kode)}
+                  onClick={() => setProvinsiTerbuka(terbuka ? null : p.province_code)}
                   className={cn(
                     "flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left transition-colors",
                     terbuka ? "bg-appbg" : "hover:bg-appbg",
@@ -400,12 +359,12 @@ export function LocationPicker({
                     ) : (
                       <IconChevronRight size={14} className="text-ink-secondary" />
                     )}
-                    <span className="text-[13px] font-medium text-ink">{p.nama}</span>
+                    <span className="text-[13px] font-medium text-ink">
+                      {p.province_name}
+                    </span>
                   </span>
-                  {/* Daftar ini hanya memuat provinsi yang ada barangnya,
-                      jadi jumlah barang selalu > 0. */}
                   <span className="shrink-0 text-[11px] font-medium text-primary">
-                    {s?.listing ?? 0} barang
+                    {p.jumlah} barang
                   </span>
                 </button>
 
@@ -414,33 +373,35 @@ export function LocationPicker({
                     <button
                       type="button"
                       onClick={() =>
-                        onPilih({ jenis: "province", kode: p.kode, label: p.nama })
+                        onPilih({
+                          jenis: "province",
+                          kode: p.province_code,
+                          label: p.province_name,
+                        })
                       }
                       className="block w-full rounded-sm px-2 py-1.5 text-left text-[12.5px] font-medium text-primary hover:bg-appbg"
                     >
-                      Seluruh {p.nama}
+                      Seluruh {p.province_name}
                     </button>
-                    {/* Hanya kabupaten/kota yang ada barangnya */}
-                    {kab
-                      .filter((k) => (perKabupaten.get(k.kode)?.listing ?? 0) > 0)
-                      .map((k) => {
-                        const ks = perKabupaten.get(k.kode);
-                        return (
-                          <button
-                            key={k.kode}
-                            type="button"
-                            onClick={() =>
-                              onPilih({ jenis: "regency", kode: k.kode, label: k.nama })
-                            }
-                            className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left hover:bg-appbg"
-                          >
-                            <span className="text-[12.5px] text-ink">{k.nama}</span>
-                            <span className="shrink-0 text-[10.5px] font-medium text-primary">
-                              {ks?.listing ?? 0} barang
-                            </span>
-                          </button>
-                        );
-                      })}
+                    {p.kabupaten.map((k) => (
+                      <button
+                        key={k.regency_code}
+                        type="button"
+                        onClick={() =>
+                          onPilih({
+                            jenis: "regency",
+                            kode: k.regency_code,
+                            label: k.regency_name,
+                          })
+                        }
+                        className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left hover:bg-appbg"
+                      >
+                        <span className="text-[12.5px] text-ink">{k.regency_name}</span>
+                        <span className="shrink-0 text-[10.5px] font-medium text-primary">
+                          {k.jumlah} barang
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -449,7 +410,6 @@ export function LocationPicker({
         </div>
       </div>
 
-      {/* Kaki: chip pilihan terakhir (tidak diterapkan otomatis) */}
       {nilai.jenis !== "semua" && (
         <div className="flex items-center justify-between border-t border-line px-4 py-3">
           <span className="flex items-center gap-2 text-[12.5px] text-ink-secondary">

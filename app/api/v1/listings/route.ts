@@ -1,11 +1,12 @@
 import { db } from "@/db";
-import { categories, clusters, listings } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { categories, listings } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { ambilFeed, type FilterFeed } from "@/lib/listing-query";
 import { ok, gagal, ipKlien } from "@/lib/api";
 import { listingSchema, validasiTenggat } from "@/lib/validators";
+import { validasiWilayah } from "@/lib/wilayah-server";
 import { generateSecretToken } from "@/lib/token";
-import { cekRateLimit } from "@/lib/rate-limit";
+import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +29,9 @@ export async function GET(req: Request) {
       : "mendesak") as FilterFeed["sort"];
 
     const filter: FilterFeed = {
-      cluster_id: q.get("cluster_id") ?? undefined,
       regency_code: q.get("regency_code") ?? undefined,
       province_code: q.get("province_code") ?? undefined,
+      district_code: q.get("district_code") ?? undefined,
       category_id: q.get("category_id") ?? undefined,
       is_free: q.get("is_free") === "true" ? true : undefined,
       q: q.get("q") ?? undefined,
@@ -67,7 +68,11 @@ export async function POST(req: Request) {
       return gagal("Format permintaan tidak valid.", 400);
     }
 
-    // 3. Validasi
+    // 3. Validasi bentuk data.
+    // Pesan galat dikirim PER FIELD supaya form bisa menandai isian yang salah.
+    // "Data belum lengkap" saja tidak berguna — pengguna tidak tahu apa yang
+    // harus diperbaiki. Kalau hanya satu field yang bermasalah, pesan field
+    // itu yang dipakai sebagai pesan utama.
     const parsed = listingSchema.safeParse(body);
     if (!parsed.success) {
       const detail: Record<string, string> = {};
@@ -75,28 +80,26 @@ export async function POST(req: Request) {
         const k = String(issue.path[0] ?? "_");
         if (!detail[k]) detail[k] = issue.message;
       }
-      return gagal("Data belum lengkap atau tidak valid.", 400, { detail });
+      const pesanUtama =
+        Object.values(detail)[0] ?? "Data belum lengkap atau tidak valid.";
+      return gagal(pesanUtama, 400, { detail });
     }
     const d = parsed.data;
 
     const errTenggat = validasiTenggat(d.deadline_date);
     if (errTenggat) return gagal(errTenggat, 400, { detail: { deadline_date: errTenggat } });
 
-    // 4. Pastikan kluster & kategori benar-benar ada.
-    // Tanpa ini, id yang salah akan lolos Zod lalu gagal di foreign key
-    // dan pengguna hanya melihat "500 Gagal menyimpan" tanpa tahu sebabnya.
-    const [klusterAda] = await db
-      .select({ id: clusters.id })
-      .from(clusters)
-      .where(and(eq(clusters.id, d.cluster_id), eq(clusters.isActive, true)))
-      .limit(1);
-
-    if (!klusterAda) {
-      return gagal("Kluster tidak dikenal atau sudah tidak aktif.", 400, {
-        detail: { cluster_id: "Pilih kluster dari daftar." },
-      });
+    // 4. Validasi rantai wilayah: provinsi -> kabupaten -> kecamatan.
+    // Setiap tingkat harus benar-benar ada DAN cocok dengan tingkat di atasnya.
+    // Ini penjaga utama supaya data lokasi tidak bisa dikotori lewat API.
+    const w = validasiWilayah(d.province_code, d.regency_code, d.district_code);
+    if (!w.ok) {
+      return gagal(w.pesan, 400, { detail: w.detail });
     }
 
+    // 4b. Pastikan kategori benar-benar ada.
+    // Tanpa ini, id kategori yang salah lolos Zod lalu gagal di foreign key
+    // dan pengguna hanya melihat "500 Gagal menyimpan" tanpa tahu sebabnya.
     const kategoriId = d.category_id === "gratis" ? null : d.category_id;
     if (kategoriId) {
       const [kategoriAda] = await db
@@ -124,7 +127,12 @@ export async function POST(req: Request) {
         condition: d.condition,
         isFree: d.is_free,
         price: d.is_free ? "0" : String(d.price),
-        clusterId: d.cluster_id,
+        provinceCode: w.wilayah.provinceCode,
+        provinceName: w.wilayah.provinceName,
+        regencyCode: w.wilayah.regencyCode,
+        regencyName: w.wilayah.regencyName,
+        districtCode: w.wilayah.districtCode,
+        districtName: w.wilayah.districtName,
         pickupLandmark: d.pickup_landmark,
         deadlineDate: d.deadline_date,
         accessNotes: d.access_notes || null,
@@ -134,7 +142,11 @@ export async function POST(req: Request) {
       })
       .returning({ id: listings.id, secretToken: listings.secretToken });
 
-    // 5. Susun manage_url
+    // 6. Baru sekarang kuota dipotong. Kalau penyimpanan gagal di atas,
+    // pengguna tidak kehilangan jatah hanya karena kesalahan sendiri.
+    await catatRateLimit(ip);
+
+    // 7. Susun manage_url
     const origin = new URL(req.url).origin;
     const manageUrl = `${origin}/manage/${baru.id}?token=${baru.secretToken}`;
 

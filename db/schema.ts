@@ -23,22 +23,6 @@ import {
  *   dikirim ke halaman publik (hanya dipakai untuk membangun link wa.me).
  */
 
-export const clusters = pgTable("clusters", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  city: varchar("city", { length: 100 }).notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  // Wilayah administratif — dipakai filter provinsi & kabupaten/kota.
-  // Kode memakai standar BPS supaya cocok dengan lib/data/wilayah.json.
-  provinceCode: varchar("province_code", { length: 2 }),
-  provinceName: varchar("province_name", { length: 100 }),
-  regencyCode: varchar("regency_code", { length: 5 }),
-  regencyName: varchar("regency_name", { length: 100 }),
-  // Koordinat pusat kluster — dipakai "Gunakan Lokasi Saya" (hitung jarak).
-  latitude: numeric("latitude", { precision: 9, scale: 6 }),
-  longitude: numeric("longitude", { precision: 9, scale: 6 }),
-});
-
 export const categories = pgTable("categories", {
   id: varchar("id", { length: 36 }).primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
@@ -55,7 +39,14 @@ export const listings = pgTable("listings", {
   condition: varchar("condition", { length: 24 }).notNull(),
   isFree: boolean("is_free").default(false).notNull(),
   price: numeric("price", { precision: 12, scale: 2 }).default("0").notNull(),
-  clusterId: varchar("cluster_id", { length: 36 }).references(() => clusters.id),
+  // Wilayah administratif berjenjang. Nama ikut disimpan supaya render kartu
+  // tidak perlu join atau membaca berkas data wilayah.
+  provinceCode: varchar("province_code", { length: 2 }),
+  provinceName: varchar("province_name", { length: 100 }),
+  regencyCode: varchar("regency_code", { length: 5 }).notNull(),
+  regencyName: varchar("regency_name", { length: 100 }).notNull(),
+  districtCode: varchar("district_code", { length: 8 }).notNull(),
+  districtName: varchar("district_name", { length: 100 }).notNull(),
   pickupLandmark: varchar("pickup_landmark", { length: 150 }).notNull(),
   deadlineDate: date("deadline_date").notNull(),
   accessNotes: varchar("access_notes", { length: 200 }),
@@ -96,7 +87,6 @@ export const STATUS_VALUES = ["AVAILABLE", "TAKEN", "EXPIRED", "DELETED"] as con
 export type Condition = (typeof CONDITION_VALUES)[number];
 export type ListingStatus = (typeof STATUS_VALUES)[number];
 export type Listing = typeof listings.$inferSelect;
-export type Cluster = typeof clusters.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 
 export { sql };

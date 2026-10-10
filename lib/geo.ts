@@ -142,18 +142,3 @@ export async function deteksiLokasi(): Promise<HasilLokasi> {
     };
   }
 }
-
-/** Kluster terdekat dari sebuah koordinat. */
-export function klusterTerdekat<T extends { latitude: string | null; longitude: string | null }>(
-  daftar: T[],
-  lat: number,
-  lon: number,
-): { kluster: T; jarak: number } | null {
-  let terbaik: { kluster: T; jarak: number } | null = null;
-  for (const k of daftar) {
-    if (!k.latitude || !k.longitude) continue;
-    const d = jarakKm(lat, lon, Number(k.latitude), Number(k.longitude));
-    if (!terbaik || d < terbaik.jarak) terbaik = { kluster: k, jarak: d };
-  }
-  return terbaik;
-}

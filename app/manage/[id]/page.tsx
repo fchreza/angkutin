@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { categories, clusters, listings, listingImages } from "@/db/schema";
+import { categories, listings, listingImages } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
 import { tokenCocok } from "@/lib/token";
 import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
@@ -79,11 +79,12 @@ export default async function KelolaPage({
       viewCount: listings.viewCount,
       whatsappClicks: listings.whatsappClicks,
       createdAt: listings.createdAt,
-      clusterName: clusters.name,
+      provinceName: listings.provinceName,
+      regencyName: listings.regencyName,
+      districtName: listings.districtName,
       categoryName: categories.name,
     })
     .from(listings)
-    .leftJoin(clusters, eq(listings.clusterId, clusters.id))
     .leftJoin(categories, eq(listings.categoryId, categories.id))
     .where(eq(listings.id, id))
     .limit(1);
@@ -123,7 +124,7 @@ export default async function KelolaPage({
     access_notes: row.accessNotes,
     sellerName: row.sellerName,
     sellerWhatsapp: row.sellerWhatsapp,
-    clusterName: row.clusterName,
+    wilayahNama: [row.districtName, row.regencyName].filter(Boolean).join(", "),
     categoryName: row.categoryName,
     created_at: row.createdAt.toISOString(),
     images: foto,

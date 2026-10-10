@@ -10,7 +10,7 @@ import { IconAlert } from "@/components/shared/icons";
 import { SuksesPasang, type RingkasanListing } from "@/components/manage/sukses-pasang";
 import { cn } from "@/lib/cn";
 import { keYMD } from "@/lib/format";
-import type { KlusterRingkas } from "@/components/feed/location-picker";
+import { WilayahPicker, type PilihanWilayah } from "./wilayah-picker";
 import type { Kategori } from "@/components/feed/filter-pills";
 
 const MAKS_HARI = 14;
@@ -26,13 +26,7 @@ type Galat = Record<string, string>;
  * Kalau langkah 2 gagal, listing TETAP tayang dan pengguna dibawa ke
  * dashboard dengan peringatan — bukan kehilangan seluruh isian.
  */
-export function FormPasang({
-  kluster,
-  kategori,
-}: {
-  kluster: KlusterRingkas[];
-  kategori: Kategori[];
-}) {
+export function FormPasang({ kategori }: { kategori: Kategori[] }) {
   const [foto, setFoto] = useState<FotoSiap[]>([]);
   const [judul, setJudul] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
@@ -40,7 +34,14 @@ export function FormPasang({
   const [kondisi, setKondisi] = useState("");
   const [gratis, setGratis] = useState(false);
   const [harga, setHarga] = useState("");
-  const [klusterId, setKlusterId] = useState(kluster[0]?.id ?? "");
+  const [wilayah, setWilayah] = useState<PilihanWilayah>({
+    province_code: "",
+    province_name: "",
+    regency_code: "",
+    regency_name: "",
+    district_code: "",
+    district_name: "",
+  });
   const [patokan, setPatokan] = useState("");
   const [tenggat, setTenggat] = useState(() => {
     const d = new Date();
@@ -73,7 +74,7 @@ export function FormPasang({
     return keYMD(d);
   })();
 
-  const klusterNama = kluster.find((k) => k.id === klusterId)?.name ?? "";
+  const wilayahNama = [wilayah.district_name, wilayah.regency_name].filter(Boolean).join(", ");
   const angkaHargaTerakhir = Number((harga || "0").replace(/\./g, ""));
   const tenggatTampil = tenggat
     ? new Intl.DateTimeFormat("id-ID", {
@@ -97,6 +98,9 @@ export function FormPasang({
     if (!kondisi) g.kondisi = "Pilih kondisi barang.";
     const angkaHarga = Number((harga || "0").replace(/\./g, ""));
     if (!gratis && angkaHarga <= 0) g.harga = "Isi harga, atau aktifkan Berikan Gratis.";
+    if (!wilayah.province_code) g.wilayah = "Pilih provinsi.";
+    else if (!wilayah.regency_code) g.wilayah = "Pilih kabupaten/kota.";
+    else if (!wilayah.district_code) g.wilayah = "Pilih kecamatan.";
     if (patokan.trim().length < 5) g.patokan = "Patokan lokasi minimal 5 karakter.";
     if (!tenggat) g.tenggat = "Pilih batas pengambilan.";
     if (nama.trim().length < 2) g.nama = "Nama minimal 2 karakter.";
@@ -126,7 +130,9 @@ export function FormPasang({
           condition: kondisi,
           is_free: gratis,
           price: gratis ? 0 : angkaHarga,
-          cluster_id: klusterId,
+          province_code: wilayah.province_code,
+          regency_code: wilayah.regency_code,
+          district_code: wilayah.district_code,
           pickup_landmark: patokan.trim(),
           deadline_date: tenggat,
           access_notes: catatan.trim(),
@@ -140,7 +146,21 @@ export function FormPasang({
           error?: string;
           detail?: Galat;
         };
-        if (j.detail) setGalat(j.detail);
+        if (j.detail) {
+          // Server memakai kunci province_code/regency_code/district_code.
+          // Form menampilkannya di satu tempat (bawah pilihan kecamatan),
+          // jadi gabungkan dulu — kalau tidak, galatnya tidak terlihat.
+          const d: Galat = { ...j.detail };
+          const w =
+            d.district_code ?? d.regency_code ?? d.province_code ?? undefined;
+          if (w) {
+            d.wilayah = w;
+            delete d.district_code;
+            delete d.regency_code;
+            delete d.province_code;
+          }
+          setGalat(d);
+        }
         setGalatUmum(j.error ?? "Gagal menayangkan listing. Coba lagi.");
         setMengirim(false);
         return;
@@ -199,7 +219,9 @@ export function FormPasang({
 
   // Setelah listing tersimpan, tampilkan layar persetujuan.
   if (hasil) {
-    const klusterNamaHasil = kluster.find((k) => k.id === klusterId)?.name ?? "";
+    const wilayahNamaHasil = [wilayah.district_name, wilayah.regency_name]
+      .filter(Boolean)
+      .join(", ");
     const ringkasan: RingkasanListing = {
       id: hasil.id,
       token: hasil.token,
@@ -207,7 +229,7 @@ export function FormPasang({
       price: gratis ? "0" : String(angkaHargaTerakhir),
       isFree: gratis,
       condition: kondisi,
-      clusterName: klusterNamaHasil,
+      wilayahNama: wilayahNamaHasil,
       pickupLandmark: patokan.trim(),
       deadlineDate: tenggat,
       jumlahFoto: hasil.fotoGagal ? 0 : foto.length,
@@ -336,22 +358,8 @@ export function FormPasang({
             Penjemputan
           </h2>
 
-          <div>
-            <label htmlFor="kluster" className="mb-2 block text-[13px] font-semibold text-ink">
-              Kluster wilayah <span className="text-danger">*</span>
-            </label>
-            <select
-              id="kluster"
-              value={klusterId}
-              onChange={(e) => setKlusterId(e.target.value)}
-              className="h-11 w-full rounded-md border border-line bg-surface px-3 text-[14px] focus:border-primary focus:outline-none"
-            >
-              {kluster.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.name} — {k.city}
-                </option>
-              ))}
-            </select>
+          <div data-galat={galat.wilayah ? "1" : "0"}>
+            <WilayahPicker nilai={wilayah} onUbah={setWilayah} galat={galat.wilayah} />
           </div>
 
           <div>
@@ -362,7 +370,7 @@ export function FormPasang({
               id="patokan"
               value={patokan}
               onChange={(e) => setPatokan(e.target.value.slice(0, 150))}
-              placeholder="Contoh: Dekat Bundaran Babarsari, belakang Indomaret Point"
+              placeholder="Contoh: Dekat Indomaret Point, gang sebelah warung Bu Ida"
               className={cn(
                 "h-11 w-full rounded-md border px-3 text-[14px] focus:outline-none",
                 galat.patokan ? "border-danger" : "border-line focus:border-primary",
@@ -486,7 +494,7 @@ export function FormPasang({
           harga={harga}
           gratis={gratis}
           kondisi={kondisi}
-          klusterNama={klusterNama}
+          wilayahNama={wilayahNama}
           patokan={patokan}
           tenggat={tenggatTampil}
         />

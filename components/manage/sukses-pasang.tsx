@@ -16,7 +16,7 @@ export type RingkasanListing = {
   price: string;
   isFree: boolean;
   condition: string;
-  clusterName: string;
+  wilayahNama: string;
   pickupLandmark: string;
   deadlineDate: string;
   jumlahFoto: number;
@@ -97,7 +97,7 @@ export function SuksesPasang({
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
             {fotoGagal
               ? "Barangnya sudah bisa dilihat orang. Fotonya gagal terunggah — coba sekali lagi di bawah."
-              : `Sudah bisa dilihat orang di kluster ${data.clusterName}.`}
+              : `Sudah bisa dilihat orang di ${data.wilayahNama}.`}
           </p>
         </div>
       </div>
@@ -147,7 +147,7 @@ export function SuksesPasang({
           </h3>
 
           <dl className="space-y-2 text-[13px]">
-            <Baris label="Kluster" nilai={data.clusterName} />
+            <Baris label="Lokasi" nilai={data.wilayahNama} />
             <Baris label="Patokan" nilai={data.pickupLandmark} />
             <Baris label="Batas ambil" nilai={formatTanggalID(data.deadlineDate)} />
             <Baris

@@ -2,7 +2,6 @@ import { db } from "@/db";
 import { categories } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import { FormPasang } from "@/components/form/form-pasang";
-import { ambilKlusterDenganJumlah } from "@/lib/kluster";
 import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
 
 export const dynamic = "force-dynamic";
@@ -13,15 +12,24 @@ export const metadata = {
     "Pasang listing tanpa daftar akun. Unggah foto, isi data, tayangkan.",
 };
 
-/** Layar 3: Form Pasang Listing. */
+/**
+ * Layar 3: Form Pasang Listing.
+ *
+ * Wilayah (provinsi/kabupaten/kecamatan) TIDAK diambil di sini. Form memuatnya
+ * sendiri di sisi klien, dan hanya saat dibutuhkan:
+ *  - provinsi + kabupaten: lib/data/wilayah.json (17 KB)
+ *  - kecamatan: diambil dari GET /api/v1/wilayah/kecamatan saat kabupaten
+ *    dipilih (~0,5 KB per permintaan). Kode kecamatan TIDAK bisa diturunkan
+ *    dari urutan daftar, jadi sumbernya harus server.
+ *
+ * Alasannya: mengirim seluruh 7.285 kecamatan = 111 KB ke setiap pengunjung,
+ * padahal hanya sebagian kecil yang membuka form ini.
+ */
 export default async function PasangPage() {
-  const [kluster, kategori] = await Promise.all([
-    ambilKlusterDenganJumlah(),
-    db
-      .select({ id: categories.id, name: categories.name, slug: categories.slug })
-      .from(categories)
-      .orderBy(asc(categories.displayOrder)),
-  ]);
+  const kategori = await db
+    .select({ id: categories.id, name: categories.name, slug: categories.slug })
+    .from(categories)
+    .orderBy(asc(categories.displayOrder));
 
   return (
     <>
@@ -38,7 +46,7 @@ export default async function PasangPage() {
           </p>
         </div>
 
-        <FormPasang kluster={kluster} kategori={kategori} />
+        <FormPasang kategori={kategori} />
       </main>
 
       <MobileTabBar />

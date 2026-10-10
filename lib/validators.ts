@@ -41,7 +41,12 @@ export const listingSchema = z
       .min(0, "Harga tidak boleh negatif")
       .max(100_000_000, "Harga maksimal Rp 100.000.000"),
 
-    cluster_id: z.string().min(1, "Pilih kluster wilayah"),
+    // Wilayah berjenjang. Hanya FORMAT yang diperiksa di sini; keberadaan
+    // kode dan kecocokan antar tingkat diverifikasi di lib/wilayah-server.ts
+    // (butuh berkas 239 KB yang tidak boleh masuk bundel klien).
+    province_code: z.string().regex(/^\d{2}$/, "Pilih provinsi"),
+    regency_code: z.string().regex(/^\d{2}\.\d{2}$/, "Pilih kabupaten/kota"),
+    district_code: z.string().regex(/^\d{2}\.\d{2}\.\d{2}$/, "Pilih kecamatan"),
 
     pickup_landmark: z
       .string()

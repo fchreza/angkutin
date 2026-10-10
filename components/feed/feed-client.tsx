@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/shared/button";
 import {
   LocationPicker,
-  type KlusterRingkas,
+  type WilayahAdaBarang,
   type PilihanLokasi,
 } from "@/components/feed/location-picker";
 import {
@@ -44,12 +44,12 @@ const KUNCI_TERAKHIR = "angkutin:lokasi-terakhir";
  *  - "Gunakan Lokasi Saya" hanya membaca lokasi saat ditekan.
  */
 export function FeedClient({
-  kluster,
+  wilayah,
   kategori,
   feedAwal,
   totalAwal,
 }: {
-  kluster: KlusterRingkas[];
+  wilayah: WilayahAdaBarang[];
   kategori: Kategori[];
   feedAwal: KartuListing[];
   totalAwal: number;
@@ -236,7 +236,7 @@ export function FeedClient({
       {panelBuka && (
         <div className="mb-4">
           <LocationPicker
-            kluster={kluster}
+            wilayah={wilayah}
             nilai={lokasi}
             onPilih={terapkanLokasi}
             onTutup={() => setPanelBuka(false)}

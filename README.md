@@ -38,9 +38,8 @@ npm run dev                        # http://localhost:3000
 
 ## Skema database
 
-Dibuat lewat `db/schema.ts` (Drizzle). Lima tabel:
+Dibuat lewat `db/schema.ts` (Drizzle). Empat tabel:
 
-- `clusters` — wilayah kampus (Pogung, Kukusan, Jatinangor, Setiabudi, Babarsari, Tembalang)
 - `categories` — kategori barang
 - `listings` — data barang; `secret_token` = kunci tautan kelola
 - `listing_images` — foto (maks 3, urutan 0-2)
@@ -56,9 +55,9 @@ npm run db:push
 
 | Metode | Rute | Fungsi |
 |---|---|---|
-| GET | `/api/v1/clusters` | Daftar kluster aktif |
+| GET | `/api/v1/wilayah` | Wilayah yang punya barang + jumlahnya |
 | GET | `/api/v1/categories` | Daftar kategori |
-| GET | `/api/v1/listings` | Feed + filter (`cluster_id`, `category_id`, `q`, `sort`) |
+| GET | `/api/v1/listings` | Feed + filter (`province_code`, `regency_code`, `category_id`, `q`, `sort`) |
 | POST | `/api/v1/listings` | Buat listing (rate limit 5/jam/IP) |
 | GET | `/api/v1/listings/:id` | Detail satu listing |
 | POST | `/api/v1/listings/:id/images` | Unggah 1-3 foto (butuh token) |
@@ -69,7 +68,7 @@ npm run db:push
 
 ## Alur halaman
 
-1. **`/`** Feed Katalog — filter kluster/kategori/pencarian/urutan
+1. **`/`** Feed Katalog — filter wilayah/kategori/pencarian/urutan
 2. **`/listing/[id]`** Detail Barang — carousel foto, CTA WhatsApp
 3. **`/pasang`** Form Pasang — kompresi foto di klien, pratinjau langsung
 4. **`/manage/[id]?token=…`** Kelola Listing — status, statistik, tautan rahasia
@@ -93,6 +92,22 @@ peringatan — bukan kehilangan seluruh isian.
 Vercel Hobby hanya mengizinkan cron 1×/hari dengan jam tidak presisi, jadi
 listing lewat tenggat sudah tersaring dari feed sejak awal; cron hanya
 merapikan status di database.
+
+**Wilayah memakai hierarki resmi, bukan kluster karangan.** Form pasang:
+Provinsi → Kabupaten/Kota → Kecamatan → patokan lokasi. Katalog publik
+menyaring sampai kabupaten/kota saja — pembeli mencari barang, bukan alamat;
+detail penjemputan dibicarakan lewat WhatsApp.
+
+**Data kecamatan tidak ikut bundel awal.** 7.285 kecamatan = 95 KB (nama saja,
+untuk browser) dan 239 KB dengan kode (khusus server). Berkas browser diimpor
+dinamis dan hanya saat kabupaten dipilih di form pasang, jadi pengunjung
+katalog tidak menanggungnya. Server memvalidasi ulang rantai
+provinsi → kabupaten → kecamatan, supaya kode palsu dari API langsung ditolak
+dan filter lokasi tetap bisa dipercaya.
+
+**Kuota anti-spam dipotong hanya setelah listing tersimpan.** Kalau percobaan
+yang gagal ikut dihitung, pengguna yang salah mengetik nomor WhatsApp beberapa
+kali akan terkunci 1 jam padahal tidak ada listing-nya yang masuk.
 
 **Tautan kelola memakai token 43 karakter** (`randomBytes(32)` → base64url)
 dan dibandingkan dengan waktu tetap. Token salah dan listing tidak ada

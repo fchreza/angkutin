@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { categories, clusters, listings, listingImages } from "@/db/schema";
+import { categories, listings, listingImages } from "@/db/schema";
 import { and, asc, desc, eq, ilike, or, sql, gte } from "drizzle-orm";
 
 /**
@@ -11,6 +11,9 @@ import { and, asc, desc, eq, ilike, or, sql, gte } from "drizzle-orm";
  * - Listing lewat tenggat TIDAK ditampilkan, meski cron belum jalan.
  *   Ini penting: cron Vercel Hobby tidak presisi, jadi filter di query
  *   adalah pengaman utama (cron hanya pembersih status di database).
+ *
+ * Wilayah: katalog publik menyaring sampai KABUPATEN/KOTA saja. Kecamatan
+ * hanya dipakai di form pasang sebagai penanda lokasi barang.
  */
 
 export type SortFeed = "mendesak" | "terbaru" | "termurah" | "gratis";
@@ -24,8 +27,12 @@ export type KartuListing = {
   status: string;
   deadline_date: string;
   pickup_landmark: string;
-  cluster_id: string | null;
-  cluster_name: string | null;
+  province_code: string | null;
+  province_name: string | null;
+  regency_code: string;
+  regency_name: string;
+  district_code: string;
+  district_name: string;
   category_id: string | null;
   category_name: string | null;
   created_at: string;
@@ -34,11 +41,12 @@ export type KartuListing = {
 };
 
 export type FilterFeed = {
-  cluster_id?: string;
-  /** Filter wilayah: kabupaten/kota (kode BPS). Semua kluster di wilayah ini ikut. */
+  /** Filter wilayah: kabupaten/kota (kode BPS). */
   regency_code?: string;
   /** Filter wilayah: provinsi (kode BPS). Dipakai kalau kabupaten belum dipilih. */
   province_code?: string;
+  /** Filter kecamatan — dipakai halaman kelola, bukan katalog publik. */
+  district_code?: string;
   category_id?: string;
   is_free?: boolean;
   q?: string;
@@ -59,14 +67,14 @@ export async function ambilFeed(f: FilterFeed): Promise<{
     gte(listings.deadlineDate, hariIni),
   ];
 
-  if (f.cluster_id) syarat.push(eq(listings.clusterId, f.cluster_id));
-  // Filter wilayah: semua kluster di kabupaten/provinsi itu ikut tampil.
+  // Filter wilayah langsung ke kolom listings — tidak perlu join lagi.
   // Kabupaten lebih spesifik, jadi kalau keduanya ada, kabupaten yang menang.
   if (f.regency_code) {
-    syarat.push(eq(clusters.regencyCode, f.regency_code));
+    syarat.push(eq(listings.regencyCode, f.regency_code));
   } else if (f.province_code) {
-    syarat.push(eq(clusters.provinceCode, f.province_code));
+    syarat.push(eq(listings.provinceCode, f.province_code));
   }
+  if (f.district_code) syarat.push(eq(listings.districtCode, f.district_code));
   if (f.category_id) {
     // "gratis" adalah kategori semu -> filter lewat is_free
     if (f.category_id === "gratis") syarat.push(eq(listings.isFree, true));
@@ -100,8 +108,12 @@ export async function ambilFeed(f: FilterFeed): Promise<{
       status: listings.status,
       deadline_date: listings.deadlineDate,
       pickup_landmark: listings.pickupLandmark,
-      cluster_id: listings.clusterId,
-      cluster_name: clusters.name,
+      province_code: listings.provinceCode,
+      province_name: listings.provinceName,
+      regency_code: listings.regencyCode,
+      regency_name: listings.regencyName,
+      district_code: listings.districtCode,
+      district_name: listings.districtName,
       category_id: listings.categoryId,
       category_name: categories.name,
       created_at: listings.createdAt,
@@ -115,20 +127,16 @@ export async function ambilFeed(f: FilterFeed): Promise<{
       )`,
     })
     .from(listings)
-    .leftJoin(clusters, eq(listings.clusterId, clusters.id))
     .leftJoin(categories, eq(listings.categoryId, categories.id))
     .where(and(...syarat))
     .orderBy(urut, asc(listings.createdAt))
     .limit(limit)
     .offset(offset);
 
-  // Hitung total harus memakai JOIN yang sama seperti query data — filter
-  // wilayah menyebut tabel `clusters`, jadi tanpa leftJoin di sini Postgres
-  // membalas "missing FROM-clause entry for table clusters".
+  // Hitung total memakai syarat yang sama.
   const [{ jumlah }] = await db
     .select({ jumlah: sql<number>`count(*)::int` })
     .from(listings)
-    .leftJoin(clusters, eq(listings.clusterId, clusters.id))
     .where(and(...syarat));
 
   return {
@@ -156,15 +164,18 @@ export async function ambilDetail(id: string) {
       access_notes: listings.accessNotes,
       seller_name: listings.sellerName,
       seller_whatsapp: listings.sellerWhatsapp,
-      cluster_id: listings.clusterId,
-      cluster_name: clusters.name,
+      province_code: listings.provinceCode,
+      province_name: listings.provinceName,
+      regency_code: listings.regencyCode,
+      regency_name: listings.regencyName,
+      district_code: listings.districtCode,
+      district_name: listings.districtName,
       category_id: listings.categoryId,
       category_name: categories.name,
       view_count: listings.viewCount,
       created_at: listings.createdAt,
     })
     .from(listings)
-    .leftJoin(clusters, eq(listings.clusterId, clusters.id))
     .leftJoin(categories, eq(listings.categoryId, categories.id))
     .where(and(eq(listings.id, id), sql`${listings.status} <> 'DELETED'`))
     .limit(1);

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { categories, clusters, listings, listingImages } from "@/db/schema";
+import { categories, listings, listingImages } from "@/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
 import { tokenCocok } from "@/lib/token";
@@ -46,13 +46,13 @@ export async function GET(
         whatsappClicks: listings.whatsappClicks,
         createdAt: listings.createdAt,
         updatedAt: listings.updatedAt,
-        clusterId: listings.clusterId,
-        clusterName: clusters.name,
+        provinceName: listings.provinceName,
+        regencyName: listings.regencyName,
+        districtName: listings.districtName,
         categoryId: listings.categoryId,
         categoryName: categories.name,
       })
       .from(listings)
-      .leftJoin(clusters, eq(listings.clusterId, clusters.id))
       .leftJoin(categories, eq(listings.categoryId, categories.id))
       .where(eq(listings.id, id))
       .limit(1);

@@ -63,7 +63,7 @@ export default async function DetailPage({
             Katalog
           </Link>
           <IconChevronRight size={13} />
-          <span className="text-ink">{d.cluster_name ?? "—"}</span>
+          <span className="text-ink">{d.district_name ? `${d.district_name}, ${d.regency_name}` : (d.regency_name ?? "—")}</span>
         </nav>
 
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
@@ -79,7 +79,11 @@ export default async function DetailPage({
               <Badge varian="kondisi">
                 {LABEL_KONDISI[d.condition] ?? d.condition}
               </Badge>
-              {d.cluster_name && <Badge varian="kluster">{d.cluster_name}</Badge>}
+              {d.regency_name && (
+                <Badge varian="wilayah">
+                  {d.district_name ? `${d.district_name}, ${d.regency_name}` : d.regency_name}
+                </Badge>
+              )}
               {sudahDiambil && <Badge varian="taken">SUDAH DIAMBIL</Badge>}
             </div>
 

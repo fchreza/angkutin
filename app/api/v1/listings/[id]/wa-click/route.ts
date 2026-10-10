@@ -3,7 +3,6 @@ import { listings } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
-import { clusters } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +32,10 @@ export async function POST(
         sellerName: listings.sellerName,
         sellerWhatsapp: listings.sellerWhatsapp,
         status: listings.status,
-        clusterName: clusters.name,
+        regencyName: listings.regencyName,
+        districtName: listings.districtName,
       })
       .from(listings)
-      .leftJoin(clusters, eq(listings.clusterId, clusters.id))
       .where(eq(listings.id, id))
       .limit(1);
 
@@ -51,7 +50,8 @@ export async function POST(
     const url = buildWhatsAppLink({
       sellerName: row.sellerName,
       itemTitle: row.title,
-      clusterName: row.clusterName ?? "sekitar",
+      wilayahNama:
+        [row.districtName, row.regencyName].filter(Boolean).join(", ") || "sekitar",
       sellerWhatsapp: row.sellerWhatsapp,
     });
 
