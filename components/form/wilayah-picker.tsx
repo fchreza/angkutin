@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { cn } from "@/lib/cn";
-import { IconChevronDown, IconAlert } from "@/components/shared/icons";
+import { IconAlert } from "@/components/shared/icons";
+import { Select } from "@/components/shared/select";
 import { PROVINSI, kabupatenDari } from "@/lib/wilayah";
 
 export type PilihanWilayah = {
@@ -118,12 +118,6 @@ export function WilayahPicker({
     onUbah({ ...nilai, district_code: kode, district_name: d?.nama ?? "" });
   }
 
-  const kelasSelect = (salah: boolean) =>
-    cn(
-      "h-11 w-full appearance-none rounded-md border bg-surface px-3 pr-9 text-[14px] focus:outline-none",
-      salah ? "border-danger" : "border-line focus:border-primary",
-    );
-
   const kecamatanSiap = Boolean(nilai.regency_code) && !memuat;
 
   return (
@@ -133,25 +127,13 @@ export function WilayahPicker({
         <label htmlFor="provinsi" className="mb-2 block text-[13px] font-semibold text-ink">
           Provinsi <span className="text-danger">*</span>
         </label>
-        <div className="relative">
-          <select
-            id="provinsi"
-            value={nilai.province_code}
-            onChange={(e) => pilihProvinsi(e.target.value)}
-            className={kelasSelect(false)}
-          >
-            <option value="">— Pilih provinsi —</option>
-            {PROVINSI.map((p) => (
-              <option key={p.kode} value={p.kode}>
-                {p.nama}
-              </option>
-            ))}
-          </select>
-          <IconChevronDown
-            size={15}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-secondary"
-          />
-        </div>
+        <Select
+          id="provinsi"
+          nilai={nilai.province_code}
+          onUbah={pilihProvinsi}
+          placeholder="— Pilih provinsi —"
+          opsi={PROVINSI.map((p) => ({ value: p.kode, label: p.nama }))}
+        />
       </div>
 
       {/* Kabupaten/Kota — muncul setelah provinsi dipilih */}
@@ -159,31 +141,16 @@ export function WilayahPicker({
         <label htmlFor="kabupaten" className="mb-2 block text-[13px] font-semibold text-ink">
           Kabupaten/Kota <span className="text-danger">*</span>
         </label>
-        <div className="relative">
-          <select
-            id="kabupaten"
-            value={nilai.regency_code}
-            disabled={!nilai.province_code}
-            onChange={(e) => pilihKabupaten(e.target.value)}
-            className={cn(
-              kelasSelect(false),
-              !nilai.province_code && "cursor-not-allowed bg-appbg text-ink-secondary",
-            )}
-          >
-            <option value="">
-              {nilai.province_code ? "— Pilih kabupaten/kota —" : "Pilih provinsi dulu"}
-            </option>
-            {kabupaten.map((k) => (
-              <option key={k.kode} value={k.kode}>
-                {k.nama}
-              </option>
-            ))}
-          </select>
-          <IconChevronDown
-            size={15}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-secondary"
-          />
-        </div>
+        <Select
+          id="kabupaten"
+          nilai={nilai.regency_code}
+          onUbah={pilihKabupaten}
+          disabled={!nilai.province_code}
+          placeholder={
+            nilai.province_code ? "— Pilih kabupaten/kota —" : "Pilih provinsi dulu"
+          }
+          opsi={kabupaten.map((k) => ({ value: k.kode, label: k.nama }))}
+        />
       </div>
 
       {/* Kecamatan — daftar diambil dari server setelah kabupaten dipilih */}
@@ -191,35 +158,21 @@ export function WilayahPicker({
         <label htmlFor="kecamatan" className="mb-2 block text-[13px] font-semibold text-ink">
           Kecamatan <span className="text-danger">*</span>
         </label>
-        <div className="relative">
-          <select
-            id="kecamatan"
-            value={nilai.district_code}
-            disabled={!kecamatanSiap}
-            onChange={(e) => pilihKecamatan(e.target.value)}
-            className={cn(
-              kelasSelect(Boolean(galat)),
-              !kecamatanSiap && "cursor-not-allowed bg-appbg text-ink-secondary",
-            )}
-          >
-            <option value="">
-              {memuat
-                ? "Memuat kecamatan…"
-                : nilai.regency_code
-                  ? "— Pilih kecamatan —"
-                  : "Pilih kabupaten/kota dulu"}
-            </option>
-            {kecamatan.map((d) => (
-              <option key={d.kode} value={d.kode}>
-                {d.nama}
-              </option>
-            ))}
-          </select>
-          <IconChevronDown
-            size={15}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-secondary"
-          />
-        </div>
+        <Select
+          id="kecamatan"
+          nilai={nilai.district_code}
+          onUbah={pilihKecamatan}
+          disabled={!kecamatanSiap}
+          salah={Boolean(galat)}
+          placeholder={
+            memuat
+              ? "Memuat kecamatan…"
+              : nilai.regency_code
+                ? "— Pilih kecamatan —"
+                : "Pilih kabupaten/kota dulu"
+          }
+          opsi={kecamatan.map((d) => ({ value: d.kode, label: d.nama }))}
+        />
 
         {galat ? (
           <p className="mt-1.5 flex items-start gap-1.5 text-[12px] text-danger">

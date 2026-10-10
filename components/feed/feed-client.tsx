@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FilterPills, type Kategori } from "@/components/feed/filter-pills";
 import { ListingCard } from "@/components/feed/listing-card";
 import { SkeletonGrid, Reveal } from "@/components/shared/skeleton-card";
+import { Select } from "@/components/shared/select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/shared/button";
 import {
@@ -217,18 +218,13 @@ export function FeedClient({
             )}
           </div>
 
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as Sort)}
+          <Select
+            nilai={sort}
+            onUbah={(v) => setSort(v as Sort)}
             aria-label="Urutkan"
-            className="h-11 shrink-0 rounded-md border border-line bg-surface px-3 text-[13.5px] font-medium text-ink focus:border-primary focus:outline-none md:w-[190px]"
-          >
-            {OPSI_SORT.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            opsi={OPSI_SORT.map((o) => ({ value: o.id, label: o.label }))}
+            className="shrink-0 md:w-[190px]"
+          />
         </div>
 
         <FilterPills kategori={kategori} aktif={kategoriId} onPilih={setKategoriId} />

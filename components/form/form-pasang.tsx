@@ -11,6 +11,7 @@ import { SuksesPasang, type RingkasanListing } from "@/components/manage/sukses-
 import { cn } from "@/lib/cn";
 import { keYMD } from "@/lib/format";
 import { WilayahPicker, type PilihanWilayah } from "./wilayah-picker";
+import { Select } from "@/components/shared/select";
 import type { Kategori } from "@/components/feed/filter-pills";
 
 const MAKS_HARI = 14;
@@ -300,18 +301,12 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
             <label htmlFor="kategori" className="mb-2 block text-[13px] font-semibold text-ink">
               Kategori <span className="text-danger">*</span>
             </label>
-            <select
+            <Select
               id="kategori"
-              value={kategoriId}
-              onChange={(e) => setKategoriId(e.target.value)}
-              className="h-11 w-full rounded-md border border-line bg-surface px-3 text-[14px] focus:border-primary focus:outline-none"
-            >
-              {kategori.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.name}
-                </option>
-              ))}
-            </select>
+              nilai={kategoriId}
+              onUbah={setKategoriId}
+              opsi={kategori.map((k) => ({ value: k.id, label: k.name }))}
+            />
           </div>
 
           <ConditionSegmented nilai={kondisi} onUbah={setKondisi} galat={galat.kondisi} />
