@@ -106,3 +106,10 @@ npm run build      # build produksi
 npm run start      # jalankan hasil build
 npm run db:push    # terapkan skema ke database
 ```
+
+## Deploy
+
+Push ke branch `main` memicu deploy otomatis ke Vercel.
+
+- Produksi: https://angkutin-app.vercel.app
+- Repo: https://github.com/fchreza/angkutin
