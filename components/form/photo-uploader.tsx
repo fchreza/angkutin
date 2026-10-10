@@ -140,7 +140,7 @@ export function PhotoUploader({
         {foto.map((f, i) => (
           <div
             key={f.preview}
-            className="group relative aspect-square overflow-hidden rounded-md border border-line bg-appbg"
+            className="animate-pop group relative aspect-square overflow-hidden rounded-md border border-line bg-appbg"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -157,7 +157,7 @@ export function PhotoUploader({
               type="button"
               onClick={() => hapus(i)}
               aria-label={`Hapus foto ${i + 1}`}
-              className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/75 text-white hover:bg-danger"
+              className="press absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/75 text-white hover:bg-danger"
             >
               <IconX size={13} />
             </button>
@@ -170,8 +170,8 @@ export function PhotoUploader({
             onClick={() => inputRef.current?.click()}
             disabled={sedangKompres}
             className={cn(
-              "flex aspect-square flex-col items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-line",
-              "bg-appbg text-ink-secondary transition-colors hover:border-primary hover:text-primary",
+              "press flex aspect-square flex-col items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-line",
+              "bg-appbg text-ink-secondary hover:border-primary hover:text-primary",
               "disabled:cursor-wait disabled:opacity-60",
             )}
           >

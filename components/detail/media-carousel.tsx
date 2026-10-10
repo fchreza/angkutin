@@ -50,7 +50,10 @@ export function MediaCarousel({
             <img
               src={f.image_url}
               alt={`${judul} — foto ${i + 1}`}
-              className="aspect-square w-full object-cover"
+              className={cn(
+                "aspect-square w-full object-cover",
+                i === aktif ? "animate-reveal" : undefined,
+              )}
               loading={i === 0 ? "eager" : "lazy"}
             />
           </div>
@@ -78,7 +81,7 @@ export function MediaCarousel({
               type="button"
               onClick={() => geser(-1)}
               aria-label="Foto sebelumnya"
-              className="absolute left-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 rotate-180 items-center justify-center rounded-full bg-white/90 text-ink shadow-card hover:bg-white md:flex"
+              className="press absolute left-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 rotate-180 items-center justify-center rounded-full bg-white/90 text-ink shadow-card hover:bg-white md:flex"
             >
               <IconChevronRight size={18} />
             </button>
@@ -88,7 +91,7 @@ export function MediaCarousel({
               type="button"
               onClick={() => geser(1)}
               aria-label="Foto berikutnya"
-              className="absolute right-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink shadow-card hover:bg-white md:flex"
+              className="press absolute right-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink shadow-card hover:bg-white md:flex"
             >
               <IconChevronRight size={18} />
             </button>

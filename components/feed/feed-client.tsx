@@ -149,6 +149,8 @@ export function FeedClient({
 
   return (
     <>
+      {/* relative: jangkar untuk panel lokasi yang mengambang */}
+      <div className="relative">
       {/* Header filter — sticky di mobile supaya selalu terjangkau */}
       <div className="sticky top-0 z-20 -mx-4 mb-4 border-b border-line bg-appbg/95 px-4 pb-3 pt-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:pb-4 md:pt-0 md:backdrop-blur-none">
         <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center">
@@ -232,16 +234,29 @@ export function FeedClient({
         <FilterPills kategori={kategori} aktif={kategoriId} onPilih={setKategoriId} />
       </div>
 
-      {/* Panel pemilih lokasi */}
+      {/* Panel pemilih lokasi.
+          PENTING: panel ini MENGAMBANG di atas konten, tidak mendorongnya.
+          Sebelumnya panel ikut mengalir di dalam tata letak, sehingga membuka
+          pemilih lokasi menggeser seluruh katalog turun ~384px dan membuat
+          layar terasa "bergerak" (CLS 0,18 — di atas ambang buruk Google).
+          Dengan posisi absolut, katalog tidak bergerak sama sekali. */}
       {panelBuka && (
-        <div className="animate-slide-down mb-4">
-          <LocationPicker
-            wilayah={wilayah}
-            nilai={lokasi}
-            onPilih={terapkanLokasi}
-            onTutup={() => setPanelBuka(false)}
+        <>
+          {/* Penutup transparan: klik di luar panel menutupnya. */}
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setPanelBuka(false)}
+            aria-hidden
           />
-        </div>
+          <div className="absolute left-4 right-4 top-[68px] z-40 animate-slide-down md:left-0 md:right-auto md:w-[380px]">
+            <LocationPicker
+              wilayah={wilayah}
+              nilai={lokasi}
+              onPilih={terapkanLokasi}
+              onTutup={() => setPanelBuka(false)}
+            />
+          </div>
+        </>
       )}
 
       {/* Chip lokasi aktif + pintasan pilihan terakhir */}
@@ -353,6 +368,7 @@ export function FeedClient({
           </div>
         </Reveal>
       )}
+      </div>
     </>
   );
 }
