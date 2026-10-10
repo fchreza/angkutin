@@ -25,7 +25,13 @@ export const maxDuration = 60;
  */
 const MAKS_FOTO = 3;
 const MAKS_BYTE = 500 * 1024; // 500 KB — batas setelah kompresi klien
-const MAKS_BYTE_MENTAH = 8 * 1024 * 1024; // 8 MB — batas file mentah dari klien
+/**
+ * Batas berkas mentah. Vercel menolak body request di atas 4,5 MB SEBELUM
+ * kode ini dijalankan (respons 413 tanpa pesan), jadi batas di sini dibuat
+ * sedikit di bawahnya. Kalau nilainya lebih besar, pengguna hanya melihat
+ * "413 Payload Too Large" tanpa penjelasan — bukan pesan Bahasa Indonesia.
+ */
+const MAKS_BYTE_MENTAH = 4 * 1024 * 1024; // 4 MB
 const TIPE_DIIZINKAN = new Set([
   "image/webp",
   "image/jpeg",
@@ -84,7 +90,8 @@ export async function POST(
       if (f.size > MAKS_BYTE_MENTAH) {
         const mb = (f.size / 1024 / 1024).toFixed(1);
         return gagal(
-          `Foto ${i + 1} berukuran ${mb} MB — maksimal 8 MB.`,
+          `Foto ${i + 1} berukuran ${mb} MB — maksimal 4 MB. ` +
+            `Kompresi otomatis di perangkat gagal; coba pilih ulang fotonya.`,
           400,
         );
       }
