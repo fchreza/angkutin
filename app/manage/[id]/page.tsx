@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { db } from "@/db";
 import { categories, clusters, listings, listingImages } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
@@ -136,7 +137,14 @@ export default async function KelolaPage({
     },
   };
 
-  const manageUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/manage/${id}?token=${token}`;
+  // Tautan kelola dibangun dari origin request yang sebenarnya, bukan dari
+  // env. Kalau memakai env dan nilainya belum diisi, tautan yang ditampilkan
+  // ke penjual akan berbunyi "localhost" — tautan itu tidak bisa dibuka dari
+  // HP. Origin request selalu benar di domain mana pun (produksi/pratinjau).
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const manageUrl = `${proto}://${host}/manage/${id}?token=${token}`;
 
   return (
     <>
@@ -147,7 +155,7 @@ export default async function KelolaPage({
         <KelolaClient
           data={data}
           token={token}
-          manageUrl={manageUrl.replace(/^\/manage/, "/manage")}
+          manageUrl={manageUrl}
           fotoGagal={sp.foto === "gagal"}
         />
       </main>
