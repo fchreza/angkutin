@@ -5,6 +5,7 @@ import { Button } from "@/components/shared/button";
 import { IconWhatsApp, IconClock } from "@/components/shared/icons";
 import { formatTanggalID } from "@/lib/format";
 import { getUrgency } from "@/lib/urgency";
+import { useToast } from "@/components/shared/toast";
 import { cn } from "@/lib/cn";
 
 /**
@@ -27,15 +28,14 @@ export function DetailActions({
   /** Versi ringkas untuk bar melekat di mobile: tanpa callout & catatan privasi. */
   ringkas?: boolean;
 }) {
+  const { tampilkan } = useToast();
   const [memuat, setMemuat] = useState(false);
-  const [galat, setGalat] = useState<string | null>(null);
   const urgency = getUrgency(deadline);
   const mendesak = urgency === "urgent" || urgency === "today";
   const sudahDiambil = status === "TAKEN";
 
   const bukaWA = async () => {
     setMemuat(true);
-    setGalat(null);
     try {
       const r = await fetch(`/api/v1/listings/${listingId}/wa-click`, {
         method: "POST",
@@ -44,7 +44,7 @@ export function DetailActions({
       const j = (await r.json()) as { url: string };
       window.open(j.url, "_blank", "noopener,noreferrer");
     } catch {
-      setGalat("Gagal membuka WhatsApp. Coba lagi ya.");
+      tampilkan("Gagal membuka WhatsApp. Coba lagi ya.", { jenis: "galat" });
     } finally {
       setMemuat(false);
     }
@@ -92,10 +92,6 @@ export function DetailActions({
         {!memuat && <IconWhatsApp size={19} />}
         {sudahDiambil ? "Sudah Diambil" : "Ambil Barang via WhatsApp"}
       </Button>
-
-      {galat && (
-        <p className="text-center text-[12.5px] text-danger">{galat}</p>
-      )}
 
       {!ringkas && (
         <p className="text-center text-[11.5px] leading-relaxed text-ink-secondary">

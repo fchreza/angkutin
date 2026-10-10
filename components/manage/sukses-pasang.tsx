@@ -7,6 +7,7 @@ import { Badge } from "@/components/shared/badge";
 import { IconCheck, IconAlert, IconEye, IconCopy } from "@/components/shared/icons";
 import { formatRupiah, formatTanggalID } from "@/lib/format";
 import { LABEL_KONDISI } from "@/lib/urgency";
+import { useToast } from "@/components/shared/toast";
 import { cn } from "@/lib/cn";
 
 export type RingkasanListing = {
@@ -48,6 +49,7 @@ export function SuksesPasang({
   onCobaUlang: () => void;
   sedangUlang: boolean;
 }) {
+  const { tampilkan } = useToast();
   const [tersalin, setTersalin] = useState(false);
 
   const salin = async () => {
@@ -63,6 +65,7 @@ export function SuksesPasang({
       ta.remove();
     }
     setTersalin(true);
+    tampilkan("Tautan pengelolaan disalin.");
     setTimeout(() => setTersalin(false), 2200);
   };
 
@@ -71,7 +74,7 @@ export function SuksesPasang({
       {/* Kepala */}
       <div
         className={cn(
-          "flex items-start gap-3 rounded-md border p-4",
+          "animate-slide-up flex items-start gap-3 rounded-md border p-4",
           fotoGagal
             ? "border-accent-bright bg-accent-soft"
             : "border-primary/25 bg-primary-soft",
@@ -122,7 +125,10 @@ export function SuksesPasang({
       )}
 
       {/* Ringkasan barang */}
-      <div className="overflow-hidden rounded-md border border-line bg-surface">
+      <div
+        className="animate-slide-up overflow-hidden rounded-md border border-line bg-surface"
+        style={{ "--d": "80ms" } as React.CSSProperties}
+      >
         <div className="border-b border-line px-4 py-3">
           <h2 className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
             Yang tayang
@@ -159,7 +165,10 @@ export function SuksesPasang({
       </div>
 
       {/* Tautan rahasia */}
-      <div className="rounded-md border border-primary/25 bg-primary-soft p-4">
+      <div
+        className="animate-slide-up rounded-md border border-primary/25 bg-primary-soft p-4"
+        style={{ "--d": "160ms" } as React.CSSProperties}
+      >
         <h2 className="text-[13.5px] font-bold text-primary-dark">Simpan tautan ini</h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
           Tautan ini satu-satunya cara kamu menandai barang sudah diambil atau
@@ -177,6 +186,7 @@ export function SuksesPasang({
           <Button
             varian={tersalin ? "outline" : "primary"}
             onClick={() => void salin()}
+            sukses={tersalin}
             className="shrink-0"
           >
             {tersalin ? <IconCheck size={15} /> : <IconCopy size={15} />}

@@ -52,7 +52,7 @@ export function TopNav() {
           <Link
             href="/"
             className={cn(
-              "rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors",
+              "press rounded-md px-3 py-2 text-[13.5px] font-medium",
               path === "/" ? "bg-primary-soft text-primary-dark" : "text-ink-secondary hover:bg-appbg",
             )}
           >
@@ -61,7 +61,7 @@ export function TopNav() {
           <Link
             href="/pasang"
             className={cn(
-              "rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors",
+              "press rounded-md px-3 py-2 text-[13.5px] font-medium",
               path === "/pasang" ? "bg-primary-soft text-primary-dark" : "text-ink-secondary hover:bg-appbg",
             )}
           >
@@ -90,7 +90,8 @@ export function MobileTabBar() {
   const path = usePathname();
   const item = (aktif: boolean) =>
     cn(
-      "flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors",
+      "press flex flex-1 flex-col items-center justify-center gap-1 py-2",
+      "text-[11px] font-medium",
       aktif ? "text-primary" : "text-ink-secondary",
     );
 
@@ -100,16 +101,30 @@ export function MobileTabBar() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex h-[60px] items-stretch">
-        <Link href="/" className={item(path === "/")}>
-          <IconHome size={20} />
+        <Link href="/" className={item(path === "/")} aria-current={path === "/" ? "page" : undefined}>
+          <span className={cn("transition-transform duration-200", path === "/" && "scale-110")}>
+            <IconHome size={20} />
+          </span>
           Katalog
         </Link>
-        <Link href="/pasang" className={item(path === "/pasang")}>
-          <IconPlus size={20} />
+        <Link
+          href="/pasang"
+          className={item(path === "/pasang")}
+          aria-current={path === "/pasang" ? "page" : undefined}
+        >
+          <span className={cn("transition-transform duration-200", path === "/pasang" && "scale-110")}>
+            <IconPlus size={20} />
+          </span>
           Pasang
         </Link>
-        <Link href="/tentang" className={item(path === "/tentang")}>
-          <IconUser size={20} />
+        <Link
+          href="/tentang"
+          className={item(path === "/tentang")}
+          aria-current={path === "/tentang" ? "page" : undefined}
+        >
+          <span className={cn("transition-transform duration-200", path === "/tentang" && "scale-110")}>
+            <IconUser size={20} />
+          </span>
           Tentang
         </Link>
       </div>
@@ -126,8 +141,8 @@ export function FabPasang() {
     <Link
       href="/pasang"
       className={cn(
-        "fixed z-30 inline-flex items-center gap-2 rounded-pill bg-primary px-4 py-3.5",
-        "font-semibold text-white shadow-fab transition-colors hover:bg-primary-dark",
+        "press fixed z-30 inline-flex items-center gap-2 rounded-pill bg-primary px-4 py-3.5",
+        "font-semibold text-white shadow-fab hover:bg-primary-dark",
         "bottom-[76px] right-4 md:bottom-8 md:right-8",
       )}
     >

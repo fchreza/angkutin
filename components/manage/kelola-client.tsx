@@ -49,19 +49,11 @@ export function KelolaClient({
   fotoGagal: boolean;
 }) {
   const [status, setStatus] = useState(data.status);
-  const [banner, setBanner] = useState<string | null>(null);
 
-  const ubahStatus = (s: string) => {
-    setStatus(s);
-    setBanner(
-      s === "TAKEN"
-        ? "Barang ditandai sudah diambil"
-        : s === "AVAILABLE"
-          ? "Barang ditandai tersedia lagi"
-          : "Postingan dihapus",
-    );
-    setTimeout(() => setBanner(null), 3200);
-  };
+  // Catatan: notifikasi perubahan status TIDAK dibuat di sini.
+  // StatusControls yang memunculkannya lewat toast bersama. Sebelumnya
+  // keduanya jalan sendiri-sendiri, jadi satu aksi memunculkan dua pesan.
+  const ubahStatus = (s: string) => setStatus(s);
 
   const dihapus = status === "DELETED";
   const sudahDiambil = status === "TAKEN";
@@ -88,7 +80,7 @@ export function KelolaClient({
   return (
     <div className="mx-auto max-w-[760px] space-y-5">
       {/* Banner sukses */}
-      <div className="flex items-start gap-3 rounded-md border border-primary/25 bg-primary-soft p-4">
+      <div className="animate-slide-up flex items-start gap-3 rounded-md border border-primary/25 bg-primary-soft p-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white">
           <IconCheck size={18} />
         </div>
@@ -122,11 +114,13 @@ export function KelolaClient({
           label="Dilihat"
           nilai={data.stat.view}
           ikon={<IconEye size={15} />}
+          urutan={0}
         />
         <StatTile
           label="Klik WhatsApp"
           nilai={data.stat.wa_click}
           ikon={<IconChat size={15} />}
+          urutan={1}
         />
         <StatTile
           label="CTR"
@@ -134,11 +128,12 @@ export function KelolaClient({
           ikon={null}
           catatan="target 35%"
           menyorot={data.stat.ctr >= 35}
+          urutan={2}
         />
       </div>
 
       {/* Kartu listing */}
-      <div className="overflow-hidden rounded-md border border-line bg-surface">
+      <div className="animate-slide-up overflow-hidden rounded-md border border-line bg-surface">
         <div className="border-b border-line px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
@@ -196,16 +191,6 @@ export function KelolaClient({
         </div>
       </div>
 
-      {/* Toast perubahan status */}
-      {banner && (
-        <div className="animate-fade-up fixed bottom-[80px] left-1/2 z-40 -translate-x-1/2 md:bottom-8">
-          <div className="flex items-center gap-2 rounded-pill bg-ink px-4 py-2.5 text-[13px] font-medium text-white shadow-modal">
-            <IconCheck size={15} />
-            {banner}
-          </div>
-        </div>
-      )}
-
       <div className="pt-2 text-center">
         <Link href="/" className="text-[13px] font-medium text-primary hover:underline">
           ← Kembali ke katalog
@@ -221,15 +206,21 @@ function StatTile({
   ikon,
   catatan,
   menyorot = false,
+  urutan = 0,
 }: {
   label: string;
   nilai: number | string;
   ikon: React.ReactNode;
   catatan?: string;
   menyorot?: boolean;
+  /** Posisi untuk animasi masuk berurutan. */
+  urutan?: number;
 }) {
   return (
-    <div className="rounded-md border border-line bg-surface p-3.5">
+    <div
+      className="animate-list-in rounded-md border border-line bg-surface p-3.5"
+      style={{ "--d": `${urutan * 60}ms` } as React.CSSProperties}
+    >
       <div className="flex items-center gap-1.5 text-[11.5px] font-medium text-ink-secondary">
         {ikon}
         {label}
