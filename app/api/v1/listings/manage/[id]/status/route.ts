@@ -57,36 +57,42 @@ export async function PATCH(
         updatedAt: listings.updatedAt,
       });
 
-    // Kalau dihapus: bersihkan foto dari Object Storage juga.
-    // Kalau gagal, listing TETAP terhapus dari database — foto yatim
-    // lebih baik daripada listing yang tidak bisa dihapus.
-    if (parsed.data.status === "DELETED" && s3Siap) {
-      try {
-        const foto = await db
-          .select({ imageUrl: listingImages.imageUrl })
-          .from(listingImages)
-          .where(eq(listingImages.listingId, id));
+    // Kalau dihapus: bersihkan foto dari Object Storage DAN barisnya di DB.
+    // Urutan: ambil daftar dulu -> hapus objek S3 -> hapus baris DB.
+    // Kalau S3 gagal, baris DB tetap dihapus supaya listing benar-benar bersih;
+    // objek yatim di storage lebih baik daripada baris yang menunjuk file hilang.
+    if (parsed.data.status === "DELETED") {
+      const foto = await db
+        .select({ imageUrl: listingImages.imageUrl })
+        .from(listingImages)
+        .where(eq(listingImages.listingId, id));
 
-        const keys = foto
-          .map((f) => {
-            const m = f.imageUrl.split(`/${BUCKET}/`);
-            return m.length === 2 ? m[1] : null;
-          })
-          .filter((k): k is string => Boolean(k));
+      if (s3Siap && foto.length > 0) {
+        try {
+          const keys = foto
+            .map((f) => {
+              const m = f.imageUrl.split(`/${BUCKET}/`);
+              return m.length === 2 ? m[1] : null;
+            })
+            .filter((k): k is string => Boolean(k));
 
-        if (keys.length === 1) {
-          await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: keys[0] }));
-        } else if (keys.length > 1) {
-          await s3.send(
-            new DeleteObjectsCommand({
-              Bucket: BUCKET,
-              Delete: { Objects: keys.map((Key) => ({ Key })) },
-            }),
-          );
+          if (keys.length === 1) {
+            await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: keys[0] }));
+          } else if (keys.length > 1) {
+            await s3.send(
+              new DeleteObjectsCommand({
+                Bucket: BUCKET,
+                Delete: { Objects: keys.map((Key) => ({ Key })) },
+              }),
+            );
+          }
+        } catch (err) {
+          console.error("[status] gagal hapus foto di storage:", err);
         }
-      } catch (err) {
-        console.error("[status] gagal hapus foto:", err);
       }
+
+      // Selalu hapus barisnya, apa pun hasil S3.
+      await db.delete(listingImages).where(eq(listingImages.listingId, id));
     }
 
     return ok({

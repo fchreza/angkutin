@@ -1,4 +1,4 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { db } from "@/db";
 import { listings, listingImages } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -67,14 +67,12 @@ export async function POST(
       return gagal("Penyimpanan foto belum dikonfigurasi.", 503);
     }
 
-    // Foto lama dihapus dari DB dulu supaya urutannya bersih
-    await db.delete(listingImages).where(eq(listingImages.listingId, id));
-
-    const hasil: { image_url: string; display_order: number }[] = [];
-
+    // Validasi SEMUA berkas dulu, sebelum menyentuh apa pun.
+    // Kalau validasi dilakukan sambil mengunggah, foto ke-3 yang ditolak akan
+    // membuat foto ke-1 dan ke-2 sudah terunggah sementara baris DB sudah
+    // terhapus — hasilnya foto yatim di storage.
     for (let i = 0; i < berkas.length; i++) {
       const f = berkas[i];
-
       if (!TIPE_DIIZINKAN.has(f.type)) {
         return gagal(`Foto ${i + 1}: format harus WebP atau JPEG.`, 400);
       }
@@ -85,7 +83,20 @@ export async function POST(
           400,
         );
       }
+    }
 
+    // Foto lama: ambil daftarnya untuk dibersihkan dari storage.
+    const lama = await db
+      .select({ imageUrl: listingImages.imageUrl })
+      .from(listingImages)
+      .where(eq(listingImages.listingId, id));
+
+    // Unggah SEMUA foto baru dulu. Baru setelah semuanya berhasil,
+    // tukar baris DB-nya.
+    const hasil: { image_url: string; display_order: number }[] = [];
+
+    for (let i = 0; i < berkas.length; i++) {
+      const f = berkas[i];
       const key = keyFoto(id, i);
       const buf = Buffer.from(await f.arrayBuffer());
 
@@ -102,6 +113,8 @@ export async function POST(
       hasil.push({ image_url: urlPublik(key), display_order: i });
     }
 
+    // Tukar baris: hapus lama, isi baru.
+    await db.delete(listingImages).where(eq(listingImages.listingId, id));
     await db.insert(listingImages).values(
       hasil.map((h) => ({
         listingId: id,
@@ -109,6 +122,31 @@ export async function POST(
         displayOrder: h.display_order,
       })),
     );
+
+    // Bersihkan foto lama yang sudah tidak dipakai dari storage.
+    // Contoh: sebelumnya 3 foto, sekarang 2 -> foto ke-3 jadi yatim.
+    // Dibuang setelah baris DB aman, dan kegagalannya tidak fatal.
+    const dipakai = new Set(hasil.map((h) => h.image_url));
+    const sisa = lama
+      .map((f) => {
+        if (dipakai.has(f.imageUrl)) return null;
+        const m = f.imageUrl.split(`/${BUCKET}/`);
+        return m.length === 2 ? m[1] : null;
+      })
+      .filter((k): k is string => Boolean(k));
+
+    if (sisa.length > 0) {
+      try {
+        await s3.send(
+          new DeleteObjectsCommand({
+            Bucket: BUCKET,
+            Delete: { Objects: sisa.map((Key) => ({ Key })) },
+          }),
+        );
+      } catch (err) {
+        console.error("[images] gagal hapus foto lama di storage:", err);
+      }
+    }
 
     return ok({ id, images: hasil }, 201);
   } catch (e) {
