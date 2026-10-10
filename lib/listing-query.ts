@@ -35,6 +35,10 @@ export type KartuListing = {
 
 export type FilterFeed = {
   cluster_id?: string;
+  /** Filter wilayah: kabupaten/kota (kode BPS). Semua kluster di wilayah ini ikut. */
+  regency_code?: string;
+  /** Filter wilayah: provinsi (kode BPS). Dipakai kalau kabupaten belum dipilih. */
+  province_code?: string;
   category_id?: string;
   is_free?: boolean;
   q?: string;
@@ -56,6 +60,13 @@ export async function ambilFeed(f: FilterFeed): Promise<{
   ];
 
   if (f.cluster_id) syarat.push(eq(listings.clusterId, f.cluster_id));
+  // Filter wilayah: semua kluster di kabupaten/provinsi itu ikut tampil.
+  // Kabupaten lebih spesifik, jadi kalau keduanya ada, kabupaten yang menang.
+  if (f.regency_code) {
+    syarat.push(eq(clusters.regencyCode, f.regency_code));
+  } else if (f.province_code) {
+    syarat.push(eq(clusters.provinceCode, f.province_code));
+  }
   if (f.category_id) {
     // "gratis" adalah kategori semu -> filter lewat is_free
     if (f.category_id === "gratis") syarat.push(eq(listings.isFree, true));
@@ -111,9 +122,13 @@ export async function ambilFeed(f: FilterFeed): Promise<{
     .limit(limit)
     .offset(offset);
 
+  // Hitung total harus memakai JOIN yang sama seperti query data — filter
+  // wilayah menyebut tabel `clusters`, jadi tanpa leftJoin di sini Postgres
+  // membalas "missing FROM-clause entry for table clusters".
   const [{ jumlah }] = await db
     .select({ jumlah: sql<number>`count(*)::int` })
     .from(listings)
+    .leftJoin(clusters, eq(listings.clusterId, clusters.id))
     .where(and(...syarat));
 
   return {

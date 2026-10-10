@@ -29,6 +29,8 @@ export async function GET(req: Request) {
 
     const filter: FilterFeed = {
       cluster_id: q.get("cluster_id") ?? undefined,
+      regency_code: q.get("regency_code") ?? undefined,
+      province_code: q.get("province_code") ?? undefined,
       category_id: q.get("category_id") ?? undefined,
       is_free: q.get("is_free") === "true" ? true : undefined,
       q: q.get("q") ?? undefined,

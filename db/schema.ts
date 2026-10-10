@@ -28,6 +28,15 @@ export const clusters = pgTable("clusters", {
   name: varchar("name", { length: 100 }).notNull(),
   city: varchar("city", { length: 100 }).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
+  // Wilayah administratif — dipakai filter provinsi & kabupaten/kota.
+  // Kode memakai standar BPS supaya cocok dengan lib/data/wilayah.json.
+  provinceCode: varchar("province_code", { length: 2 }),
+  provinceName: varchar("province_name", { length: 100 }),
+  regencyCode: varchar("regency_code", { length: 5 }),
+  regencyName: varchar("regency_name", { length: 100 }),
+  // Koordinat pusat kluster — dipakai "Gunakan Lokasi Saya" (hitung jarak).
+  latitude: numeric("latitude", { precision: 9, scale: 6 }),
+  longitude: numeric("longitude", { precision: 9, scale: 6 }),
 });
 
 export const categories = pgTable("categories", {

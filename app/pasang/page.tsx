@@ -1,7 +1,8 @@
 import { db } from "@/db";
-import { categories, clusters } from "@/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { categories } from "@/db/schema";
+import { asc } from "drizzle-orm";
 import { FormPasang } from "@/components/form/form-pasang";
+import { ambilKlusterDenganJumlah } from "@/lib/kluster";
 import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,7 @@ export const metadata = {
 /** Layar 3: Form Pasang Listing. */
 export default async function PasangPage() {
   const [kluster, kategori] = await Promise.all([
-    db
-      .select({ id: clusters.id, name: clusters.name, city: clusters.city })
-      .from(clusters)
-      .where(eq(clusters.isActive, true))
-      .orderBy(asc(clusters.name)),
+    ambilKlusterDenganJumlah(),
     db
       .select({ id: categories.id, name: categories.name, slug: categories.slug })
       .from(categories)

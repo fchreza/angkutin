@@ -10,7 +10,7 @@ import { IconAlert } from "@/components/shared/icons";
 import { SuksesPasang, type RingkasanListing } from "@/components/manage/sukses-pasang";
 import { cn } from "@/lib/cn";
 import { keYMD } from "@/lib/format";
-import type { Kluster } from "@/components/feed/cluster-selector";
+import type { KlusterRingkas } from "@/components/feed/location-picker";
 import type { Kategori } from "@/components/feed/filter-pills";
 
 const MAKS_HARI = 14;
@@ -30,7 +30,7 @@ export function FormPasang({
   kluster,
   kategori,
 }: {
-  kluster: Kluster[];
+  kluster: KlusterRingkas[];
   kategori: Kategori[];
 }) {
   const [foto, setFoto] = useState<FotoSiap[]>([]);
