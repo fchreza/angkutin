@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/shared/button";
-import { IconCopy, IconCheck, IconWhatsApp, IconTrash } from "@/components/shared/icons";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { useToast } from "@/components/shared/toast";
+import {
+  IconCopy,
+  IconCheck,
+  IconWhatsApp,
+  IconTrash,
+} from "@/components/shared/icons";
 import { cn } from "@/lib/cn";
 
 /** Kotak tautan rahasia + tombol salin & kirim ke WA sendiri (Layar 4). */
@@ -13,13 +20,12 @@ export function SecretLinkBox({
   manageUrl: string;
   sellerWhatsapp: string;
 }) {
+  const { tampilkan } = useToast();
   const [tersalin, setTersalin] = useState(false);
 
   const salin = async () => {
     try {
       await navigator.clipboard.writeText(manageUrl);
-      setTersalin(true);
-      setTimeout(() => setTersalin(false), 2200);
     } catch {
       // Fallback untuk browser tanpa clipboard API (mis. HTTP non-secure)
       const ta = document.createElement("textarea");
@@ -28,9 +34,10 @@ export function SecretLinkBox({
       ta.select();
       document.execCommand("copy");
       ta.remove();
-      setTersalin(true);
-      setTimeout(() => setTersalin(false), 2200);
     }
+    setTersalin(true);
+    tampilkan("Tautan pengelolaan disalin.");
+    setTimeout(() => setTersalin(false), 2200);
   };
 
   const kirimWA = () => {
@@ -67,6 +74,7 @@ export function SecretLinkBox({
           type="button"
           varian={tersalin ? "outline" : "primary"}
           onClick={() => void salin()}
+          sukses={tersalin}
           className="shrink-0"
         >
           {tersalin ? <IconCheck size={15} /> : <IconCopy size={15} />}
@@ -78,7 +86,7 @@ export function SecretLinkBox({
         type="button"
         onClick={kirimWA}
         className={cn(
-          "mt-2.5 inline-flex items-center gap-2 rounded-md px-3 py-2",
+          "press mt-2.5 inline-flex items-center gap-2 rounded-md px-3 py-2",
           "text-[13px] font-semibold text-primary-dark hover:bg-primary/10",
         )}
       >
@@ -89,7 +97,7 @@ export function SecretLinkBox({
   );
 }
 
-/** Panel kontrol status + modal konfirmasi hapus. */
+/** Panel kontrol status + konfirmasi hapus. */
 export function StatusControls({
   listingId,
   token,
@@ -101,13 +109,12 @@ export function StatusControls({
   status: string;
   onBerubah: (s: string) => void;
 }) {
+  const { tampilkan } = useToast();
   const [memuat, setMemuat] = useState<string | null>(null);
   const [konfirmasiHapus, setKonfirmasiHapus] = useState(false);
-  const [galat, setGalat] = useState<string | null>(null);
 
   const ubah = async (baru: string) => {
     setMemuat(baru);
-    setGalat(null);
     try {
       const r = await fetch(`/api/v1/listings/manage/${listingId}/status`, {
         method: "PATCH",
@@ -117,8 +124,17 @@ export function StatusControls({
       if (!r.ok) throw new Error();
       onBerubah(baru);
       setKonfirmasiHapus(false);
+
+      // Beri tahu hasilnya — sebelumnya halaman berubah tanpa penjelasan.
+      if (baru === "DELETED") {
+        tampilkan("Postingan dihapus dari katalog.");
+      } else if (baru === "TAKEN") {
+        tampilkan("Ditandai sudah diambil.");
+      } else if (baru === "AVAILABLE") {
+        tampilkan("Ditandai tersedia lagi.");
+      }
     } catch {
-      setGalat("Gagal memperbarui status. Coba lagi.");
+      tampilkan("Gagal memperbarui status. Coba lagi.", { jenis: "galat" });
     } finally {
       setMemuat(null);
     }
@@ -138,66 +154,22 @@ export function StatusControls({
           {sudahDiambil ? "Tandai Tersedia Lagi" : "Tandai Sudah Diambil"}
         </Button>
 
-        <Button
-          varian="danger"
-          penuh
-          onClick={() => setKonfirmasiHapus(true)}
-        >
+        <Button varian="danger" penuh onClick={() => setKonfirmasiHapus(true)}>
           <IconTrash size={15} />
           Hapus Postingan
         </Button>
       </div>
 
-      {galat && <p className="text-[12.5px] text-danger">{galat}</p>}
-
-      {/* Modal konfirmasi — aksi destruktif WAJIB dikonfirmasi */}
-      {konfirmasiHapus && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="judul-hapus"
-        >
-          <div className="animate-pop w-full max-w-[400px] rounded-md bg-surface p-5 shadow-modal">
-            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-danger-soft">
-              <IconTrash size={20} className="text-danger" />
-            </div>
-            <h3 id="judul-hapus" className="font-display text-[17px] font-bold text-ink">
-              Hapus postingan ini?
-            </h3>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">
-              Postingan akan hilang dari katalog dan fotonya dihapus. Tindakan
-              ini tidak bisa dibatalkan.
-            </p>
-
-            <div className="mt-5 flex gap-2">
-              <Button
-                varian="outline"
-                penuh
-                onClick={() => setKonfirmasiHapus(false)}
-                disabled={memuat === "DELETED"}
-              >
-                Batal
-              </Button>
-              <button
-                type="button"
-                onClick={() => void ubah("DELETED")}
-                disabled={memuat === "DELETED"}
-                className={cn(
-                  "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md",
-                  "bg-danger font-semibold text-white transition-colors hover:brightness-95",
-                  "disabled:cursor-not-allowed disabled:opacity-60",
-                )}
-              >
-                {memuat === "DELETED" && (
-                  <span className="spin inline-block h-[14px] w-[14px] rounded-full border-2 border-white border-r-transparent" />
-                )}
-                Ya, Hapus
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Aksi merusak WAJIB dikonfirmasi — lihat ConfirmDialog. */}
+      <ConfirmDialog
+        buka={konfirmasiHapus}
+        judul="Hapus postingan ini?"
+        keterangan="Postingan akan hilang dari katalog dan fotonya dihapus. Tindakan ini tidak bisa dibatalkan."
+        labelKonfirmasi="Ya, Hapus"
+        sedangProses={memuat === "DELETED"}
+        onKonfirmasi={() => void ubah("DELETED")}
+        onBatal={() => setKonfirmasiHapus(false)}
+      />
     </div>
   );
 }

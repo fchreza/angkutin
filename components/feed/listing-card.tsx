@@ -25,8 +25,8 @@ export function ListingCard({ item }: { item: KartuListing }) {
     <Link
       href={`/listing/${item.id}`}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-md border border-line bg-surface",
-        "shadow-card transition-shadow hover:shadow-[0_6px_20px_rgba(17,24,39,0.10)]",
+        "press-card group relative flex flex-col overflow-hidden rounded-md border border-line bg-surface",
+        "shadow-card hover:border-primary/30 hover:shadow-[0_6px_20px_rgba(17,24,39,0.10)]",
       )}
     >
       {/* Foto */}

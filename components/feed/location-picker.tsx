@@ -12,6 +12,7 @@ import {
 } from "@/components/shared/icons";
 import { PROVINSI, kabupatenDari } from "@/lib/wilayah";
 import { deteksiLokasi } from "@/lib/geo";
+import { Spinner } from "@/components/shared/spinner";
 
 /** Wilayah yang punya barang, dari GET /api/v1/wilayah. */
 export type WilayahAdaBarang = {
@@ -228,7 +229,7 @@ export function LocationPicker({
         >
           {gps.status === "memuat" ? (
             <>
-              <span className="spin inline-block h-[15px] w-[15px] rounded-full border-2 border-white border-r-transparent" />
+              <Spinner ukuran={15} />
               Mencari lokasimu…
             </>
           ) : (

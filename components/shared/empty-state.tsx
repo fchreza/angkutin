@@ -17,7 +17,7 @@ export function EmptyState({
   ikon?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+    <div className="animate-slide-up flex flex-col items-center justify-center px-6 py-14 text-center">
       <div className="mb-4 text-ink-secondary/60">
         {ikon ?? <IconInbox size={44} />}
       </div>

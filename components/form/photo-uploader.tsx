@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { IconCamera, IconX } from "@/components/shared/icons";
+import { Spinner } from "@/components/shared/spinner";
 import { cn } from "@/lib/cn";
 
 /**
@@ -175,7 +176,7 @@ export function PhotoUploader({
             )}
           >
             {sedangKompres ? (
-              <span className="spin h-5 w-5 rounded-full border-2 border-primary border-r-transparent" />
+              <Spinner ukuran={20} className="text-primary" />
             ) : (
               <>
                 <IconCamera size={22} />

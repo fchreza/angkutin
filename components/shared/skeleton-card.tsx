@@ -1,6 +1,13 @@
 import { cn } from "@/lib/cn";
 
-/** Skeleton kartu listing — dipakai saat feed sedang memuat. */
+/**
+ * Skeleton kartu listing — dipakai saat feed sedang memuat.
+ *
+ * Bentuknya sengaja MENIRU kartu asli (rasio gambar 1:1, dua baris judul,
+ * satu baris harga) supaya tidak ada lompatan tata letak saat data masuk.
+ * Skeleton yang bentuknya beda dari kontennya justru membuat halaman terasa
+ * berkedip — lebih buruk daripada tidak ada skeleton.
+ */
 export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
@@ -26,6 +33,33 @@ export function SkeletonGrid({ jumlah = 8 }: { jumlah?: number }) {
       {Array.from({ length: jumlah }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}
+    </div>
+  );
+}
+
+/**
+ * Isi yang muncul setelah selesai memuat: cross-fade + un-blur.
+ *
+ * KENAPA: mengganti skeleton dengan konten secara mendadak membuat mata
+ * "kehilangan" posisi. Transisi halus membuat perpindahannya terbaca.
+ * Teknik dari Spectrum UI `skeleton-reveal` (transitions.dev).
+ *
+ * `kunci` dipakai supaya animasi diputar ulang setiap kali data berganti —
+ * tanpa itu, React memakai ulang elemen lama dan animasinya tidak jalan.
+ */
+export function Reveal({
+  children,
+  kunci,
+  className,
+}: {
+  children: React.ReactNode;
+  /** Nilai yang berubah saat data baru masuk (mis. jumlah item + filter). */
+  kunci?: string | number;
+  className?: string;
+}) {
+  return (
+    <div key={kunci} className={cn("animate-reveal", className)}>
+      {children}
     </div>
   );
 }

@@ -1,15 +1,27 @@
 import { cn } from "@/lib/cn";
+import { Spinner } from "./spinner";
+import { IconCheck } from "./icons";
 
 type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   varian?: "primary" | "outline" | "danger" | "ghost" | "wa";
   ukuran?: "md" | "lg" | "sm";
   memuat?: boolean;
   penuh?: boolean;
+  /** Setelah aksi berhasil: tombol berubah jadi centang sejenak. */
+  sukses?: boolean;
 };
 
 /**
  * Tombol utama. Touch target minimal 44px (syarat aksesibilitas PRD).
  * Varian `wa` khusus CTA WhatsApp: emerald penuh + ikon WhatsApp.
+ *
+ * Tiga keadaan, tidak pernah tumpang tindih:
+ *  - normal  : isi tombol
+ *  - memuat  : spinner menggantikan isi, tombol dinonaktifkan otomatis
+ *  - sukses  : centang hijau sejenak, memberi tahu aksi sudah berhasil
+ *
+ * Umpan balik tekan (`.press`) memakai transform, bukan perubahan warna saja —
+ * di layar sentuh, perubahan warna saja sering tidak terasa.
  */
 export function Button({
   children,
@@ -18,6 +30,7 @@ export function Button({
   ukuran = "md",
   memuat = false,
   penuh = false,
+  sukses = false,
   disabled,
   ...props
 }: Props) {
@@ -38,27 +51,36 @@ export function Button({
     lg: "h-12 px-5 text-[15px]",
   }[ukuran];
 
+  const terkunci = disabled || memuat || sukses;
+
   return (
     <button
       {...props}
-      disabled={disabled || memuat}
+      disabled={terkunci}
+      aria-busy={memuat || undefined}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md font-semibold",
-        "transition-colors duration-150",
+        "press inline-flex items-center justify-center gap-2 rounded-md font-semibold",
         "disabled:cursor-not-allowed disabled:opacity-50",
         tinggi,
         gaya,
+        sukses && "!bg-primary !text-white",
         penuh && "w-full",
         className,
       )}
     >
-      {memuat && (
-        <span
-          aria-hidden
-          className="spin inline-block h-[14px] w-[14px] rounded-full border-2 border-current border-r-transparent"
-        />
+      {sukses ? (
+        <>
+          <IconCheck size={16} className="animate-pop" />
+          {children}
+        </>
+      ) : memuat ? (
+        <>
+          <Spinner ukuran={14} />
+          {children}
+        </>
+      ) : (
+        children
       )}
-      {children}
     </button>
   );
 }

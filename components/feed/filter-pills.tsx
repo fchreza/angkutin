@@ -31,9 +31,9 @@ export function FilterPills({
             onClick={() => onPilih(k.id)}
             aria-pressed={terpilih}
             className={cn(
-              "shrink-0 rounded-pill border px-3.5 py-2 text-[13px] font-medium transition-colors",
+              "press shrink-0 rounded-pill border px-3.5 py-2 text-[13px] font-medium",
               terpilih
-                ? "border-primary bg-primary text-white"
+                ? "border-primary bg-primary text-white shadow-card"
                 : "border-line bg-surface text-ink-secondary hover:border-primary/40 hover:text-ink",
             )}
           >

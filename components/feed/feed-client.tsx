@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { FilterPills, type Kategori } from "@/components/feed/filter-pills";
 import { ListingCard } from "@/components/feed/listing-card";
-import { SkeletonGrid } from "@/components/shared/skeleton-card";
+import { SkeletonGrid, Reveal } from "@/components/shared/skeleton-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/shared/button";
 import {
@@ -158,7 +158,7 @@ export function FeedClient({
             onClick={() => setPanelBuka((v) => !v)}
             aria-expanded={panelBuka}
             className={cn(
-              "flex h-11 shrink-0 items-center justify-between gap-2 rounded-md border px-3 text-left transition-colors md:w-[260px]",
+              "press flex h-11 shrink-0 items-center justify-between gap-2 rounded-md border px-3 text-left md:w-[260px]",
               lokasi.jenis === "semua"
                 ? "border-line bg-surface hover:border-primary/40"
                 : "border-primary bg-primary-soft",
@@ -181,7 +181,7 @@ export function FeedClient({
             <IconChevronDown
               size={15}
               className={cn(
-                "shrink-0 text-ink-secondary transition-transform",
+                "shrink-0 text-ink-secondary transition-transform duration-200",
                 panelBuka && "rotate-180",
               )}
             />
@@ -234,7 +234,7 @@ export function FeedClient({
 
       {/* Panel pemilih lokasi */}
       {panelBuka && (
-        <div className="mb-4">
+        <div className="animate-slide-down mb-4">
           <LocationPicker
             wilayah={wilayah}
             nilai={lokasi}
@@ -246,7 +246,7 @@ export function FeedClient({
 
       {/* Chip lokasi aktif + pintasan pilihan terakhir */}
       <div className="mb-3 flex flex-wrap items-center gap-2 text-[12.5px]">
-        <span className="text-ink-secondary">
+        <span className="text-ink-secondary" aria-live="polite">
           {memuat ? "Memuat…" : `${total} barang ditemukan`}
           {lokasi.jenis !== "semua" ? ` di ${lokasi.label}` : " di semua lokasi"}
           {qDebounce && !memuat ? ` untuk "${qDebounce}"` : ""}
@@ -337,11 +337,21 @@ export function FeedClient({
           }
         />
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-          {data.map((item) => (
-            <ListingCard key={item.id} item={item} />
-          ))}
-        </div>
+        <Reveal kunci={`${lokasi.jenis}-${lokasi.kode ?? ""}-${kategoriId}-${qDebounce}-${sort}-${data.length}`}>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+            {data.map((item, i) => (
+              <div
+                key={item.id}
+                className="animate-list-in"
+                // Stagger dibatasi 8 item pertama; lebih dari itu animasinya
+                // terasa lambat dan tidak berguna karena sudah di luar layar.
+                style={{ "--d": `${Math.min(i, 8) * 35}ms` } as React.CSSProperties}
+              >
+                <ListingCard item={item} />
+              </div>
+            ))}
+          </div>
+        </Reveal>
       )}
     </>
   );

@@ -158,3 +158,178 @@ body {
 .spin {
   animation: spin 0.7s linear infinite;
 }
+
+/* ------------------------------------------------------------------
+ * Lapisan gerak (motion).
+ *
+ * Prinsip yang dipegang, diambil dari Spectrum UI / COSS UI / RareUI:
+ *  1. Setiap animasi harus punya alasan — memberi umpan balik, bukan hiasan.
+ *  2. Durasi 150-250ms untuk interaksi, 300-400ms untuk kemunculan panel.
+ *  3. Pakai transform & opacity saja (GPU), jangan width/height/top/left.
+ *  4. Semua wajib mati saat prefers-reduced-motion (lihat blok di atas).
+ * ------------------------------------------------------------------ */
+
+/* Panel muncul dari atas (dropdown, popover) */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top center;
+}
+
+/* Elemen masuk dari bawah (toast, daftar) */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Keluar ke bawah (toast ditutup) */
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.animate-slide-out {
+  animation: slideOutDown 0.18s ease-in both;
+}
+
+/* Isi muncul setelah skeleton selesai (cross-fade + un-blur).
+   Teknik ini dari Spectrum UI SkeletonReveal / transitions.dev. */
+@keyframes revealIn {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.animate-reveal {
+  animation: revealIn 0.32s ease-out both;
+}
+
+/* Kilau lembut untuk elemen yang baru berubah (mis. harga setelah edit) */
+@keyframes flash {
+  0% {
+    background-color: var(--color-primary-soft);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-flash {
+  animation: flash 1.1s ease-out both;
+}
+
+/* Tombol ditekan: umpan balik sentuh. Dipakai lewat .press */
+.press {
+  transition:
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Kartu yang bisa ditekan: sedikit terangkat saat disentuh */
+.press-card {
+  transition:
+    transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.press-card:hover {
+  transform: translateY(-2px);
+}
+
+.press-card:active {
+  transform: translateY(0) scale(0.995);
+}
+
+/* Indikator geser untuk segmented control.
+   COSS UI memakai primitif untuk ini; kita cukup satu elemen absolute. */
+.segmen-indikator {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Baris daftar yang masuk berurutan (stagger).
+   Delay diatur lewat style inline --d. */
+@keyframes listIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-list-in {
+  animation: listIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Cincin denyut untuk status "sedang berjalan" */
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgb(5 150 105 / 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgb(5 150 105 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(5 150 105 / 0);
+  }
+}
+
+.pulse-ring {
+  animation: pulseRing 1.6s ease-out infinite;
+}
+
+@keyframes pulseDot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+

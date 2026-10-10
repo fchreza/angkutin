@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
+import { ToastProvider } from "@/components/shared/toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -74,8 +75,12 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${inter.variable} ${jakarta.variable}`}>
       <body className="font-sans">
-        {children}
-        <ServiceWorkerRegister />
+        {/* ToastProvider di akar supaya halaman mana pun bisa memunculkan
+            notifikasi lewat useToast(). */}
+        <ToastProvider>
+          {children}
+          <ServiceWorkerRegister />
+        </ToastProvider>
       </body>
     </html>
   );
