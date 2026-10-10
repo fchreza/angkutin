@@ -68,7 +68,14 @@ async function reverseGeocode(
     `&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
 
   const res = await fetch(url, {
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      // WAJIB: paksa Bahasa Indonesia. Tanpa ini, Nominatim mengikuti bahasa
+      // perangkat pengguna dan mengembalikan "North Jakarta" /
+      // "Special Capital Region of Jakarta", yang tidak ada di direktori kita
+      // (kita memakai "Jakarta Utara" / "Daerah Khusus Ibukota Jakarta").
+      "Accept-Language": "id",
+    },
     signal: AbortSignal.timeout(12000),
   });
   if (!res.ok) throw new Error("Layanan lokasi sedang tidak bisa dihubungi.");
@@ -79,6 +86,11 @@ async function reverseGeocode(
   // Urutan prioritas. Petunjuk jenis (kota vs kabupaten) diambil dari nama
   // field: `city` -> kota, `county` -> kabupaten. Ini yang membedakan
   // "Kota Bandung" dari "Kabupaten Bandung".
+  //
+  // CATATAN: untuk DKI Jakarta, Nominatim menaruh PROVINSI di `city`
+  // ("Daerah Khusus Ibukota Jakarta") dan kotamadyanya di `city_district`
+  // ("Jakarta Utara"). Karena provinsi tidak ada di indeks kabupaten,
+  // pencarian lanjut ke field berikutnya dan menemukan kotamadya yang benar.
   const fields = [
     "city",
     "county",

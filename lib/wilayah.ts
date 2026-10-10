@@ -47,6 +47,56 @@ export type HasilCocok =
   | { status: "ragu"; kandidat: Wilayah[] }
   | { status: "tidak_ketemu" };
 
+/**
+ * Padanan nama INGGRIS -> INDONESIA.
+ *
+ * KENAPA INI PERLU — jangan dihapus tanpa alasan kuat:
+ * Nominatim mengembalikan nama sesuai header `Accept-Language` yang dikirim
+ * browser. Browser di perangkat berbahasa Inggris akan menjawab
+ * "North Jakarta" / "Special Capital Region of Jakarta", sedangkan direktori
+ * kita berisi "Jakarta Utara" / "Daerah Khusus Ibukota Jakarta" — tidak cocok.
+ *
+ * Kita sudah memaksa `Accept-Language: id` di lib/geo.ts, tapi header itu bisa
+ * diabaikan proxy/browser tertentu, jadi tabel ini jadi jaring pengaman.
+ * Hanya kasus yang benar-benar ada di data Nominatim yang dimasukkan.
+ */
+const PADANAN_INGGRIS: Record<string, string> = {
+  // provinsi
+  "special capital region of jakarta": "daerah khusus ibukota jakarta",
+  "jakarta special capital region": "daerah khusus ibukota jakarta",
+  "capital region of jakarta": "daerah khusus ibukota jakarta",
+  "special region of yogyakarta": "daerah istimewa yogyakarta",
+  "yogyakarta special region": "daerah istimewa yogyakarta",
+  "special region of yogya": "daerah istimewa yogyakarta",
+  "west java": "jawa barat",
+  "central java": "jawa tengah",
+  "east java": "jawa timur",
+  "west sumatra": "sumatera barat",
+  "north sumatra": "sumatera utara",
+  "south sumatra": "sumatera selatan",
+  "west kalimantan": "kalimantan barat",
+  "east kalimantan": "kalimantan timur",
+  "south kalimantan": "kalimantan selatan",
+  "central kalimantan": "kalimantan tengah",
+  "north kalimantan": "kalimantan utara",
+  "west sulawesi": "sulawesi barat",
+  "north sulawesi": "sulawesi utara",
+  "south sulawesi": "sulawesi selatan",
+  "central sulawesi": "sulawesi tengah",
+  "southeast sulawesi": "sulawesi tenggara",
+  "west nusa tenggara": "nusa tenggara barat",
+  "east nusa tenggara": "nusa tenggara timur",
+  "bangka belitung islands": "kepulauan bangka belitung",
+  "riau islands": "kepulauan riau",
+  // kota Jakarta (kotamadya)
+  "north jakarta": "jakarta utara",
+  "central jakarta": "jakarta pusat",
+  "west jakarta": "jakarta barat",
+  "east jakarta": "jakarta timur",
+  "south jakarta": "jakarta selatan",
+  "thousand islands": "kepulauan seribu",
+};
+
 /** Buang awalan jenis wilayah + tanda baca, supaya kunci bisa disamakan. */
 export function normalWilayah(nama: string): string {
   let s = (nama || "").toLowerCase().trim();
@@ -55,7 +105,9 @@ export function normalWilayah(nama: string): string {
   s = s.replace(/^(kota|kabupaten)\s+/, " ");
   s = s.replace(/administrasi/g, " ");
   s = s.replace(/[^a-z0-9 ]/g, " ");
-  return s.replace(/\s+/g, " ").trim();
+  s = s.replace(/\s+/g, " ").trim();
+  // terjemahkan nama Inggris -> Indonesia kalau ada padanannya
+  return PADANAN_INGGRIS[s] ?? s;
 }
 
 /** Daftar provinsi untuk pemilih. */
