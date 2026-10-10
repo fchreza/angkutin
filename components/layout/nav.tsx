@@ -10,7 +10,32 @@ import { cn } from "@/lib/cn";
  *
  * Mobile-first: tab bar di bawah dengan 3 aksi utama, karena jempol
  * lebih mudah menjangkau bawah layar.
+ *
+ * Logo memakai berkas mark (pin + titik oranye) dari public/brand, bukan
+ * huruf — supaya identitasnya sama dengan ikon aplikasi di layar utama.
+ * Nama ditulis "angkut" + "in" dengan "in" berwarna emerald, sesuai logo.
  */
+
+function Logo({ ukuran = 30 }: { ukuran?: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/brand/mark.png"
+      alt=""
+      width={ukuran}
+      height={ukuran}
+      className="shrink-0 rounded-[7px]"
+    />
+  );
+}
+
+function NamaBrand({ kelas }: { kelas: string }) {
+  return (
+    <span className={kelas}>
+      angkut<span className="text-primary">in</span>
+    </span>
+  );
+}
 
 export function TopNav() {
   const path = usePathname();
@@ -19,12 +44,8 @@ export function TopNav() {
     <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/95 backdrop-blur md:block">
       <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-[15px] font-black text-white">
-            A
-          </span>
-          <span className="font-display text-[17px] font-bold tracking-tight text-ink">
-            Angkutin
-          </span>
+          <Logo />
+          <NamaBrand kelas="font-display text-[17px] font-bold tracking-tight text-ink" />
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -57,12 +78,8 @@ export function MobileAppBar() {
     <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur md:hidden">
       <div className="flex h-14 items-center justify-center px-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-[13px] font-black text-white">
-            A
-          </span>
-          <span className="font-display text-[16px] font-bold tracking-tight text-ink">
-            Angkutin
-          </span>
+          <Logo ukuran={28} />
+          <NamaBrand kelas="font-display text-[16px] font-bold tracking-tight text-ink" />
         </Link>
       </div>
     </header>

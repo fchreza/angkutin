@@ -35,6 +35,16 @@ export default function TentangPage() {
       <MobileAppBar />
 
       <main className="mx-auto w-full max-w-[820px] px-4 pb-[110px] pt-4 md:px-6 md:pb-24 md:pt-8">
+        {/* Lockup resmi dari berkas brand */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/lockup.png"
+          alt="angkutin — Lepas barang pindahan, ambil sendiri."
+          width={1199}
+          height={1197}
+          className="mx-auto mb-6 h-auto w-[190px] md:w-[220px]"
+        />
+
         <h1 className="font-display text-[24px] font-bold tracking-tight text-ink md:text-[30px]">
           Tentang Angkutin
         </h1>

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { PhotoUploader, type FotoSiap } from "./photo-uploader";
 import { ConditionSegmented } from "./condition-segmented";
 import { PriceWithGiveaway } from "./price-with-giveaway";
 import { LivePreview } from "./live-preview";
 import { Button } from "@/components/shared/button";
 import { IconAlert } from "@/components/shared/icons";
+import { SuksesPasang, type RingkasanListing } from "@/components/manage/sukses-pasang";
 import { cn } from "@/lib/cn";
 import { keYMD } from "@/lib/format";
 import type { Kluster } from "@/components/feed/cluster-selector";
@@ -33,8 +33,6 @@ export function FormPasang({
   kluster: Kluster[];
   kategori: Kategori[];
 }) {
-  const router = useRouter();
-
   const [foto, setFoto] = useState<FotoSiap[]>([]);
   const [judul, setJudul] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
@@ -57,6 +55,17 @@ export function FormPasang({
   const [galatUmum, setGalatUmum] = useState<string | null>(null);
   const [mengirim, setMengirim] = useState(false);
 
+  // Hasil setelah listing tersimpan. Selama ini terisi, layar persetujuan
+  // yang tampil — bukan dashboard — supaya berkas foto masih ada di memori
+  // dan bisa diunggah ulang kalau gagal.
+  const [hasil, setHasil] = useState<{
+    id: string;
+    token: string;
+    fotoGagal: boolean;
+    pesanFoto?: string;
+  } | null>(null);
+  const [sedangUlang, setSedangUlang] = useState(false);
+
   const hariIni = keYMD(new Date());
   const maksTenggat = (() => {
     const d = new Date();
@@ -65,6 +74,7 @@ export function FormPasang({
   })();
 
   const klusterNama = kluster.find((k) => k.id === klusterId)?.name ?? "";
+  const angkaHargaTerakhir = Number((harga || "0").replace(/\./g, ""));
   const tenggatTampil = tenggat
     ? new Intl.DateTimeFormat("id-ID", {
         weekday: "short",
@@ -143,26 +153,76 @@ export function FormPasang({
       };
 
       // Langkah 2: unggah foto. Kegagalan di sini TIDAK membatalkan listing.
-      let gagalFoto = false;
-      try {
-        const fd = new FormData();
-        fd.append("token", secret_token);
-        foto.forEach((f) => fd.append("images", f.file));
-        const r2 = await fetch(`/api/v1/listings/${id}/images`, {
-          method: "POST",
-          body: fd,
-        });
-        if (!r2.ok) gagalFoto = true;
-      } catch {
-        gagalFoto = true;
-      }
+      const { gagal: gagalFoto, pesan: pesanFoto } = await unggahFoto(id, secret_token);
 
-      const tujuan = `/manage/${id}?token=${encodeURIComponent(secret_token)}`;
-      router.push(gagalFoto ? `${tujuan}&foto=gagal` : tujuan);
+      setHasil({ id, token: secret_token, fotoGagal: gagalFoto, pesanFoto });
+      setMengirim(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setGalatUmum("Gagal menghubungi server. Periksa koneksi lalu coba lagi.");
       setMengirim(false);
     }
+  }
+
+  /** Unggah foto ke listing yang sudah tersimpan. Dipakai juga saat coba ulang. */
+  async function unggahFoto(
+    id: string,
+    token: string,
+  ): Promise<{ gagal: boolean; pesan?: string }> {
+    try {
+      const fd = new FormData();
+      fd.append("token", token);
+      foto.forEach((f) => fd.append("images", f.file));
+
+      const r = await fetch(`/api/v1/listings/${id}/images`, {
+        method: "POST",
+        body: fd,
+      });
+
+      if (r.ok) return { gagal: false };
+
+      const j = (await r.json().catch(() => ({}))) as { error?: string };
+      return { gagal: true, pesan: j.error };
+    } catch {
+      return { gagal: true };
+    }
+  }
+
+  /** Tombol "coba unggah lagi" di layar persetujuan. */
+  async function cobaUlangFoto() {
+    if (!hasil) return;
+    setSedangUlang(true);
+    const { gagal: gagalFoto, pesan: pesanFoto } = await unggahFoto(hasil.id, hasil.token);
+    setHasil({ ...hasil, fotoGagal: gagalFoto, pesanFoto });
+    setSedangUlang(false);
+  }
+
+  // Setelah listing tersimpan, tampilkan layar persetujuan.
+  if (hasil) {
+    const klusterNamaHasil = kluster.find((k) => k.id === klusterId)?.name ?? "";
+    const ringkasan: RingkasanListing = {
+      id: hasil.id,
+      token: hasil.token,
+      title: judul.trim(),
+      price: gratis ? "0" : String(angkaHargaTerakhir),
+      isFree: gratis,
+      condition: kondisi,
+      clusterName: klusterNamaHasil,
+      pickupLandmark: patokan.trim(),
+      deadlineDate: tenggat,
+      jumlahFoto: hasil.fotoGagal ? 0 : foto.length,
+    };
+
+    return (
+      <SuksesPasang
+        data={ringkasan}
+        manageUrl={`${window.location.origin}/manage/${hasil.id}?token=${encodeURIComponent(hasil.token)}`}
+        fotoGagal={hasil.fotoGagal}
+        pesanFoto={hasil.pesanFoto}
+        onCobaUlang={() => void cobaUlangFoto()}
+        sedangUlang={sedangUlang}
+      />
+    );
   }
 
   return (

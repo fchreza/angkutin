@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
 import { BUCKET, keyFoto, s3, s3Siap, urlPublik } from "@/lib/s3";
 import { tokenCocok } from "@/lib/token";
+import { kompresDiServer } from "@/lib/compress-image";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,11 +17,15 @@ export const maxDuration = 60;
  * satu foto gagal diunggah, dan supaya body request tidak melewati batas
  * Vercel (4.5 MB).
  *
- * Foto WAJIB sudah dikompresi di klien (< 500 KB, WebP) — server tidak
- * mengompresi lagi, hanya memvalidasi ukuran & tipe.
+ * Alur ukuran:
+ *   - Klien sudah mengompresi (< 500 KB, WebP) — jalur normal, server hanya
+ *     meneruskan.
+ *   - Kalau klien gagal mengompresi atau mengunggah lewat API langsung,
+ *     server mengompresi ulang dengan sharp (jaring pengaman).
  */
 const MAKS_FOTO = 3;
-const MAKS_BYTE = 500 * 1024; // 500 KB
+const MAKS_BYTE = 500 * 1024; // 500 KB — batas setelah kompresi klien
+const MAKS_BYTE_MENTAH = 8 * 1024 * 1024; // 8 MB — batas file mentah dari klien
 const TIPE_DIIZINKAN = new Set([
   "image/webp",
   "image/jpeg",
@@ -76,10 +81,10 @@ export async function POST(
       if (!TIPE_DIIZINKAN.has(f.type)) {
         return gagal(`Foto ${i + 1}: format harus WebP atau JPEG.`, 400);
       }
-      if (f.size > MAKS_BYTE) {
-        const kb = Math.round(f.size / 1024);
+      if (f.size > MAKS_BYTE_MENTAH) {
+        const mb = (f.size / 1024 / 1024).toFixed(1);
         return gagal(
-          `Foto ${i + 1} berukuran ${kb} KB — maksimal 500 KB setelah kompresi.`,
+          `Foto ${i + 1} berukuran ${mb} MB — maksimal 8 MB.`,
           400,
         );
       }
@@ -94,18 +99,30 @@ export async function POST(
     // Unggah SEMUA foto baru dulu. Baru setelah semuanya berhasil,
     // tukar baris DB-nya.
     const hasil: { image_url: string; display_order: number }[] = [];
+    let adaKompresServer = false;
 
     for (let i = 0; i < berkas.length; i++) {
       const f = berkas[i];
       const key = keyFoto(id, i);
-      const buf = Buffer.from(await f.arrayBuffer());
+      let buf = Buffer.from(await f.arrayBuffer());
+      let tipe = f.type;
+
+      // Jalur normal: klien sudah mengompresi di bawah 500 KB.
+      // Kalau belum, server mengompresi ulang — supaya storage tidak
+      // kemasukan foto besar dan halaman tetap ringan.
+      if (buf.length > MAKS_BYTE) {
+        const k = await kompresDiServer(buf);
+        buf = Buffer.from(k.buf);
+        tipe = k.tipe;
+        adaKompresServer = true;
+      }
 
       await s3.send(
         new PutObjectCommand({
           Bucket: BUCKET,
           Key: key,
           Body: buf,
-          ContentType: f.type,
+          ContentType: tipe,
           CacheControl: "public, max-age=31536000, immutable",
         }),
       );
@@ -148,7 +165,7 @@ export async function POST(
       }
     }
 
-    return ok({ id, images: hasil }, 201);
+    return ok({ id, images: hasil, dikompres_server: adaKompresServer }, 201);
   } catch (e) {
     console.error("[images POST] gagal:", e);
     return gagal("Gagal mengunggah foto. Coba lagi.", 500);
