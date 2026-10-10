@@ -24,7 +24,13 @@ export const metadata: Metadata = {
   // manifest inilah yang memunculkan tawaran "pasang ke layar utama".
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.png",
+    // .ico untuk browser lama dan tab; PNG untuk yang mendukung.
+    // Urutan penting: .ico lebih dulu supaya tidak ditimpa.
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+      { url: "/brand/favicon-48.png", type: "image/png", sizes: "48x48" },
+    ],
     // iOS membaca apple-touch-icon, BUKAN ikon di manifest.
     apple: "/apple-touch-icon.png",
   },
