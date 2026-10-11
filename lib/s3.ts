@@ -40,10 +40,20 @@ export function urlPublik(key: string): string {
 }
 
 /**
- * Key objek untuk foto listing: `listings/{listingId}/{urutan}.webp`
- * Dipisah per listing supaya penghapusan listing bisa menghapus
- * seluruh folder-nya dengan satu prefix.
+ * Key objek untuk foto listing: `listings/{listingId}/{urutan}-{versi}.webp`
+ * Dipisah per listing supaya penghapusan listing bisa menghapus seluruh
+ * folder-nya dengan satu prefix.
+ *
+ * KENAPA ADA VERSI:
+ * Key dulu hanya `{urutan}.webp` dan objeknya dikirim dengan header
+ * `Cache-Control: immutable` selama 1 tahun. Akibatnya, saat penjual MENGGANTI
+ * foto, browser (dan CDN) terus menyajikan foto LAMA dari cache — penjual
+ * melihat fotonya "tidak berubah" padahal di server sudah baru.
+ *
+ * Dengan menyisipkan versi, setiap penggantian menghasilkan URL baru, jadi
+ * cache lama tidak pernah terpakai lagi. Objek lama dihapus oleh pemanggil.
  */
-export function keyFoto(listingId: string, urutan: number): string {
-  return `listings/${listingId}/${urutan}.webp`;
+export function keyFoto(listingId: string, urutan: number, versi?: string): string {
+  const v = versi ? `-${versi}` : "";
+  return `listings/${listingId}/${urutan}${v}.webp`;
 }

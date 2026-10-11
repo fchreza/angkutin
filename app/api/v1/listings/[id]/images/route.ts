@@ -1,4 +1,5 @@
 import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomBytes } from "node:crypto";
 import { db } from "@/db";
 import { listings, listingImages } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -64,18 +65,52 @@ export async function POST(
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }
 
-    // Kumpulkan file
+    // Kumpulkan file baru
     const berkas = form
       .getAll("images")
       .filter((v): v is File => typeof v !== "string" && v instanceof File);
 
-    if (berkas.length === 0) return gagal("Pilih minimal 1 foto.", 400);
-    if (berkas.length > MAKS_FOTO)
+    /**
+     * `keep` = daftar URL foto LAMA yang harus dipertahankan, URUT sesuai
+     * keinginan penjual. Dipakai halaman kelola untuk menghapus, menambah,
+     * atau mengubah urutan foto tanpa memilih ulang semuanya.
+     *
+     * Cara kerjanya: daftar final = keep (urutannya dihormati) + berkas baru
+     * di belakang. Semua yang tidak ada di daftar final dihapus dari storage.
+     *
+     * Kalau `keep` tidak dikirim (alur form pasang), semua foto lama dibuang —
+     * perilaku lama tetap terjaga.
+     */
+    const keep = form
+      .getAll("keep")
+      .filter((v): v is string => typeof v === "string" && v.length > 0);
+
+    if (berkas.length === 0 && keep.length === 0) {
+      return gagal("Pilih minimal 1 foto.", 400);
+    }
+    if (keep.length + berkas.length > MAKS_FOTO) {
       return gagal(`Maksimal ${MAKS_FOTO} foto per listing.`, 400);
+    }
 
     // Baru sekarang cek storage — sudah terautentikasi, jadi aman memberi tahu.
     if (!s3Siap) {
       return gagal("Penyimpanan foto belum dikonfigurasi.", 503);
+    }
+
+    // Foto lama yang benar-benar dimiliki listing ini. URL di luar daftar ini
+    // ditolak, supaya penjual tidak bisa menyisipkan URL sembarangan ke dalam
+    // listingnya (dan supaya tidak ada yang bisa menghapus objek milik orang
+    // lain dengan menebak URL-nya).
+    const lama = await db
+      .select({ imageUrl: listingImages.imageUrl })
+      .from(listingImages)
+      .where(eq(listingImages.listingId, id));
+
+    const urlSah = new Set(lama.map((f) => f.imageUrl));
+    const keepSah = keep.filter((u) => urlSah.has(u));
+
+    if (keep.length !== keepSah.length) {
+      return gagal("Ada foto yang tidak dikenal pada listing ini.", 400);
     }
 
     // Validasi SEMUA berkas dulu, sebelum menyentuh apa pun.
@@ -97,20 +132,28 @@ export async function POST(
       }
     }
 
-    // Foto lama: ambil daftarnya untuk dibersihkan dari storage.
-    const lama = await db
-      .select({ imageUrl: listingImages.imageUrl })
-      .from(listingImages)
-      .where(eq(listingImages.listingId, id));
-
     // Unggah SEMUA foto baru dulu. Baru setelah semuanya berhasil,
     // tukar baris DB-nya.
+    //
+    // VERSI BARU untuk setiap unggahan: key lama memakai pola `{urutan}.webp`
+    // dengan header `immutable`, sehingga mengganti foto membuat browser terus
+    // menampilkan foto LAMA dari cache. Dengan versi, URL-nya berubah setiap
+    // kali foto diganti.
+    const versi = randomBytes(4).toString("hex");
     const hasil: { image_url: string; display_order: number }[] = [];
+
+    // Foto lama yang dipertahankan lebih dulu (urutannya dihormati penjual),
+    // baru berkas baru di belakang.
+    keepSah.forEach((url, i) => {
+      hasil.push({ image_url: url, display_order: i });
+    });
+
     let adaKompresServer = false;
+    const offset = keepSah.length;
 
     for (let i = 0; i < berkas.length; i++) {
       const f = berkas[i];
-      const key = keyFoto(id, i);
+      const key = keyFoto(id, offset + i, versi);
       let buf = Buffer.from(await f.arrayBuffer());
       let tipe = f.type;
 
@@ -134,7 +177,7 @@ export async function POST(
         }),
       );
 
-      hasil.push({ image_url: urlPublik(key), display_order: i });
+      hasil.push({ image_url: urlPublik(key), display_order: offset + i });
     }
 
     // Tukar baris: hapus lama, isi baru.

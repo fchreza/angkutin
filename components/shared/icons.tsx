@@ -81,6 +81,13 @@ export const IconCopy = ({ className, size = 16 }: P) => (
   </svg>
 );
 
+export const IconEdit = ({ className, size = 16 }: P) => (
+  <svg {...base(size)} className={className} aria-hidden>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);
+
 export const IconCamera = ({ className, size = 22 }: P) => (
   <svg {...base(size)} className={className} aria-hidden>
     <path d="M4 8h3l2-3h6l2 3h3v11H4z" />

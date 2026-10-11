@@ -1,20 +1,26 @@
 import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
-import { asc, desc, eq } from "drizzle-orm";
-import { ok, gagal } from "@/lib/api";
+import { asc, eq } from "drizzle-orm";
+import { ok, gagal, bacaJson } from "@/lib/api";
 import { tokenCocok } from "@/lib/token";
+import { editSchema, validasiTenggat } from "@/lib/validators";
+import { validasiWilayah } from "@/lib/wilayah-server";
+import { normalizeWhatsApp } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 /**
- * GET /api/v1/listings/manage/:id?token= — data kelola listing (FR-4).
+ * GET   /api/v1/listings/manage/:id?token= — data kelola listing (FR-4).
+ * PATCH /api/v1/listings/manage/:id         — ubah isi listing (FR-4).
  *
- * Keamanan (PRD §FR-4 ENHANCED):
- * - Token dibandingkan dengan waktu tetap (constant-time).
- * - Token salah -> 404, BUKAN 403, supaya penyerang tidak bisa membedakan
- *   antara "listing tidak ada" dan "token salah" (mencegah enumerasi).
- * - Token hanya dibaca dari query param, tidak pernah dari localStorage.
+ * KEAMANAN (berlaku untuk kedua metode):
+ *  - Token dibandingkan dengan waktu tetap (constant-time).
+ *  - Token salah -> 404, BUKAN 403, supaya penyerang tidak bisa membedakan
+ *    antara "listing tidak ada" dan "token salah" (mencegah enumerasi).
+ *  - Token hanya dibaca dari query param / body, tidak pernah dari localStorage.
  */
+
 export async function GET(
   req: Request,
   ctx: { params: Promise<{ id: string }> },
@@ -92,5 +98,124 @@ export async function GET(
   } catch (e) {
     console.error("[manage GET] gagal:", e);
     return gagal("Gagal memuat data pengelolaan.", 500);
+  }
+}
+
+/**
+ * PATCH — ubah isi listing dari dashboard penjual.
+ *
+ * KENAPA INI ADA:
+ * Sebelumnya listing hanya bisa dipasang, ditandai terjual, atau dihapus.
+ * Salah ketik harga atau deskripsi berarti listing itu permanen salah, dan
+ * satu-satunya jalan keluar adalah menghapus lalu memasang ulang dari nol.
+ *
+ * Validasi memakai skema YANG SAMA dengan form pasang (lib/validators.ts),
+ * jadi aturan "saat dipasang" dan "saat diubah" tidak mungkin menyimpang.
+ * Nama wilayah diambil dari direktori server, bukan dari yang dikirim klien.
+ *
+ * Yang TIDAK bisa diubah lewat sini: `secret_token` (kunci akses), `status`
+ * (punya endpoint sendiri), dan foto (butuh multipart, punya endpoint sendiri).
+ */
+export async function PATCH(
+  req: Request,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await ctx.params;
+
+    if (!/^[0-9a-f-]{36}$/i.test(id)) {
+      return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
+    }
+
+    const body = await bacaJson(req);
+    const parsed = editSchema.safeParse(body);
+
+    if (!parsed.success) {
+      const detail: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const k = String(issue.path[0] ?? "_");
+        if (!detail[k]) detail[k] = issue.message;
+      }
+      const pesanUtama =
+        Object.values(detail)[0] ?? "Data belum lengkap atau tidak valid.";
+      return gagal(pesanUtama, 400, { detail });
+    }
+
+    const d = parsed.data;
+
+    // Otorisasi DULU, baru validasi isi. Tanpa token yang benar, pemanggil
+    // tidak boleh tahu apa pun tentang aturan server.
+    const [row] = await db
+      .select({ id: listings.id, secretToken: listings.secretToken })
+      .from(listings)
+      .where(eq(listings.id, id))
+      .limit(1);
+
+    if (!row || !tokenCocok(d.token, row.secretToken)) {
+      return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
+    }
+
+    const errTenggat = validasiTenggat(d.deadline_date);
+    if (errTenggat) {
+      return gagal(errTenggat, 400, { detail: { deadline_date: errTenggat } });
+    }
+
+    // Rantai wilayah: provinsi -> kabupaten -> kecamatan.
+    const w = validasiWilayah(d.province_code, d.regency_code, d.district_code);
+    if (!w.ok) {
+      return gagal(w.pesan, 400, { detail: w.detail });
+    }
+
+    // Kategori harus benar-benar ada (kecuali kategori semu "gratis").
+    const kategoriId = d.category_id === "gratis" ? null : d.category_id;
+    if (kategoriId) {
+      const [ada] = await db
+        .select({ id: categories.id })
+        .from(categories)
+        .where(eq(categories.id, kategoriId))
+        .limit(1);
+
+      if (!ada) {
+        return gagal("Kategori tidak dikenal.", 400, {
+          detail: { category_id: "Pilih kategori dari daftar." },
+        });
+      }
+    }
+
+    const [diubah] = await db
+      .update(listings)
+      .set({
+        title: d.title,
+        description: d.description,
+        categoryId: kategoriId,
+        condition: d.condition,
+        isFree: d.is_free,
+        price: d.is_free ? "0" : String(d.price),
+        provinceCode: w.wilayah.provinceCode,
+        provinceName: w.wilayah.provinceName,
+        regencyCode: w.wilayah.regencyCode,
+        regencyName: w.wilayah.regencyName,
+        districtCode: w.wilayah.districtCode,
+        districtName: w.wilayah.districtName,
+        pickupLandmark: d.pickup_landmark,
+        deadlineDate: d.deadline_date,
+        accessNotes: d.access_notes || null,
+        sellerName: d.seller_name,
+        sellerWhatsapp: normalizeWhatsApp(d.seller_whatsapp),
+        updatedAt: new Date(),
+      })
+      .where(eq(listings.id, id))
+      .returning({
+        id: listings.id,
+        updatedAt: listings.updatedAt,
+      });
+
+    return ok({
+      id: diubah.id,
+      updated_at: diubah.updatedAt.toISOString(),
+    });
+  } catch (e) {
+    console.error("[manage PATCH] gagal:", e);
+    return gagal("Gagal menyimpan perubahan. Coba lagi sebentar.", 500);
   }
 }

@@ -75,9 +75,13 @@ export default async function KelolaPage({
       viewCount: listings.viewCount,
       whatsappClicks: listings.whatsappClicks,
       createdAt: listings.createdAt,
+      provinceCode: listings.provinceCode,
       provinceName: listings.provinceName,
+      regencyCode: listings.regencyCode,
       regencyName: listings.regencyName,
+      districtCode: listings.districtCode,
       districtName: listings.districtName,
+      categoryId: listings.categoryId,
       categoryName: categories.name,
     })
     .from(listings)
@@ -95,14 +99,22 @@ export default async function KelolaPage({
     );
   }
 
-  const foto = await db
-    .select({
-      image_url: listingImages.imageUrl,
-      display_order: listingImages.displayOrder,
-    })
-    .from(listingImages)
-    .where(eq(listingImages.listingId, id))
-    .orderBy(asc(listingImages.displayOrder));
+  const [foto, kategori] = await Promise.all([
+    db
+      .select({
+        image_url: listingImages.imageUrl,
+        display_order: listingImages.displayOrder,
+      })
+      .from(listingImages)
+      .where(eq(listingImages.listingId, id))
+      .orderBy(asc(listingImages.displayOrder)),
+    // Daftar kategori untuk dropdown di form ubah. Diambil bersamaan dengan
+    // foto supaya tidak menambah satu perjalanan bolak-balik ke database.
+    db
+      .select({ id: categories.id, name: categories.name, slug: categories.slug })
+      .from(categories)
+      .orderBy(asc(categories.displayOrder)),
+  ]);
 
   const data: DataKelola = {
     id: row.id,
@@ -117,7 +129,14 @@ export default async function KelolaPage({
     access_notes: row.accessNotes,
     sellerName: row.sellerName,
     sellerWhatsapp: row.sellerWhatsapp,
+    provinceCode: row.provinceCode,
+    provinceName: row.provinceName,
+    regencyCode: row.regencyCode,
+    regencyName: row.regencyName,
+    districtCode: row.districtCode,
+    districtName: row.districtName,
     wilayahNama: [row.districtName, row.regencyName].filter(Boolean).join(", "),
+    categoryId: row.categoryId,
     categoryName: row.categoryName,
     created_at: row.createdAt.toISOString(),
     images: foto,
@@ -148,6 +167,7 @@ export default async function KelolaPage({
           data={data}
           token={token}
           manageUrl={manageUrl}
+          kategori={kategori}
           fotoGagal={sp.foto === "gagal"}
         />
       </main>

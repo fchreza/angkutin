@@ -3,13 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SecretLinkBox, StatusControls } from "./manage-controls";
+import { FormEdit } from "./form-edit";
 import { Badge } from "@/components/shared/badge";
 import { Button } from "@/components/shared/button";
 import { MediaCarousel } from "@/components/detail/media-carousel";
-import { IconCheck, IconEye, IconChat, IconAlert } from "@/components/shared/icons";
+import {
+  IconCheck,
+  IconEye,
+  IconChat,
+  IconAlert,
+  IconEdit,
+} from "@/components/shared/icons";
 import { formatRupiah, formatTanggalID, waktuRelatif } from "@/lib/format";
 import { LABEL_KONDISI, LABEL_STATUS } from "@/lib/urgency";
 import { cn } from "@/lib/cn";
+import type { Kategori } from "@/components/feed/filter-pills";
 
 export type DataKelola = {
   id: string;
@@ -24,7 +32,14 @@ export type DataKelola = {
   access_notes: string | null;
   sellerName: string;
   sellerWhatsapp: string;
+  provinceCode: string | null;
+  provinceName: string | null;
+  regencyCode: string | null;
+  regencyName: string | null;
+  districtCode: string | null;
+  districtName: string | null;
   wilayahNama: string | null;
+  categoryId: string | null;
   categoryName: string | null;
   created_at: string;
   images: { image_url: string; display_order: number }[];
@@ -34,21 +49,33 @@ export type DataKelola = {
 /**
  * Layar 4: Kelola Listing (Seller Secret Dashboard).
  *
- * Semua perubahan status dilakukan tanpa reload halaman — state lokal
- * diperbarui supaya umpan balik instan, dan tidak ada kedip.
+ * Dua mode:
+ *  - LIHAT  : statistik, detail barang, tombol status (bawaan)
+ *  - UBAH   : form isian penuh, menggantikan kartu detail
+ *
+ * Mode ubah dibuka lewat tombol, bukan selalu tampil. Alasannya: sebagian
+ * besar waktu penjual hanya ingin memantau, jadi menampilkan form penuh
+ * terus-menerus membuat halaman terasa berat.
+ *
+ * Semua perubahan dilakukan tanpa memuat ulang halaman — state lokal
+ * diperbarui supaya umpan balik instan.
  */
 export function KelolaClient({
-  data,
+  data: dataAwal,
   token,
   manageUrl,
+  kategori,
   fotoGagal,
 }: {
   data: DataKelola;
   token: string;
   manageUrl: string;
+  kategori: Kategori[];
   fotoGagal: boolean;
 }) {
-  const [status, setStatus] = useState(data.status);
+  const [data, setData] = useState(dataAwal);
+  const [status, setStatus] = useState(dataAwal.status);
+  const [modeUbah, setModeUbah] = useState(false);
 
   // Catatan: notifikasi perubahan status TIDAK dibuat di sini.
   // StatusControls yang memunculkannya lewat toast bersama. Sebelumnya
@@ -77,6 +104,22 @@ export function KelolaClient({
     );
   }
 
+  // Mode ubah: form penuh menggantikan seluruh tampilan kelola.
+  if (modeUbah) {
+    return (
+      <div className="mx-auto max-w-[760px]">
+        <FormEdit
+          data={data}
+          token={token}
+          kategori={kategori}
+          nonaktif={sudahDiambil}
+          onSimpan={(baru) => setData((s) => ({ ...s, ...baru }))}
+          onBatal={() => setModeUbah(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[760px] space-y-5">
       {/* Banner sukses */}
@@ -99,8 +142,8 @@ export function KelolaClient({
         <div className="flex items-start gap-2.5 rounded-md border border-accent-bright bg-accent-soft px-3.5 py-3">
           <IconAlert size={16} className="mt-[1px] shrink-0 text-accent" />
           <div className="text-[12.5px] leading-relaxed text-accent-text">
-            <b>Listing tetap tayang</b>, tapi fotonya gagal terunggah. Coba
-            pasang ulang barang ini supaya pembeli bisa melihat fotonya.
+            <b>Listing tetap tayang</b>, tapi fotonya gagal terunggah. Buka
+            &quot;Ubah Listing&quot; untuk menambahkan fotonya.
           </div>
         </div>
       )}
@@ -110,12 +153,7 @@ export function KelolaClient({
 
       {/* Statistik KPI (wajib tampil menurut PRD §3.2 ENHANCED) */}
       <div className="grid grid-cols-3 gap-3">
-        <StatTile
-          label="Dilihat"
-          nilai={data.stat.view}
-          ikon={<IconEye size={15} />}
-          urutan={0}
-        />
+        <StatTile label="Dilihat" nilai={data.stat.view} ikon={<IconEye size={15} />} urutan={0} />
         <StatTile
           label="Klik WhatsApp"
           nilai={data.stat.wa_click}
@@ -137,9 +175,7 @@ export function KelolaClient({
         <div className="border-b border-line px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
-              varian={
-                sudahDiambil ? "taken" : status === "EXPIRED" ? "netral" : "wilayah"
-              }
+              varian={sudahDiambil ? "taken" : status === "EXPIRED" ? "netral" : "wilayah"}
             >
               {LABEL_STATUS[status] ?? status}
             </Badge>
@@ -173,12 +209,21 @@ export function KelolaClient({
             <Baris label="Lokasi" nilai={data.wilayahNama ?? "—"} />
             <Baris label="Patokan" nilai={data.pickup_landmark} />
             {data.access_notes && <Baris label="Catatan akses" nilai={data.access_notes} />}
-            <Baris
-              label="Batas ambil"
-              nilai={formatTanggalID(data.deadline_date)}
-            />
+            <Baris label="Batas ambil" nilai={formatTanggalID(data.deadline_date)} />
             <Baris label="Ditayangkan" nilai={waktuRelatif(data.created_at)} />
           </dl>
+        </div>
+
+        {/* Aksi utama: ubah isi listing */}
+        <div className="border-t border-line px-4 py-3">
+          <Button varian="outline" penuh onClick={() => setModeUbah(true)}>
+            <IconEdit size={15} />
+            Ubah Listing
+          </Button>
+          <p className="mt-2 text-center text-[11.5px] leading-relaxed text-ink-secondary">
+            Salah harga, deskripsi, atau foto? Ubah di sini tanpa perlu
+            memasang ulang.
+          </p>
         </div>
 
         <div className="border-t border-line bg-appbg px-4 py-4">
@@ -233,9 +278,7 @@ function StatTile({
       >
         {nilai}
       </div>
-      {catatan && (
-        <div className="text-[11px] text-ink-secondary">{catatan}</div>
-      )}
+      {catatan && <div className="text-[11px] text-ink-secondary">{catatan}</div>}
     </div>
   );
 }

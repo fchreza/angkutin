@@ -102,3 +102,14 @@ export const statusSchema = z.object({
   token: z.string().min(20, "Token tidak valid"),
   status: z.enum(["TAKEN", "DELETED", "AVAILABLE"]),
 });
+
+/**
+ * Skema untuk MENGUBAH listing dari dashboard penjual.
+ *
+ * Sengaja memakai `listingSchema` yang sama dengan form pasang, supaya aturan
+ * validasinya tidak pernah berbeda antara "saat dipasang" dan "saat diubah".
+ * Menulis skema kedua adalah cara paling mudah membuat keduanya menyimpang.
+ */
+export const editSchema = listingSchema.and(
+  z.object({ token: z.string().min(20, "Token tidak valid") }),
+);
