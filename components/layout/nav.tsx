@@ -32,7 +32,7 @@ function Logo({ ukuran = 30 }: { ukuran?: number }) {
       alt=""
       width={ukuran}
       height={ukuran}
-      className="shrink-0 rounded-[7px]"
+      className="shrink-0"
     />
   );
 }
