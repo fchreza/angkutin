@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
 import { Button } from "@/components/shared/button";
 
 export const metadata = { title: "Halaman tidak ditemukan — Angkutin" };
@@ -7,8 +6,6 @@ export const metadata = { title: "Halaman tidak ditemukan — Angkutin" };
 export default function NotFound() {
   return (
     <>
-      <TopNav />
-      <MobileAppBar />
 
       <main className="mx-auto flex w-full max-w-[520px] flex-col items-center px-4 py-20 text-center md:px-6">
         <div className="font-display text-[56px] font-black leading-none text-line">
@@ -25,7 +22,6 @@ export default function NotFound() {
         </Link>
       </main>
 
-      <MobileTabBar />
     </>
   );
 }

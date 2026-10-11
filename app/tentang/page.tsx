@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
 import { Button } from "@/components/shared/button";
 import { IconWhatsApp, IconCheck } from "@/components/shared/icons";
 
@@ -31,8 +30,6 @@ const CARA = [
 export default function TentangPage() {
   return (
     <>
-      <TopNav />
-      <MobileAppBar />
 
       <main className="mx-auto w-full max-w-[820px] px-4 pb-[110px] pt-4 md:px-6 md:pb-24 md:pt-8">
         {/* Lockup resmi dari berkas brand */}
@@ -101,7 +98,6 @@ export default function TentangPage() {
         </div>
       </main>
 
-      <MobileTabBar />
     </>
   );
 }

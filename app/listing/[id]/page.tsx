@@ -5,7 +5,6 @@ import { ambilDetail } from "@/lib/listing-query";
 import { MediaCarousel } from "@/components/detail/media-carousel";
 import { DetailActions } from "@/components/detail/detail-actions";
 import { Badge } from "@/components/shared/badge";
-import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
 import { IconPin, IconChevronRight } from "@/components/shared/icons";
 import { formatRupiah } from "@/lib/format";
 import { LABEL_KONDISI } from "@/lib/urgency";
@@ -53,8 +52,6 @@ export default async function DetailPage({
 
   return (
     <>
-      <TopNav />
-      <MobileAppBar />
 
       <main className="mx-auto w-full max-w-[1200px] px-4 pb-[190px] pt-4 md:px-6 md:pb-24 md:pt-6">
         {/* Breadcrumb (desktop) */}
@@ -183,7 +180,6 @@ export default async function DetailPage({
         />
       </div>
 
-      <MobileTabBar />
     </>
   );
 }

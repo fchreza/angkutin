@@ -98,46 +98,51 @@ export async function ambilFeed(f: FilterFeed): Promise<{
   const limit = Math.min(Math.max(f.limit ?? 24, 1), 60);
   const offset = Math.max(f.offset ?? 0, 0);
 
-  const baris = await db
-    .select({
-      id: listings.id,
-      title: listings.title,
-      price: listings.price,
-      is_free: listings.isFree,
-      condition: listings.condition,
-      status: listings.status,
-      deadline_date: listings.deadlineDate,
-      pickup_landmark: listings.pickupLandmark,
-      province_code: listings.provinceCode,
-      province_name: listings.provinceName,
-      regency_code: listings.regencyCode,
-      regency_name: listings.regencyName,
-      district_code: listings.districtCode,
-      district_name: listings.districtName,
-      category_id: listings.categoryId,
-      category_name: categories.name,
-      created_at: listings.createdAt,
-      cover_url: sql<string | null>`(
-        select li.image_url from listing_images li
-        where li.listing_id = ${listings.id}
-        order by li.display_order asc limit 1
-      )`,
-      jumlah_foto: sql<number>`(
-        select count(*)::int from listing_images li where li.listing_id = ${listings.id}
-      )`,
-    })
-    .from(listings)
-    .leftJoin(categories, eq(listings.categoryId, categories.id))
-    .where(and(...syarat))
-    .orderBy(urut, asc(listings.createdAt))
-    .limit(limit)
-    .offset(offset);
-
-  // Hitung total memakai syarat yang sama.
-  const [{ jumlah }] = await db
-    .select({ jumlah: sql<number>`count(*)::int` })
-    .from(listings)
-    .where(and(...syarat));
+  // PENTING — kedua query dijalankan BERSAMAAN, bukan berurutan.
+  // Database ada di Singapura: satu round-trip ~250 ms. Menjalankannya
+  // berurutan berarti pengguna menunggu 2x lipat hanya untuk hal yang tidak
+  // saling bergantung. Promise.all memangkas satu round-trip penuh.
+  const [baris, hasilHitung] = await Promise.all([
+    db
+      .select({
+        id: listings.id,
+        title: listings.title,
+        price: listings.price,
+        is_free: listings.isFree,
+        condition: listings.condition,
+        status: listings.status,
+        deadline_date: listings.deadlineDate,
+        pickup_landmark: listings.pickupLandmark,
+        province_code: listings.provinceCode,
+        province_name: listings.provinceName,
+        regency_code: listings.regencyCode,
+        regency_name: listings.regencyName,
+        district_code: listings.districtCode,
+        district_name: listings.districtName,
+        category_id: listings.categoryId,
+        category_name: categories.name,
+        created_at: listings.createdAt,
+        cover_url: sql<string | null>`(
+          select li.image_url from listing_images li
+          where li.listing_id = ${listings.id}
+          order by li.display_order asc limit 1
+        )`,
+        jumlah_foto: sql<number>`(
+          select count(*)::int from listing_images li where li.listing_id = ${listings.id}
+        )`,
+      })
+      .from(listings)
+      .leftJoin(categories, eq(listings.categoryId, categories.id))
+      .where(and(...syarat))
+      .orderBy(urut, asc(listings.createdAt))
+      .limit(limit)
+      .offset(offset),
+    // Hitung total memakai syarat yang sama.
+    db
+      .select({ jumlah: sql<number>`count(*)::int` })
+      .from(listings)
+      .where(and(...syarat)),
+  ]);
 
   return {
     data: baris.map((b) => ({
@@ -145,7 +150,7 @@ export async function ambilFeed(f: FilterFeed): Promise<{
       created_at: b.created_at.toISOString(),
       deadline_date: String(b.deadline_date).slice(0, 10),
     })) as KartuListing[],
-    total: jumlah,
+    total: hasilHitung[0]?.jumlah ?? 0,
   };
 }
 

@@ -4,12 +4,6 @@ import { and, asc, eq, gte, sql } from "drizzle-orm";
 import { ambilFeed, type KartuListing } from "@/lib/listing-query";
 import { FeedClient } from "@/components/feed/feed-client";
 import type { WilayahAdaBarang } from "@/components/feed/location-picker";
-import {
-  TopNav,
-  MobileAppBar,
-  MobileTabBar,
-  FabPasang,
-} from "@/components/layout/nav";
 
 export const dynamic = "force-dynamic";
 
@@ -85,8 +79,6 @@ export default async function BerandaPage() {
 
   return (
     <>
-      <TopNav />
-      <MobileAppBar />
 
       <main className="mx-auto w-full max-w-[1200px] px-4 pb-[100px] pt-4 md:px-6 md:pb-24 md:pt-6">
         <div className="mb-4 hidden md:block">
@@ -106,8 +98,6 @@ export default async function BerandaPage() {
         />
       </main>
 
-      <FabPasang />
-      <MobileTabBar />
     </>
   );
 }

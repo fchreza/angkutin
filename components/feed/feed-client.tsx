@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { FilterPills, type Kategori } from "@/components/feed/filter-pills";
 import { ListingCard } from "@/components/feed/listing-card";
@@ -93,28 +93,74 @@ export function FeedClient({
     }
   }, []);
 
-  const muat = useCallback(async () => {
-    setMemuat(true);
-    setGalat(null);
-    try {
-      const p = new URLSearchParams();
-      if (lokasi.jenis === "regency" && lokasi.kode) p.set("regency_code", lokasi.kode);
-      else if (lokasi.jenis === "province" && lokasi.kode) p.set("province_code", lokasi.kode);
-      if (kategoriId !== "semua") p.set("category_id", kategoriId);
-      if (qDebounce) p.set("q", qDebounce);
-      p.set("sort", sort);
+  // Cache hasil per kombinasi filter. Menekan filter yang sama dua kali jadi
+  // instan, dan kembali ke filter sebelumnya tidak perlu memuat ulang.
+  const cacheRef = useRef<Map<string, { data: KartuListing[]; total: number }>>(
+    new Map(),
+  );
+  // Permintaan yang sedang jalan — dibatalkan kalau filter berubah lagi,
+  // supaya balasan lama tidak menimpa hasil filter yang lebih baru.
+  const abortRef = useRef<AbortController | null>(null);
+  // Skeleton hanya muncul kalau pemuatan benar-benar lambat. Tanpa ini,
+  // pemuatan 200 ms tetap memunculkan skeleton sekejap — justru terasa
+  // berkedip dan lebih lambat daripada tidak ada indikator sama sekali.
+  const timerSkeleton = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-      const r = await fetch(`/api/v1/listings?${p.toString()}`, { cache: "no-store" });
+  const kunciFilter = useMemo(() => {
+    const p = new URLSearchParams();
+    if (lokasi.jenis === "regency" && lokasi.kode) p.set("regency_code", lokasi.kode);
+    else if (lokasi.jenis === "province" && lokasi.kode) p.set("province_code", lokasi.kode);
+    if (kategoriId !== "semua") p.set("category_id", kategoriId);
+    if (qDebounce) p.set("q", qDebounce);
+    p.set("sort", sort);
+    return p.toString();
+  }, [lokasi, kategoriId, qDebounce, sort]);
+
+  const muat = useCallback(async () => {
+    const kunci = kunciFilter;
+
+    // 1. Hasil sudah ada di cache -> tampilkan seketika, tidak ada skeleton.
+    const tersimpan = cacheRef.current.get(kunci);
+    if (tersimpan) {
+      setData(tersimpan.data);
+      setTotal(tersimpan.total);
+      setGalat(null);
+      setMemuat(false);
+      return;
+    }
+
+    // 2. Batalkan permintaan sebelumnya yang belum selesai.
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+
+    // 3. Skeleton baru muncul setelah 150 ms. Pemuatan yang lebih cepat dari
+    //    itu tidak perlu indikator apa pun.
+    if (timerSkeleton.current) clearTimeout(timerSkeleton.current);
+    timerSkeleton.current = setTimeout(() => setMemuat(true), 150);
+    setGalat(null);
+
+    try {
+      const r = await fetch(`/api/v1/listings?${kunci}`, {
+        signal: ac.signal,
+        // Cache HTTP sebentar: filter yang sama dalam 15 detik tidak perlu
+        // memanggil server lagi (mis. pengguna menekan bolak-balik).
+        next: { revalidate: 15 },
+      });
       if (!r.ok) throw new Error("gagal");
       const j = (await r.json()) as { data: KartuListing[]; total: number };
+      cacheRef.current.set(kunci, { data: j.data, total: j.total });
       setData(j.data);
       setTotal(j.total);
-    } catch {
+    } catch (e) {
+      // Abort bukan kegagalan — permintaan yang lebih baru sudah menggantikan.
+      if ((e as { name?: string })?.name === "AbortError") return;
       setGalat("Gagal memuat barang. Periksa koneksi lalu coba lagi.");
     } finally {
+      if (timerSkeleton.current) clearTimeout(timerSkeleton.current);
       setMemuat(false);
     }
-  }, [lokasi, kategoriId, qDebounce, sort]);
+  }, [kunciFilter]);
 
   // Lewati fetch pertama (data awal sudah dari server)
   useEffect(() => {
@@ -124,6 +170,14 @@ export function FeedClient({
     }
     void muat();
   }, [muat]);
+
+  // Bersihkan timer & batalkan permintaan saat komponen dilepas.
+  useEffect(() => {
+    return () => {
+      if (timerSkeleton.current) clearTimeout(timerSkeleton.current);
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const terapkanLokasi = (p: PilihanLokasi) => {
     setLokasi(p);

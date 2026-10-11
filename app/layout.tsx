@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import { ToastProvider } from "@/components/shared/toast";
+import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
 const inter = Inter({
@@ -78,7 +79,7 @@ export default function RootLayout({
         {/* ToastProvider di akar supaya halaman mana pun bisa memunculkan
             notifikasi lewat useToast(). */}
         <ToastProvider>
-          {children}
+          <AppShell>{children}</AppShell>
           <ServiceWorkerRegister />
         </ToastProvider>
       </body>

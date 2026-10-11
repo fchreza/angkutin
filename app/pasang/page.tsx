@@ -2,7 +2,6 @@ import { db } from "@/db";
 import { categories } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import { FormPasang } from "@/components/form/form-pasang";
-import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +32,6 @@ export default async function PasangPage() {
 
   return (
     <>
-      <TopNav />
-      <MobileAppBar />
 
       <main className="mx-auto w-full max-w-[1200px] px-4 pb-[130px] pt-4 md:px-6 md:pb-24 md:pt-6">
         <div className="mb-5">
@@ -49,7 +46,6 @@ export default async function PasangPage() {
         <FormPasang kategori={kategori} />
       </main>
 
-      <MobileTabBar />
     </>
   );
 }

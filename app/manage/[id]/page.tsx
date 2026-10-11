@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
 import { tokenCocok } from "@/lib/token";
-import { TopNav, MobileAppBar, MobileTabBar } from "@/components/layout/nav";
 import { Button } from "@/components/shared/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { KelolaClient, type DataKelola } from "@/components/manage/kelola-client";
@@ -51,12 +50,9 @@ export default async function KelolaPage({
   if (!/^[0-9a-f-]{36}$/i.test(id)) {
     return (
       <>
-        <TopNav />
-        <MobileAppBar />
         <main className="mx-auto w-full max-w-[1200px] px-4 md:px-6">
           {gagalTautan}
         </main>
-        <MobileTabBar />
       </>
     );
   }
@@ -92,12 +88,9 @@ export default async function KelolaPage({
   if (!row || !tokenCocok(token, row.secretToken)) {
     return (
       <>
-        <TopNav />
-        <MobileAppBar />
         <main className="mx-auto w-full max-w-[1200px] px-4 md:px-6">
           {gagalTautan}
         </main>
-        <MobileTabBar />
       </>
     );
   }
@@ -149,8 +142,6 @@ export default async function KelolaPage({
 
   return (
     <>
-      <TopNav />
-      <MobileAppBar />
 
       <main className="mx-auto w-full max-w-[1200px] px-4 pb-[110px] pt-4 md:px-6 md:pb-24 md:pt-6">
         <KelolaClient
@@ -161,7 +152,6 @@ export default async function KelolaPage({
         />
       </main>
 
-      <MobileTabBar />
     </>
   );
 }
