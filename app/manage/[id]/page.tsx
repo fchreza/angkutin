@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
 import { tokenCocok } from "@/lib/token";
+import { tanggalHariIniID } from "@/lib/format";
+import { statusEfektif } from "@/lib/urgency";
 import { Button } from "@/components/shared/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { KelolaClient, type DataKelola } from "@/components/manage/kelola-client";
@@ -116,6 +118,10 @@ export default async function KelolaPage({
       .orderBy(asc(categories.displayOrder)),
   ]);
 
+  // Tanggal dihitung SERVER-SIDE supaya server dan browser tidak pernah
+  // berbeda pendapat soal "hari ini" (server di UTC, penjual di WIB).
+  const hariIni = tanggalHariIniID();
+
   const data: DataKelola = {
     id: row.id,
     title: row.title,
@@ -123,7 +129,12 @@ export default async function KelolaPage({
     price: row.price,
     isFree: row.isFree,
     condition: row.condition,
-    status: row.status,
+    // Status yang BENAR-BENAR berlaku, bukan hanya kolom database.
+    // Cron hanya berjalan sekali sehari (batas Vercel Hobby), jadi tanpa ini
+    // penjual melihat "Tersedia" padahal katalog sudah menyembunyikannya.
+    status: statusEfektif(row.status, String(row.deadlineDate).slice(0, 10)),
+    statusDb: row.status,
+    hariIni,
     deadline_date: String(row.deadlineDate).slice(0, 10),
     pickup_landmark: row.pickupLandmark,
     access_notes: row.accessNotes,

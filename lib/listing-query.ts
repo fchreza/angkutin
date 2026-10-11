@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
 import { and, asc, desc, eq, ilike, or, sql, gte } from "drizzle-orm";
+import { tanggalHariIniID } from "./format";
 
 /**
  * Query feed katalog (FR-2).
@@ -59,7 +60,7 @@ export async function ambilFeed(f: FilterFeed): Promise<{
   data: KartuListing[];
   total: number;
 }> {
-  const hariIni = new Date().toISOString().slice(0, 10);
+  const hariIni = tanggalHariIniID();
 
   const syarat = [
     eq(listings.status, "AVAILABLE"),

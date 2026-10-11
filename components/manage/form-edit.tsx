@@ -6,6 +6,7 @@ import { useToast } from "@/components/shared/toast";
 import {
   FormListingFields,
   GalatUmum,
+  nilaiTenggatBaru,
   payloadDari,
   rapikanGalatServer,
   validasiForm,
@@ -37,6 +38,7 @@ export function FormEdit({
   onSimpan,
   onBatal,
   nonaktif,
+  tenggatLewat = false,
 }: {
   data: DataKelola;
   token: string;
@@ -45,9 +47,20 @@ export function FormEdit({
   onBatal: () => void;
   /** true = status listing tidak memungkinkan diubah (mis. sudah diambil). */
   nonaktif?: boolean;
+  /**
+   * true = tenggat sudah lewat, jadi penjual sedang memperpanjang waktu tayang.
+   *
+   * Ini satu-satunya jalan keluar untuk listing kedaluwarsa: server menolak
+   * tenggat di masa lalu, jadi tanpa memperpanjang tanggal, listing itu tidak
+   * akan pernah bisa tampil lagi — walaupun statusnya dikembalikan ke
+   * AVAILABLE.
+   */
+  tenggatLewat?: boolean;
 }) {
   const { tampilkan } = useToast();
 
+  // Untuk listing kedaluwarsa, tenggat lama sudah tidak valid (di masa lalu).
+  // Isi dengan tanggal yang masuk akal supaya penjual tidak harus menebak.
   const [foto, setFoto] = useState<FotoTersimpan[]>(data.images);
   const [nilai, setNilai] = useState<NilaiForm>({
     judul: data.title,
@@ -66,7 +79,7 @@ export function FormEdit({
       district_name: data.districtName ?? "",
     },
     patokan: data.pickup_landmark,
-    tenggat: data.deadline_date,
+    tenggat: tenggatLewat ? nilaiTenggatBaru(7) : data.deadline_date,
     catatan: data.access_notes ?? "",
     nama: data.sellerName,
     wa: data.sellerWhatsapp,
@@ -115,6 +128,11 @@ export function FormEdit({
 
       // Sukses: kirim nilai baru ke induk supaya tampilan detail ikut berubah
       // tanpa perlu memuat ulang halaman.
+      //
+      // `status` ikut dikirim untuk kasus perpanjang tenggat: server
+      // mengembalikan EXPIRED ke AVAILABLE, dan tanpa meneruskannya di sini
+      // penjual tetap melihat "Waktu Habis" walaupun listingnya sudah tayang
+      // lagi — dia harus refresh untuk tahu bahwa berhasil.
       onSimpan({
         title: nilai.judul.trim(),
         description: nilai.deskripsi.trim(),
@@ -140,9 +158,12 @@ export function FormEdit({
         access_notes: nilai.catatan.trim() || null,
         sellerName: nilai.nama.trim(),
         images: foto,
+        status: tenggatLewat ? "AVAILABLE" : undefined,
       });
 
-      tampilkan("Perubahan tersimpan.");
+      tampilkan(
+        tenggatLewat ? "Listing tayang lagi dengan tenggat baru." : "Perubahan tersimpan.",
+      );
       onBatal(); // keluar dari mode ubah
     } catch {
       setGalatUmum("Gagal menghubungi server. Periksa koneksi lalu coba lagi.");
@@ -156,11 +177,12 @@ export function FormEdit({
       <div className="flex items-start gap-3 rounded-md border border-primary/25 bg-primary-soft p-4">
         <div>
           <h2 className="font-display text-[15px] font-bold text-primary-dark">
-            Ubah listing
+            {tenggatLewat ? "Perpanjang waktu tayang" : "Ubah listing"}
           </h2>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
-            Perubahan langsung terlihat di katalog setelah disimpan. Perubahan
-            foto tersimpan otomatis saat kamu menekan tombol di bagian foto.
+            {tenggatLewat
+              ? "Waktu tayang listing ini sudah habis. Ubah batas pengambilannya, lalu simpan — listing langsung tayang lagi di katalog."
+              : "Perubahan langsung terlihat di katalog setelah disimpan. Perubahan foto tersimpan otomatis saat kamu menekan tombol di bagian foto."}
           </p>
         </div>
       </div>

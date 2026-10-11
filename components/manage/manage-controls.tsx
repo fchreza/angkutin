@@ -131,7 +131,11 @@ export function StatusControls({
       } else if (baru === "TAKEN") {
         tampilkan("Ditandai sudah diambil.");
       } else if (baru === "AVAILABLE") {
-        tampilkan("Ditandai tersedia lagi.");
+        tampilkan(
+          habisWaktu
+            ? "Ditayangkan lagi. Ubah batas pengambilannya di Ubah Listing."
+            : "Ditandai tersedia lagi.",
+        );
       }
     } catch {
       tampilkan("Gagal memperbarui status. Coba lagi.", { jenis: "galat" });
@@ -141,6 +145,22 @@ export function StatusControls({
   };
 
   const sudahDiambil = status === "TAKEN";
+  /**
+   * Listing yang tenggatnya sudah lewat.
+   *
+   * TIDAK ada tombol "ubah status" untuk kasus ini. Percobaan pertama saya
+   * menambahkan tombol "Tayangkan Lagi" yang mengubah status jadi AVAILABLE —
+   * dan itu TERBUKTI TIDAK BERGUNA: status di database berubah (HTTP 200),
+   * tapi karena tenggatnya masih lewat, status efektifnya langsung kembali
+   * jadi "Waktu Habis" dan katalog tetap tidak menampilkannya. Penjual
+   * menekan tombol dan tidak ada yang berubah.
+   *
+   * Yang benar: membuka form agar penjual bisa MEMPERPANJANG tenggatnya.
+   * Saat disimpan, server mengembalikan status EXPIRED ke AVAILABLE
+   * (lihat PATCH /api/v1/listings/manage/:id). Itu satu-satunya jalan keluar
+   * yang benar-benar berfungsi.
+   */
+  const habisWaktu = status === "EXPIRED";
 
   return (
     <div className="space-y-3">
@@ -150,6 +170,7 @@ export function StatusControls({
           penuh
           memuat={memuat === (sudahDiambil ? "AVAILABLE" : "TAKEN")}
           onClick={() => void ubah(sudahDiambil ? "AVAILABLE" : "TAKEN")}
+          disabled={habisWaktu}
         >
           {sudahDiambil ? "Tandai Tersedia Lagi" : "Tandai Sudah Diambil"}
         </Button>
@@ -159,6 +180,11 @@ export function StatusControls({
           Hapus Postingan
         </Button>
       </div>
+
+      {/* Tombol "Perpanjang Waktu Tayang" TIDAK dibuat di sini.
+          Tombol utama di atas kartu sudah menanganinya ("Ubah Listing" berubah
+          jadi "Perpanjang Waktu Tayang"). Sebelumnya keduanya ada, dan penjual
+          melihat dua tombol kembar dengan fungsi yang sama. */}
 
       {/* Aksi merusak WAJIB dikonfirmasi — lihat ConfirmDialog. */}
       <ConfirmDialog

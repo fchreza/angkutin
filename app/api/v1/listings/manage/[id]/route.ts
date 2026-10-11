@@ -146,7 +146,11 @@ export async function PATCH(
     // Otorisasi DULU, baru validasi isi. Tanpa token yang benar, pemanggil
     // tidak boleh tahu apa pun tentang aturan server.
     const [row] = await db
-      .select({ id: listings.id, secretToken: listings.secretToken })
+      .select({
+        id: listings.id,
+        secretToken: listings.secretToken,
+        status: listings.status,
+      })
       .from(listings)
       .where(eq(listings.id, id))
       .limit(1);
@@ -154,6 +158,10 @@ export async function PATCH(
     if (!row || !tokenCocok(d.token, row.secretToken)) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }
+
+    // Status SEBELUM perubahan — dipakai untuk memutuskan apakah listing yang
+    // tadinya kedaluwarsa perlu ditayangkan lagi (lihat catatan di bawah).
+    const statusLama = row.status;
 
     const errTenggat = validasiTenggat(d.deadline_date);
     if (errTenggat) {
@@ -202,16 +210,33 @@ export async function PATCH(
         accessNotes: d.access_notes || null,
         sellerName: d.seller_name,
         sellerWhatsapp: normalizeWhatsApp(d.seller_whatsapp),
+        /**
+         * Perpanjang tenggat = tayangkan lagi.
+         *
+         * Status EXPIRED di database adalah status AKHIR: katalog mensyaratkan
+         * `status = 'AVAILABLE'`, jadi listing yang sudah ditandai kedaluwarsa
+         * oleh cron tidak akan pernah muncul lagi walaupun tenggatnya
+         * diperpanjang — penjual mengubah tanggal, menyimpan, dan tetap tidak
+         * ada yang berubah. Karena tenggat barunya sudah lolos validasi (tidak
+         * boleh di masa lalu), mengembalikan statusnya ke AVAILABLE di sini
+         * aman dan memang yang penjual maksud.
+         *
+         * Hanya berlaku untuk EXPIRED. TAKEN dan DELETED adalah keputusan
+         * sadar penjual, jadi tidak boleh dibatalkan diam-diam.
+         */
+        ...(statusLama === "EXPIRED" ? { status: "AVAILABLE" } : {}),
         updatedAt: new Date(),
       })
       .where(eq(listings.id, id))
       .returning({
         id: listings.id,
+        status: listings.status,
         updatedAt: listings.updatedAt,
       });
 
     return ok({
       id: diubah.id,
+      status: diubah.status,
       updated_at: diubah.updatedAt.toISOString(),
     });
   } catch (e) {

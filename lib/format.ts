@@ -55,6 +55,21 @@ export const keYMD = (d: Date): string => {
   return `${y}-${m}-${dd}`;
 };
 
+/**
+ * Tanggal hari ini menurut zona waktu Indonesia Barat (WIB, UTC+7).
+ *
+ * KENAPA TIDAK PAKAI `new Date().toISOString().slice(0,10)`:
+ * Itu menghasilkan tanggal UTC. Indonesia berada di depan UTC, jadi antara
+ * pukul 00:00 dan 06:59 WIB tanggal UTC masih HARI KEMARIN. Akibatnya listing
+ * yang tenggatnya hari ini dianggap sudah lewat dan hilang dari katalog
+ * selama 7 jam pertama setiap hari.
+ *
+ * Zona waktu dikunci ke WIB karena penggunanya di Indonesia; kalau nanti
+ * meluas, ini titik yang harus diubah.
+ */
+export const tanggalHariIniID = (now = new Date()): string =>
+  new Date(now.getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
+
 /** Jumlah hari dari sekarang ke tanggal (negatif = sudah lewat). */
 export const selisihHari = (target: Date | string, now = new Date()): number => {
   const t = typeof target === "string" ? parseTanggalLokal(target) : target;

@@ -80,6 +80,19 @@ export function batasTenggat() {
 }
 
 /**
+ * Tanggal tenggat yang masuk akal untuk listing yang sudah kedaluwarsa.
+ *
+ * Dipakai saat penjual memperpanjang waktu tayang: tanggal lama sudah di masa
+ * lalu dan akan ditolak server, jadi form diisi dengan tanggal baru supaya
+ * penjual tidak perlu menebak dari nol.
+ */
+export function nilaiTenggatBaru(hari = 7): string {
+  const d = new Date();
+  d.setDate(d.getDate() + hari);
+  return keYMD(d);
+}
+
+/**
  * Validasi di sisi klien supaya umpan balik instan.
  * Server tetap memvalidasi ulang — ini hanya untuk kenyamanan, bukan pengaman.
  */

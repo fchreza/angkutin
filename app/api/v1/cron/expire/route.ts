@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { listings } from "@/db/schema";
 import { and, eq, lt } from "drizzle-orm";
+import { tanggalHariIniID } from "@/lib/format";
 import { ok, gagal } from "@/lib/api";
 import { bersihkanRateLimit } from "@/lib/rate-limit";
 
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
 
     if (!sah) return gagal("Tidak diizinkan.", 401);
 
-    const hariIni = new Date().toISOString().slice(0, 10);
+    const hariIni = tanggalHariIniID();
 
     const kedaluwarsa = await db
       .update(listings)

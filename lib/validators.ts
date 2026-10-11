@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { tanggalHariIniID } from "./format";
 
 /**
  * Skema validasi (Zod) — ambang batas PERSIS dari PRD-Enhanced §FR-3.
@@ -83,18 +84,29 @@ export const listingSchema = z
 
 export type ListingInput = z.infer<typeof listingSchema>;
 
-/** Validasi tenggat: hari ini s/d hari ini + 14 hari (dilakukan terpisah
- *  karena butuh "sekarang", bukan nilai statis). */
+/**
+ * Validasi tenggat: hari ini s/d hari ini + MAX_HARI_TENGGAT.
+ *
+ * Memakai perbandingan tanggal murni (YYYY-MM-DD) dalam zona WIB, bukan
+ * selisih milidetik dari tengah malam lokal server. Dua alasan:
+ *
+ *  1. Server Vercel berjalan di UTC, sedangkan tanggal tenggat adalah konsep
+ *     kalender pengguna di Indonesia. Menghitung selisih terhadap tengah
+ *     malam lokal server membuat listing dengan tenggat "hari ini" ditolak
+ *     sebagai "sebelum hari ini" antara pukul 00:00–06:59 WIB.
+ *  2. Aturan yang sama dipakai katalog (deadline >= hari ini), jadi validasi
+ *     dan penyaringan tidak mungkin berbeda pendapat soal tanggal.
+ */
 export function validasiTenggat(ymd: string, now = new Date()): string | null {
-  const [y, m, d] = ymd.split("-").map(Number);
-  if (!y || !m || !d) return "Format tanggal tidak valid";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return "Format tanggal tidak valid";
 
-  const target = new Date(y, m - 1, d);
-  const hariIni = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const selisih = Math.round((target.getTime() - hariIni.getTime()) / 86_400_000);
+  const hariIni = tanggalHariIniID(now);
+  if (ymd < hariIni) return "Tanggal tidak boleh sebelum hari ini";
 
-  if (selisih < 0) return "Tanggal tidak boleh sebelum hari ini";
-  if (selisih > MAX_HARI_TENGGAT) return `Maksimal ${MAX_HARI_TENGGAT} hari dari sekarang`;
+  const maks = new Date(now.getTime() + (MAX_HARI_TENGGAT + 1) * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  if (ymd > maks) return `Maksimal ${MAX_HARI_TENGGAT} hari dari sekarang`;
   return null;
 }
 
