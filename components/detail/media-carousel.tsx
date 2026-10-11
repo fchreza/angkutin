@@ -68,13 +68,24 @@ export function MediaCarousel({
         {foto.map((f, i) => (
           <div key={f.image_url} id={`foto-${i}`} className="w-full shrink-0 snap-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/*
+             * TIDAK memakai animate-reveal di sini.
+             *
+             * Animasi revealIn mulai dari opacity 0 + blur(4px) — dirancang
+             * untuk peralihan skeleton ke konten. Kalau dipasang ke foto,
+             * setiap perpindahan foto membuat foto memudar masuk dari
+             * ketidakterlihatan, dan yang terlihat lebih dulu adalah latar
+             * carousel yang nyaris putih (#F9FAFB). Itulah "kilatan putih"
+             * saat foto digeser. Terukur: opacity foto baru 0,167 pada 80ms
+             * pertama, dan kilatan berlangsung ~320ms.
+             *
+             * Pada carousel, geseran horizontal itu SENDIRI sudah menjadi
+             * transisinya — foto tidak perlu memudar.
+             */}
             <img
               src={f.image_url}
               alt={`${judul} — foto ${i + 1}`}
-              className={cn(
-                "aspect-square w-full object-cover",
-                i === aktif ? "animate-reveal" : undefined,
-              )}
+              className="aspect-square w-full object-cover"
               loading={i === 0 ? "eager" : "lazy"}
             />
           </div>
