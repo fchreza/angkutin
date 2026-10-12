@@ -49,20 +49,38 @@ export function FeedClient({
   kategori,
   feedAwal,
   totalAwal,
+  kategoriAwal = "semua",
+  regencyAwal = "",
 }: {
   wilayah: WilayahAdaBarang[];
   kategori: Kategori[];
   feedAwal: KartuListing[];
   totalAwal: number;
+  /** Filter awal dari URL (?kategori=) — dipakai remah navigasi. */
+  kategoriAwal?: string;
+  /** Filter awal dari URL (?regency=) — dipakai remah navigasi. */
+  regencyAwal?: string;
 }) {
-  const [lokasi, setLokasi] = useState<PilihanLokasi>({
-    jenis: "semua",
-    label: "Semua Lokasi",
+  const [lokasi, setLokasi] = useState<PilihanLokasi>(() => {
+    if (!regencyAwal) return { jenis: "semua", label: "Semua Lokasi" };
+    // Nama wilayah dicari dari daftar yang sudah dikirim server, supaya label
+    // di tombol tidak menampilkan kode mentah.
+    for (const prov of wilayah) {
+      const kab = prov.kabupaten.find((k) => k.regency_code === regencyAwal);
+      if (kab) {
+        return {
+          jenis: "regency",
+          kode: regencyAwal,
+          label: `${kab.regency_name}, ${prov.province_name}`,
+        };
+      }
+    }
+    return { jenis: "semua", label: "Semua Lokasi" };
   });
   const [panelBuka, setPanelBuka] = useState(false);
   const [terakhir, setTerakhir] = useState<PilihanLokasi | null>(null);
 
-  const [kategoriId, setKategoriId] = useState("semua");
+  const [kategoriId, setKategoriId] = useState(kategoriAwal);
   const [sort, setSort] = useState<Sort>("mendesak");
   const [q, setQ] = useState("");
   const [qDebounce, setQDebounce] = useState("");
@@ -73,6 +91,32 @@ export function FeedClient({
   const [galat, setGalat] = useState<string | null>(null);
 
   const pertama = useRef(true);
+
+  // Kalau filter awal datang dari URL, data awalnya juga sudah tersaring di
+  // server — jadi fetch pertama tetap boleh dilewati. Tapi penanda "pertama"
+  // harus tetap benar saat URL berubah tanpa mount ulang.
+  const filterAwalRef = useRef(`${kategoriAwal}|${regencyAwal}`);
+  useEffect(() => {
+    const sekarang = `${kategoriAwal}|${regencyAwal}`;
+    if (sekarang !== filterAwalRef.current) {
+      filterAwalRef.current = sekarang;
+      setKategoriId(kategoriAwal);
+      setLokasi(() => {
+        if (!regencyAwal) return { jenis: "semua", label: "Semua Lokasi" };
+        for (const prov of wilayah) {
+          const kab = prov.kabupaten.find((k) => k.regency_code === regencyAwal);
+          if (kab) {
+            return {
+              jenis: "regency",
+              kode: regencyAwal,
+              label: `${kab.regency_name}, ${prov.province_name}`,
+            };
+          }
+        }
+        return { jenis: "semua", label: "Semua Lokasi" };
+      });
+    }
+  }, [kategoriAwal, regencyAwal, wilayah]);
 
   // Debounce pencarian 350ms — supaya tidak fetch tiap ketikan
   useEffect(() => {

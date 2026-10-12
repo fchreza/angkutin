@@ -548,6 +548,124 @@ body {
   opacity: 0.7;
 }
 
+/* === Remah navigasi (breadcrumb) ===
+   Referensi: uiarc.dev/components/breadcrumb.
+
+   Nama kelas sengaja berbahasa Indonesia dan berawalan `remah-` supaya jelas
+   berasal dari komponen mana, dan tidak bentrok dengan utilitas Tailwind. */
+.remah-daftar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.remah-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgb(var(--w-ink-mono));
+  /* Satu remah tidak boleh terpotong di tengah; kalau tidak muat, barisnya
+     yang turun — bukan labelnya yang pecah. */
+  white-space: nowrap;
+}
+
+/* Pemisah memakai `ink-mono` (bukan `line-kuat`).
+   Dulu `line-kuat` memberi 2,88:1 di mode terang — elemen grafis sebaiknya
+   >= 3:1 (WCAG 1.4.11). `ink-mono` memberi 5,11:1 terang / 4,65:1 gelap,
+   dan tetap terbaca sebagai pemisah, bukan sebagai teks. */
+.remah-pemisah {
+  flex: 0 0 auto;
+  color: rgb(var(--w-ink-mono));
+  opacity: 0.75;
+}
+
+.remah-tautan,
+.remah-kini {
+  display: inline-flex;
+  flex-direction: column;
+  border-radius: 5px;
+  padding: 3px 2px;
+}
+
+/*
+ * TEKNIK KUNCI: setiap remah memesan lebar label versi TEBAL-nya lebih dulu,
+ * lewat pseudo-elemen yang disembunyikan. Tanpa ini, saat sebuah remah menjadi
+ * "halaman aktif" dan berat hurufnya naik ke 600, lebar teksnya bertambah dan
+ * seluruh baris bergeser — tepat ketika pengguna sedang melihatnya.
+ */
+.remah-teks::after {
+  content: attr(data-label);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: 600;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Remah yang bisa diklik: warna sekunder, dan garis bawah muncul saat hover
+   sebagai penanda bahwa ini tautan (bukan hanya berubah warna). */
+.remah-tautan {
+  color: rgb(var(--w-ink-secondary));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .remah-tautan:hover {
+    color: rgb(var(--w-primary));
+    text-decoration-color: color-mix(in oklab, currentColor 45%, transparent);
+  }
+}
+
+/* Halaman aktif: emerald + berat 600. Lebarnya sudah dipesan oleh ::after,
+   jadi tidak ada pergeseran saat statusnya berubah. */
+.remah-kini[aria-current="page"] {
+  color: rgb(var(--w-primary-text));
+  font-weight: 600;
+}
+
+/* Remah yang tidak bisa diklik dan bukan halaman aktif (mis. ruas yang tidak
+   punya tautan) tetap terbaca sebagai teks biasa. */
+.remah-kini:not([aria-current="page"]) {
+  color: rgb(var(--w-ink-secondary));
+}
+
+/* Remah yang baru muncul meluncur masuk dari kiri. Hanya transform + opacity
+   (GPU), tidak menyentuh tata letak. */
+@keyframes remahMasuk {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.remah-item {
+  animation: remahMasuk 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remah-tautan {
+    transition: none;
+  }
+}
+
 /* Baris daftar yang masuk berurutan (stagger).
    Delay diatur lewat style inline --d. */
 @keyframes listIn {

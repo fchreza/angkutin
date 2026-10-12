@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import type { Metadata } from "next";
@@ -9,7 +8,8 @@ import { ambilDetail } from "@/lib/listing-query";
 import { MediaCarousel } from "@/components/detail/media-carousel";
 import { DetailActions } from "@/components/detail/detail-actions";
 import { Badge } from "@/components/shared/badge";
-import { IconPin, IconChevronRight } from "@/components/shared/icons";
+import { Breadcrumb } from "@/components/shared/breadcrumb";
+import { IconPin } from "@/components/shared/icons";
 import { formatRupiah } from "@/lib/format";
 import { LABEL_KONDISI } from "@/lib/urgency";
 
@@ -120,14 +120,40 @@ export default async function DetailPage({
     <>
 
       <main className="shell w-full pb-[190px] pt-4 md:pb-24 md:pt-6">
-        {/* Breadcrumb (desktop) */}
-        <nav className="mb-4 hidden items-center gap-1.5 text-[12.5px] text-ink-secondary md:flex">
-          <Link href="/" className="hover:text-primary">
-            Katalog
-          </Link>
-          <IconChevronRight size={13} />
-          <span className="text-ink">{d.district_name ? `${d.district_name}, ${d.regency_name}` : (d.regency_name ?? "—")}</span>
-        </nav>
+        {/*
+          Remah navigasi. Dulu hanya tampil di desktop (`hidden md:flex`), dan
+          tanpa tautan ke wilayah — padahal wilayah itu langkah di antaranya.
+          Sekarang tampil di semua ukuran (referensinya memang membungkus baris
+          di layar sempit) dan wilayah bisa diklik untuk memfilter katalog.
+
+          Hierarkinya: Katalog > Kategori > Wilayah > Judul barang.
+          Ruas yang tidak punya nilai dilewati, jadi tidak ada tautan kosong.
+        */}
+        <Breadcrumb
+          className="mb-4"
+          items={[
+            { label: "Katalog", href: "/" },
+            ...(d.category_name
+              ? [
+                  {
+                    label: d.category_name,
+                    href: `/?kategori=${encodeURIComponent(d.category_id ?? "")}`,
+                  },
+                ]
+              : []),
+            ...(d.regency_name
+              ? [
+                  {
+                    label: d.district_name
+                      ? `${d.district_name}, ${d.regency_name}`
+                      : d.regency_name,
+                    href: `/?regency=${encodeURIComponent(d.regency_code ?? "")}`,
+                  },
+                ]
+              : []),
+            { label: d.title },
+          ]}
+        />
 
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
           {/* Kolom kiri: foto */}

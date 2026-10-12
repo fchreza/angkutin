@@ -4,6 +4,7 @@ import { and, asc, eq, gte, sql } from "drizzle-orm";
 import { ambilFeed, type KartuListing } from "@/lib/listing-query";
 import { FeedClient } from "@/components/feed/feed-client";
 import type { WilayahAdaBarang } from "@/components/feed/location-picker";
+import { tanggalHariIniID } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +17,28 @@ export const dynamic = "force-dynamic";
  *
  * Data awal diambil di server (SSR) supaya konten sudah ada saat halaman
  * pertama tampil — penting untuk FCP < 1.8s (NFR §11 no.1).
+ *
+ * FILTER AWAL DARI URL (?kategori=&regency=):
+ * Dipakai oleh remah navigasi di halaman detail barang, supaya "Rak & Meja"
+ * atau "Sleman, DI Yogyakarta" di remah benar-benar membuka katalog yang sudah
+ * tersaring — bukan tautan yang mendarat di katalog penuh.
+ *
+ * Batasnya: hanya dua filter pertama yang dibaca. Sort, kata kunci, dan
+ * provinsi sengaja tidak, supaya URL tetap pendek dan tidak ada permukaan
+ * tambahan yang perlu diamankan.
  */
-export default async function BerandaPage() {
-  const hariIni = new Date().toISOString().slice(0, 10);
+export default async function BerandaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kategori?: string; regency?: string }>;
+}) {
+  const sp = await searchParams;
+  const kategoriAwal = sp.kategori ?? "semua";
+  const regencyAwal = sp.regency ?? "";
+
+  // Zona WIB, bukan UTC — lihat catatan di lib/format.ts. Dengan
+  // toISOString() tanggalnya masih kemarin antara 00:00–06:59 WIB.
+  const hariIni = tanggalHariIniID();
 
   const [barisWilayah, kategori, feed] = await Promise.all([
     // Wilayah yang punya barang, beserta jumlahnya. Dikelompokkan per provinsi
@@ -45,8 +65,17 @@ export default async function BerandaPage() {
       .select({ id: categories.id, name: categories.name, slug: categories.slug })
       .from(categories)
       .orderBy(asc(categories.displayOrder)),
-    // Tanpa filter wilayah -> seluruh katalog
-    ambilFeed({ sort: "mendesak", limit: 24 }),
+    // Filter awal dari URL: kabupaten kalau ada, kalau tidak kategori saja.
+    // (Katalog tidak menerima keduanya sekaligus dari remah.)
+    ambilFeed({
+      sort: "mendesak",
+      limit: 24,
+      ...(regencyAwal
+        ? { regency_code: regencyAwal }
+        : kategoriAwal !== "semua"
+          ? { category_id: kategoriAwal }
+          : {}),
+    }),
   ]);
 
   // Kelompokkan per provinsi, urut dari barang terbanyak.
@@ -99,6 +128,8 @@ export default async function BerandaPage() {
           kategori={kategori}
           feedAwal={feed.data as KartuListing[]}
           totalAwal={feed.total}
+          kategoriAwal={kategoriAwal}
+          regencyAwal={regencyAwal}
         />
       </main>
     </>
