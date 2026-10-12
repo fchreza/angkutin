@@ -47,14 +47,49 @@ function sistemGelap(): boolean {
   );
 }
 
-/** Terapkan ke <html> + beri tahu browser supaya kontrol bawaan ikut gelap. */
+/**
+ * Terapkan ke <html> + beri tahu browser supaya kontrol bawaan ikut gelap.
+ *
+ * KENAPA TRANSIKSI DIMATIKAN SEKEJAP DI SINI:
+ * Banyak komponen punya `transition-colors` (untuk efek hover), dan `.press`
+ * mentransisikan background/border/color/box-shadow. Saat kelas tema ditukar,
+ * transisi itu IKUT BERJALAN — jadi setiap elemen beranimasi dari warna tema
+ * lama ke warna tema baru selama ~150ms.
+ *
+ * Terukur pada satu elemen <select>: putih -> 248 -> 216 -> 153 -> 68 -> 39
+ * -> 34 -> 32. Delapan nilai warna perantara. Itulah "kedip-kedip" yang
+ * terlihat: saat pindah ke gelap, komponen sempat memutih; saat pindah ke
+ * terang, komponen sempat menggelap.
+ *
+ * Transisi itu ada untuk HOVER, bukan untuk pergantian tema — jadi solusinya
+ * bukan menghapusnya, melainkan mematikannya selama pergantian tema saja.
+ *
+ * CARA KERJANYA:
+ *   1. Pasang `.tema-beralih` di <html> — aturan CSS-nya mematikan semua
+ *      transisi di seluruh pohon.
+ *   2. Tukar kelas tema. Karena transisi mati, warna baru langsung terpasang.
+ *   3. Baca `offsetHeight` untuk MEMAKSA browser menghitung ulang gaya
+ *      sekarang juga. Tanpa langkah ini, browser bisa menunda perhitungannya
+ *      sampai kelasnya sudah dilepas lagi, dan transisinya tetap berjalan.
+ *   4. Lepas kelasnya. Transisi hover kembali seperti semula.
+ *
+ * Semuanya sinkron dalam satu tugas, jadi tidak ada frame yang sempat
+ * menampilkan keadaan setengah jalan.
+ */
 function terapkan(mode: "terang" | "gelap") {
   const el = document.documentElement;
+
+  el.classList.add("tema-beralih");
   el.classList.toggle("dark", mode === "gelap");
   // color-scheme membuat date picker, scrollbar, dan autofill ikut gelap.
   // WAJIB nilai CSS baku ("light"/"dark"), bukan kata Indonesia — nilai yang
   // tidak dikenal diabaikan browser, sehingga kontrol bawaan tetap terang.
   el.style.colorScheme = mode === "gelap" ? "dark" : "light";
+
+  // Paksa perhitungan ulang gaya SELAGI transisi masih mati.
+  void el.offsetHeight;
+
+  el.classList.remove("tema-beralih");
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

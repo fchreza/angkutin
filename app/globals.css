@@ -224,6 +224,30 @@ body {
   }
 }
 
+/* === Matikan transisi selama pergantian tema ===
+ *
+ * Banyak komponen punya `transition-colors` untuk hover, dan `.press`
+ * mentransisikan background/border/color/box-shadow. Transisi itu IKUT
+ * berjalan saat kelas tema ditukar, sehingga setiap elemen beranimasi dari
+ * warna tema lama ke warna tema baru — itulah "kedip-kedip" yang terlihat.
+ *
+ * Terukur pada satu elemen <select>: putih -> 248 -> 216 -> 153 -> 68 -> 39
+ * -> 34 -> 32. Delapan nilai perantara.
+ *
+ * Kelas ini dipasang oleh `terapkan()` di theme.tsx HANYA selama penukaran,
+ * lalu langsung dilepas. Jadi efek hover tetap mulus seperti sebelumnya;
+ * yang hilang hanya animasi pergantian tema, yang memang tidak diinginkan.
+ *
+ * `!important` diperlukan karena transisinya ditulis sebagai utility class
+ * Tailwind pada elemennya, yang menang atas selektor biasa.
+ */
+.tema-beralih,
+.tema-beralih *,
+.tema-beralih *::before,
+.tema-beralih *::after {
+  transition: none !important;
+}
+
 /* Skeleton shimmer untuk state loading */
 @keyframes shimmer {
   0% {
