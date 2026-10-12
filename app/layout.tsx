@@ -17,7 +17,36 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+/**
+ * Alamat dasar situs untuk metadata.
+ *
+ * WAJIB ADA. Tanpa ini, Next mengubah URL og:image menjadi relatif, dan
+ * crawler (WhatsApp, Facebook, X) TIDAK bisa mengambil gambar dari URL relatif
+ * — akibatnya link yang dibagikan muncul tanpa gambar sama sekali.
+ *
+ * URUTAN PENTING: domain Vercel didahulukan, env eksplisit BELAKANGAN.
+ * Alasannya: nilai NEXT_PUBLIC_SITE_URL di proyek ini berisi
+ * "http://localhost:3000" (sisa dari pengembangan awal). Kalau env dipakai
+ * lebih dulu, semua gambar kartu link di produksi akan menunjuk ke localhost
+ * dan link WhatsApp tetap tampil tanpa gambar. Domain Vercel selalu benar
+ * untuk deployment yang sedang berjalan.
+ *
+ * Kalau nanti ada domain sendiri (mis. angkutin.id), perbarui nilai env-nya
+ * di Vercel ATAU ubah urutan ini supaya domain sendiri yang menang.
+ */
+const alamatSitus = (() => {
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+
+  const dariEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (dariEnv && !dariEnv.includes("localhost")) return dariEnv;
+
+  return "http://localhost:3000";
+})();
+
 export const metadata: Metadata = {
+  metadataBase: new URL(alamatSitus),
   title: "Angkutin — Barang pindahan, diambil sendiri",
   description:
     "Marketplace barang bekas hyper-local untuk yang sedang pindahan. Tanpa daftar akun, diambil sendiri, bisa gratis.",

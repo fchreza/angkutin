@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import type { Metadata } from "next";
+import { db } from "@/db";
+import { listings } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { ambilDetail } from "@/lib/listing-query";
 import { MediaCarousel } from "@/components/detail/media-carousel";
 import { DetailActions } from "@/components/detail/detail-actions";
@@ -20,13 +24,50 @@ export async function generateMetadata({
   if (!/^[0-9a-f-]{36}$/i.test(id)) return { title: "Barang tidak ditemukan" };
   const d = await ambilDetail(id);
   if (!d) return { title: "Barang tidak ditemukan" };
+
+  const judul = `${d.title} — Angkutin`;
+  const deskripsi = d.description.slice(0, 150);
+
+  /**
+   * Kartu link memakai endpoint /listing/:id/og, BUKAN foto aslinya.
+   *
+   * Foto asli berformat WebP dan boleh sampai 500 KB; WhatsApp menolak di
+   * atas ~300 KB dan sering gagal merender WebP, sehingga link yang dibagikan
+   * muncul tanpa gambar. Endpoint itu menyajikannya ulang sebagai JPEG
+   * 1200x630 yang sudah dikecilkan.
+   *
+   * CADANGAN WAJIB: kalau listing tidak punya foto, pakai gambar bawaan situs.
+   * Menulis `undefined` di sini BUKAN "pakai bawaan" — Next menafsirkannya
+   * sebagai "tidak ada og:image", dan gambar bawaan dari layout ikut terhapus.
+   * Akibatnya listing tanpa foto tampil tanpa gambar sama sekali di WhatsApp.
+   */
+  const ogImage = d.images.length > 0 ? `/listing/${id}/og` : "/brand/og.png";
+
   return {
-    title: `${d.title} — Angkutin`,
-    description: d.description.slice(0, 150),
+    title: judul,
+    description: deskripsi,
+    alternates: { canonical: `/listing/${id}` },
     openGraph: {
       title: d.title,
-      description: d.description.slice(0, 150),
-      images: d.images.length > 0 ? [d.images[0].image_url] : undefined,
+      description: deskripsi,
+      url: `/listing/${id}`,
+      type: "website",
+      locale: "id_ID",
+      siteName: "Angkutin",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: d.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: d.title,
+      description: deskripsi,
+      images: [ogImage],
     },
   };
 }
@@ -47,6 +88,31 @@ export default async function DetailPage({
 
   const d = await ambilDetail(id);
   if (!d) notFound();
+
+  /**
+   * Catat tampilan (KPI view -> CTR).
+   *
+   * KENAPA DI SINI, BUKAN DI API ROUTE:
+   * Halaman ini membaca database langsung, sedangkan `GET /api/v1/listings/:id`
+   * yang punya kode penghitung tidak pernah dipanggil siapa pun — jadi
+   * "Dilihat" selalu 0 dan CTR di dashboard selalu 0% (padahal ada label
+   * target 35%). Penghitungnya harus berada di jalur yang benar-benar
+   * dilewati pembaca.
+   *
+   * `after()` menjalankan ini SETELAH respons terkirim, jadi pembaca tidak
+   * menunggu satu tulis database. Kalau penulisannya gagal, halaman tetap
+   * tampil — statistik tidak boleh menjatuhkan halaman publik.
+   */
+  after(async () => {
+    try {
+      await db
+        .update(listings)
+        .set({ viewCount: sql`${listings.viewCount} + 1` })
+        .where(eq(listings.id, id));
+    } catch (e) {
+      console.error("[view count] gagal:", e);
+    }
+  });
 
   const sudahDiambil = d.status === "TAKEN";
 

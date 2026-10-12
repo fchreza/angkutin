@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
 import { and, asc, desc, eq, ilike, or, sql, gte } from "drizzle-orm";
@@ -155,7 +156,20 @@ export async function ambilFeed(f: FilterFeed): Promise<{
   };
 }
 
-export async function ambilDetail(id: string) {
+/**
+ * Detail barang untuk halaman publik.
+ *
+ * DIBUNGKUS `cache()` REACT — bukan sekadar optimasi.
+ * `generateMetadata` dan komponen halaman sama-sama memanggil fungsi ini untuk
+ * id yang sama dalam satu permintaan. Tanpa cache, setiap buka halaman detail
+ * menjalankan dua kali query detail + dua kali query foto, padahal hasilnya
+ * identik. `cache()` membuat panggilan kedua dalam permintaan yang sama
+ * memakai hasil yang pertama.
+ *
+ * Catatan: ini cache PER-PERMINTAAN, bukan cache lintas pengguna — jadi data
+ * yang baru diubah tetap langsung terlihat.
+ */
+export const ambilDetail = cache(async (id: string) => {
   const [row] = await db
     .select({
       id: listings.id,
@@ -203,4 +217,4 @@ export async function ambilDetail(id: string) {
     deadline_date: String(row.deadline_date).slice(0, 10),
     images: foto,
   };
-}
+});
