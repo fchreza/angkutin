@@ -3,13 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/shared/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { TombolSalin } from "@/components/shared/tombol-salin";
 import { useToast } from "@/components/shared/toast";
-import {
-  IconCopy,
-  IconCheck,
-  IconWhatsApp,
-  IconTrash,
-} from "@/components/shared/icons";
+import { IconWhatsApp, IconTrash } from "@/components/shared/icons";
 import { cn } from "@/lib/cn";
 
 /** Kotak tautan rahasia + tombol salin & kirim ke WA sendiri (Layar 4). */
@@ -21,24 +17,6 @@ export function SecretLinkBox({
   sellerWhatsapp: string;
 }) {
   const { tampilkan } = useToast();
-  const [tersalin, setTersalin] = useState(false);
-
-  const salin = async () => {
-    try {
-      await navigator.clipboard.writeText(manageUrl);
-    } catch {
-      // Fallback untuk browser tanpa clipboard API (mis. HTTP non-secure)
-      const ta = document.createElement("textarea");
-      ta.value = manageUrl;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    }
-    setTersalin(true);
-    tampilkan("Tautan pengelolaan disalin.");
-    setTimeout(() => setTersalin(false), 2200);
-  };
 
   const kirimWA = () => {
     const pesan =
@@ -70,16 +48,15 @@ export function SecretLinkBox({
           aria-label="Tautan pengelolaan"
           className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-[11.5px] text-ink-secondary focus:border-primary focus:outline-none"
         />
-        <Button
-          type="button"
-          varian={tersalin ? "outline" : "primary"}
-          onClick={() => void salin()}
-          sukses={tersalin}
-          className="shrink-0"
-        >
-          {tersalin ? <IconCheck size={15} /> : <IconCopy size={15} />}
-          {tersalin ? "Tersalin" : "Salin"}
-        </Button>
+        {/*
+          Tombol salin: lebar tetap, hurufnya berganti satu per satu, dan
+          centangnya menggambar sendiri. Lihat components/shared/tombol-salin.
+        */}
+        <TombolSalin
+          nilai={manageUrl}
+          varian="primary"
+          onTersalin={() => tampilkan("Tautan pengelolaan disalin.")}
+        />
       </div>
 
       <button

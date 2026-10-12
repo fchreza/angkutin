@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { Button } from "@/components/shared/button";
 import { Badge } from "@/components/shared/badge";
 import { AppleBreathe } from "@/components/shared/apple-breathe";
-import { IconCheck, IconAlert, IconEye, IconCopy } from "@/components/shared/icons";
+import { TombolSalin } from "@/components/shared/tombol-salin";
+import { IconCheck, IconAlert, IconEye } from "@/components/shared/icons";
 import { formatRupiah, formatTanggalID } from "@/lib/format";
 import { LABEL_KONDISI } from "@/lib/urgency";
 import { useToast } from "@/components/shared/toast";
@@ -74,24 +74,6 @@ export function SuksesPasang({
   sedangUlang: boolean;
 }) {
   const { tampilkan } = useToast();
-  const [tersalin, setTersalin] = useState(false);
-
-  const salin = async () => {
-    try {
-      await navigator.clipboard.writeText(manageUrl);
-    } catch {
-      // Fallback untuk browser tanpa Clipboard API (mis. HTTP non-secure)
-      const ta = document.createElement("textarea");
-      ta.value = manageUrl;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    }
-    setTersalin(true);
-    tampilkan("Tautan pengelolaan disalin.");
-    setTimeout(() => setTersalin(false), 2200);
-  };
 
   return (
     <div className="mx-auto max-w-[620px] space-y-4">
@@ -207,15 +189,13 @@ export function SuksesPasang({
             aria-label="Tautan pengelolaan"
             className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-[11.5px] text-ink-secondary focus:border-primary focus:outline-none"
           />
-          <Button
-            varian={tersalin ? "outline" : "primary"}
-            onClick={() => void salin()}
-            sukses={tersalin}
-            className="shrink-0"
-          >
-            {tersalin ? <IconCheck size={15} /> : <IconCopy size={15} />}
-            {tersalin ? "Tersalin" : "Salin"}
-          </Button>
+          {/* Lebar tetap + huruf berganti + centang menggambar sendiri.
+              Lihat components/shared/tombol-salin. */}
+          <TombolSalin
+            nilai={manageUrl}
+            varian="primary"
+            onTersalin={() => tampilkan("Tautan pengelolaan disalin.")}
+          />
         </div>
 
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">

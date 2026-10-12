@@ -224,6 +224,73 @@ body {
   }
 }
 
+/* === Tombol salin: huruf berganti + centang menggambar ===
+ *
+ * Referensi: uiarc.dev/components/copy-button. Semuanya CSS murni — tidak ada
+ * paket animasi.
+ *
+ * HURUF NAIK DARI BLUR. Yang baru masuk naik 4px dari blur; yang lama naik
+ * sedikit lebih jauh dan lebih cepat supaya tidak terasa menunggu. Karena
+ * hanya huruf yang benar-benar berganti yang dianimasikan (lihat pecahHuruf),
+ * "Salin" -> "Tersalin" terbaca sebagai kata yang berubah, bukan dua kata yang
+ * saling menggantikan.
+ *
+ * Delay bertingkat lewat --d, diberikan per huruf dari komponen. Batasnya
+ * 120ms supaya kata panjang tidak terasa lambat.
+ */
+@keyframes glifMasuk {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+    filter: blur(4px);
+  }
+}
+
+.glif-salin {
+  animation: glifMasuk 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Ikon berganti dengan mengecil ke dalam blur; yang baru tumbuh dari blur. */
+@keyframes ikonSalinMasuk {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+    filter: blur(4px);
+  }
+}
+
+.ikon-salin {
+  animation: ikonSalinMasuk 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Centang menggambar dirinya sendiri. pathLength=1 menormalkan panjang garis
+   jadi 1, jadi animasinya tidak perlu tahu panjang sebenarnya. */
+@keyframes centangGambar {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.centang-salin {
+  stroke-dasharray: 1;
+  animation: centangGambar 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glif-salin,
+  .ikon-salin,
+  .centang-salin {
+    animation: none;
+  }
+  .centang-salin {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* === Dropdown: nilai bergulir + menu masuk ===
  *
  * Dua animasi kecil untuk komponen select (referensi:
