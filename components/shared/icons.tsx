@@ -55,6 +55,14 @@ export const IconPlus = ({ className, size = 18 }: P) => (
   </svg>
 );
 
+/** Awan dengan panah naik — dipakai di area unggah foto. */
+export const IconUpload = ({ className, size = 18 }: P) => (
+  <svg {...base(size)} className={className} aria-hidden>
+    <path d="M12 16V6M8 10l4-4 4 4" />
+    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+  </svg>
+);
+
 export const IconX = ({ className, size = 18 }: P) => (
   <svg {...base(size)} className={className} aria-hidden>
     <path d="M18 6 6 18M6 6l12 12" />

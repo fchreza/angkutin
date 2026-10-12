@@ -224,6 +224,34 @@ body {
   }
 }
 
+/* === Baris yang masuk bertahap ===
+ *
+ * Dipakai di area unggah foto (referensi: boardui.com/components/file-upload).
+ * Ikon, teks utama, lalu keterangan kecil masuk BERURUTAN dengan naik dari
+ * blur halus — bukan muncul serentak. Urutannya dibaca sebagai satu gerakan
+ * yang mengarahkan mata dari atas ke bawah.
+ *
+ * Delay per baris diberikan dari komponen lewat --d.
+ */
+@keyframes barisMuncul {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(3px);
+  }
+}
+
+.baris-muncul {
+  animation: barisMuncul 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .baris-muncul {
+    animation: none;
+  }
+}
+
 /* === Tombol salin: huruf berganti + centang menggambar ===
  *
  * Referensi: uiarc.dev/components/copy-button. Semuanya CSS murni — tidak ada
