@@ -16,37 +16,23 @@ import type { KartuListing } from "@/lib/listing-query";
  * - Judul maksimal 2 baris (clamp-2).
  * - State TAKEN: overlay putih 75% + badge monokrom "SUDAH DIAMBIL".
  *
- * TEKNIK YANG DIAMBIL DARI DUA REFERENSI (uiarc/card + spectrum beam-card):
+ * TEKNIK YANG DIAMBIL DARI uiarc/card:
  *
- * 1. Beam tepi yang menyala saat ditunjuk (beam-card).
- *    Referensinya memakai paket border-beam (99 KB). Di sini beam-nya gradien
- *    conic yang berjalan — lihat .kartu-beam di globals.css. Nol paket baru.
- *
- *    PENTING: beam TIDAK menyala terus di semua kartu. Katalog bisa memuat
- *    puluhan kartu sekaligus; dua puluh empat cincin berputar bersamaan itu
- *    berisik dan membuang baterai. Beam menyala saat kartu ditunjuk atau
- *    difokuskan keyboard — KECUALI kartu yang tenggatnya hari ini, yang
- *    menyala sendiri karena di situ beam-nya membawa arti, bukan hiasan.
- *
- * 2. `min-width: 0` + `isolation: isolate` pada kartu (uiarc/card).
+ * 1. `min-width: 0` + `isolation: isolate` pada kartu.
  *    Tanpa min-width 0, satu judul panjang bisa melebarkan sel grid dan
  *    menggeser seluruh kolom.
  *
- * 3. `text-wrap: balance` pada judul (uiarc/card), supaya judul dua baris
- *    tidak menyisakan satu kata menggantung di baris kedua.
+ * 2. `text-wrap: balance` pada judul, supaya judul dua baris tidak
+ *    menyisakan satu kata menggantung di baris kedua.
  *
- * 4. Seluruh kartu tetap SATU tautan. Referensinya menjadikan judul sebagai
+ * 3. Seluruh kartu tetap SATU tautan. Referensinya menjadikan judul sebagai
  *    tombol pemicu dialog dengan lapisan `::after` yang menutupi kartu; pola
  *    itu berguna untuk quick-look, tapi di sini seluruh kartu memang sudah
  *    sebuah <Link> — jadi tidak ada lapisan tambahan yang perlu diakali.
  *
- * STRUKTUR LAPISAN (penting):
- * Kartu memakai padding 2px. Beam dan pendar mengisi seluruh bidang itu,
- * lalu `.kartu-isi` (berlatar penuh, overflow hidden) menutupi bagian
- * tengahnya — jadi yang tersisa hanya bingkai 2px di keliling kartu. Cara ini
- * dipakai karena versi ber-`mask-composite` menghapus elemennya TOTAL di
- * browser ini (dibuktikan dengan uji piksel: 0 piksel hijau, lalu 87.189
- * piksel begitu mask dilepas).
+ * CATATAN: beam tepi yang pernah ditambahkan di sini sudah DIHAPUS atas
+ * permintaan pemilik produk — efeknya terlalu ramai di katalog. Urgensi
+ * tetap ditandai badge tenggat seperti sebelumnya.
  */
 export function ListingCard({ item }: { item: KartuListing }) {
   const urgency = getUrgency(item.deadline_date);
@@ -60,18 +46,12 @@ export function ListingCard({ item }: { item: KartuListing }) {
       href={`/listing/${item.id}`}
       data-mendesak={beamOtomatis ? "true" : undefined}
       className={cn(
-        "kartu press-card group flex flex-col rounded-md border border-line bg-surface p-[2px]",
+        "kartu press-card group flex flex-col overflow-hidden rounded-md border border-line bg-surface",
         "shadow-card hover:border-primary/30 hover:shadow-[0_6px_20px_rgba(17,24,39,0.10)]",
       )}
     >
-      {/* Beam + pendar. Murni dekoratif -> aria-hidden. Berada di belakang
-          .kartu-isi, sehingga hanya tepinya yang terlihat. */}
-      <span className="kartu-pendar" aria-hidden />
-      <span className="kartu-beam" aria-hidden />
-
-      {/* Isi kartu: berlatar penuh + overflow hidden, jadi ia yang membentuk
-          bentuk kartu dan menutupi bagian tengah beam. */}
-      <div className="kartu-isi flex flex-1 flex-col overflow-hidden rounded-[4px] bg-surface">
+      {/* Isi kartu. */}
+      <div className="flex flex-1 flex-col">
         {/* Foto */}
         <div className="relative aspect-square w-full overflow-hidden bg-appbg">
           {item.cover_url ? (
