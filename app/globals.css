@@ -714,48 +714,51 @@ body {
 }
 
 /* --- Beam tepi ---
-   Pendekatan TANPA mask.
+   Pendekatan TANPA mask dan TANPA @property.
 
-   Percobaan pertama memakai `mask-composite: exclude` untuk memotong gradien
-   jadi cincin tipis. Diuji dengan piksel: elemennya hilang TOTAL — bukan hanya
-   bagian tengahnya. Dibuktikan dengan mengganti warnanya jadi magenta pekat
-   dan melepas mask: 87.189 piksel magenta muncul, jadi beam-nya memang
-   tergambar dan mask-lah yang menghapusnya.
+   RIWAYAT (dua kegagalan, keduanya ketemu lewat pengukuran, bukan mata):
+   1. `mask-composite: exclude` untuk memotong gradien jadi cincin ternyata
+      menghapus elemennya TOTAL di renderer ini. Dibuktikan dengan mengganti
+      warnanya jadi magenta dan melepas mask: 87.189 piksel magenta muncul.
+   2. `@property --beam-sudut` + `@keyframes` yang menganimasikan sudutnya.
+      Nilainya MEMANG berinterpolasi (dibaca: 216deg -> 318deg -> 60deg ->
+      165deg) tapi gradien yang DILUKIS tidak pernah berubah: `from 0deg`
+      selamanya. Diuji dengan membaca `backgroundImage` enam kali selama 1,5
+      detik -> sudut unik = 1. Jadi beam-nya diam di satu posisi, persis
+      seperti yang dilaporkan pengguna.
 
-   Cara yang dipakai sekarang lebih sederhana dan tidak bergantung pada mask:
-   gradien conic penuh diletakkan di belakang isi kartu, dan isi kartu (yang
-   berlatar penuh) menutupi bagian tengahnya secara alami — yang tersisa hanya
-   bingkai 2px di sekeliling. Tidak ada mask, tidak ada @supports.
+   Cara yang dipakai sekarang: elemen ini adalah gradien conic STATIS, lalu
+   SELURUH elemennya diputar dengan `transform: rotate()`. Transform diputar
+   di lapisan komposit (GPU) dan terbukti berjalan, sedangkan animasi custom
+   property tidak.
 
-   Struktur: .kartu punya padding 2px; .kartu-isi membawa overflow-hidden dan
-   latar, sehingga beam tidak pernah terpotong oleh overflow kartu. */
-@property --beam-sudut {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
+   Kenapa ini tidak menimbulkan sudut kosong: conic-gradient menutup 360deg
+   penuh dan arc-nya cuma ~24deg, jadi tidak ada celah yang bisa muncul saat
+   diputar.
 
+   Struktur: .kartu punya padding 2px; .kartu-isi (berlatar penuh) menutupi
+   bagian tengah beam, sehingga yang tersisa hanya bingkai 2px di keliling. */
 .kartu-beam {
   position: absolute;
   inset: 0;
   z-index: 0;
   border-radius: inherit;
   background: conic-gradient(
-    from var(--beam-sudut, 0deg),
-    transparent 0deg,
-    transparent 286deg,
-    rgb(var(--warna-beam, var(--w-primary))) 332deg,
-    rgb(var(--warna-beam, var(--w-primary))) 350deg,
+    rgb(var(--warna-beam, var(--w-primary))) 0deg,
+    rgb(var(--warna-beam, var(--w-primary))) 22deg,
+    transparent 22deg,
     transparent 360deg
   );
   opacity: 0;
   transition: opacity 0.35s ease;
   pointer-events: none;
+  /* Titik putar di tengah kartu. */
+  transform-origin: 50% 50%;
 }
 
 @keyframes beamPutar {
   to {
-    --beam-sudut: 360deg;
+    transform: rotate(360deg);
   }
 }
 
@@ -815,17 +818,16 @@ body {
   z-index: 1;
   border-radius: inherit;
   background: conic-gradient(
-    from var(--beam-sudut, 0deg),
-    transparent 0deg,
-    transparent 286deg,
-    rgb(var(--warna-beam, var(--w-primary))) 332deg,
-    rgb(var(--warna-beam, var(--w-primary))) 350deg,
+    rgb(var(--warna-beam, var(--w-primary))) 0deg,
+    rgb(var(--warna-beam, var(--w-primary))) 22deg,
+    transparent 22deg,
     transparent 360deg
   );
   filter: blur(6px);
   opacity: 0;
   transition: opacity 0.35s ease;
   pointer-events: none;
+  transform-origin: 50% 50%;
 }
 
 .kartu:hover .kartu-pendar,
