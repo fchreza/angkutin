@@ -107,8 +107,10 @@ export function MobileAppBar() {
         </Link>
 
         {/* Di mobile, tema tetap bisa diganti — jangan sembunyikan kontrol
-            yang memengaruhi seluruh tampilan. */}
-        <div className="flex items-center gap-1">
+            yang memengaruhi seluruh tampilan. Celah gap-2 (8px) dipakai agar
+            pill tema tidak menempel pada tautan "Tentang"; pada 375px masih
+            tersisa ruang, dan tidak ada overflow horizontal. */}
+        <div className="flex items-center gap-2">
           <Link
             href="/tentang"
             aria-current={path === "/tentang" ? "page" : undefined}
