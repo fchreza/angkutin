@@ -1,5 +1,6 @@
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { Badge } from "@/components/shared/badge";
+import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { IconPin, IconClock } from "@/components/shared/icons";
 import { formatRupiah } from "@/lib/format";
 import { getUrgency, labelTenggat } from "@/lib/urgency";
@@ -34,6 +35,31 @@ import type { KartuListing } from "@/lib/listing-query";
  * permintaan pemilik produk — efeknya terlalu ramai di katalog. Urgensi
  * tetap ditandai badge tenggat seperti sebelumnya.
  */
+/**
+ * Lapisan yang muncul saat kartu ini sedang dibuka.
+ *
+ * `useLinkStatus` memberi tahu apakah tautan induknya sedang menavigasi.
+ * Karena dipanggil di dalam komponen anak (bukan di kartu itu sendiri), ia
+ * membaca status tautan terdekat di atasnya — jadi tidak perlu meneruskan
+ * prop apa pun.
+ *
+ * Hanya dirender saat `pending`, jadi tidak ada elemen tambahan di kondisi
+ * diam. Ini yang membuat kartu yang ditekan langsung terasa "merespons",
+ * bukan menunggu sampai halaman berikutnya siap.
+ */
+function SedangDibuka() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span
+      className="absolute inset-0 z-10 flex items-center justify-center bg-surface/70 backdrop-blur-[1px]"
+      aria-hidden
+    >
+      <AppleBreathe ukuran={34} />
+    </span>
+  );
+}
+
 export function ListingCard({ item }: { item: KartuListing }) {
   const urgency = getUrgency(item.deadline_date);
   const ambil = item.status === "TAKEN";
@@ -50,6 +76,9 @@ export function ListingCard({ item }: { item: KartuListing }) {
         "shadow-card hover:border-primary/30 hover:shadow-[0_6px_20px_rgba(17,24,39,0.10)]",
       )}
     >
+      {/* Lapisan "sedang dibuka" — hanya ada saat kartu ini ditekan. */}
+      <SedangDibuka />
+
       {/* Isi kartu. */}
       <div className="flex flex-1 flex-col">
         {/* Foto */}

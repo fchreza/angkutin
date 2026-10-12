@@ -701,6 +701,36 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* === Loader "napas" (apple-breathe) ===
+   Konsep dari amicro.vercel.app/loaders/apple-breathe, ditulis ulang sebagai
+   CSS murni (aslinya memakai framer-motion + animasi JS).
+
+   Tiap titik mengembang 1 -> 1,75 sambil bergerak radial keluar sejauh --dx/--dy,
+   lalu kembali. Semua titik memakai keyframes yang sama, jadi geraknya
+   serempak dan terbaca sebagai satu lingkaran yang bernapas.
+
+   Hanya transform yang dianimasikan (skala + geser) — dikerjakan kompositur,
+   tidak memicu tata letak. `translate` dan `scale` dipakai sebagai properti
+   terpisah, bukan `transform`, supaya keduanya tidak saling menimpa. */
+@keyframes napasTitik {
+  0%,
+  100% {
+    scale: 1;
+    translate: 0 0;
+    opacity: 0.75;
+  }
+  50% {
+    scale: 1.75;
+    translate: var(--dx, 0) var(--dy, 0);
+    opacity: 1;
+  }
+}
+
+.napas-titik {
+  animation: napasTitik 3.6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 /* Baris daftar yang masuk berurutan (stagger).
    Delay diatur lewat style inline --d. */
 @keyframes listIn {

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { Button } from "@/components/shared/button";
 import { Badge } from "@/components/shared/badge";
+import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { IconCheck, IconAlert, IconEye, IconCopy } from "@/components/shared/icons";
 import { formatRupiah, formatTanggalID } from "@/lib/format";
 import { LABEL_KONDISI } from "@/lib/urgency";
@@ -34,6 +35,29 @@ export type RingkasanListing = {
  *      berkas fotonya masih ada di memori karena layar ini bagian dari alur
  *      form, bukan halaman terpisah.
  */
+/**
+ * Isi tautan yang berganti jadi loader saat tautannya sedang dibuka.
+ *
+ * `useLinkStatus` membaca status tautan terdekat di atasnya, jadi umpan
+ * baliknya muncul sejak ditekan — sebelum halaman tujuan siap.
+ */
+function IsiTautan({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
+  const { pending } = useLinkStatus();
+  if (!pending) return <>{children}</>;
+  return (
+    <>
+      <AppleBreathe ukuran={16} />
+      <span className="sr-only">Membuka {label}…</span>
+    </>
+  );
+}
+
 export function SuksesPasang({
   data,
   manageUrl,
@@ -200,13 +224,15 @@ export function SuksesPasang({
             className="sm:flex-1"
           >
             <Button penuh>
-              <IconEye size={15} />
-              Buka Dashboard
+              <IsiTautan label="Dashboard">
+                <IconEye size={15} />
+                Buka Dashboard
+              </IsiTautan>
             </Button>
           </Link>
           <Link href={`/listing/${data.id}`} className="sm:flex-1">
             <Button varian="outline" penuh>
-              Lihat Halaman Publik
+              <IsiTautan label="halaman publik">Lihat Halaman Publik</IsiTautan>
             </Button>
           </Link>
         </div>

@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { IconHome, IconPlus, IconUser } from "@/components/shared/icons";
 import { Spinner } from "@/components/shared/spinner";
+import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { TombolTema } from "@/components/shared/tombol-tema";
 import { cn } from "@/lib/cn";
 
@@ -49,6 +50,45 @@ function NamaBrand({ kelas }: { kelas: string }) {
   );
 }
 
+/**
+ * Isi tautan yang berubah saat tautannya sedang dibuka.
+ *
+ * Dipakai di dalam <Link>: `useLinkStatus` membaca status tautan terdekat di
+ * atasnya, jadi umpan baliknya muncul sejak milidetik pertama ditekan —
+ * sebelum server selesai menyiapkan halaman berikutnya. Ini yang membuat
+ * perpindahan halaman terasa direspons, bukan menggantung.
+ *
+ * Hanya satu dari dua yang dirender, jadi tidak ada elemen menganggur.
+ */
+function IsiTautan({
+  label,
+  ikon,
+  teks,
+}: {
+  label: string;
+  ikon?: React.ReactNode;
+  /** true = tampilkan label teks di samping ikon. */
+  teks?: boolean;
+}) {
+  const { pending } = useLinkStatus();
+
+  if (pending) {
+    return (
+      <>
+        <AppleBreathe ukuran={ikon ? 20 : 16} />
+        {teks && <span className="sr-only">Membuka {label}…</span>}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {ikon}
+      {teks && <span>{label}</span>}
+    </>
+  );
+}
+
 const TAUTAN = [
   { href: "/", label: "Katalog" },
   { href: "/pasang", label: "Pasang Barang" },
@@ -81,7 +121,7 @@ export function TopNav() {
                     : "text-ink-secondary hover:text-ink",
                 )}
               >
-                {t.label}
+                <IsiTautan label={t.label} teks />
               </Link>
             );
           })}
@@ -116,7 +156,7 @@ export function MobileAppBar() {
             aria-current={path === "/tentang" ? "page" : undefined}
             className="press rounded-md px-2.5 py-2 text-[13px] font-medium text-ink-secondary hover:text-ink"
           >
-            Tentang
+            <IsiTautan label="Tentang" teks />
           </Link>
           <TombolTema />
         </div>
@@ -149,20 +189,17 @@ export function MobileTabBar() {
     >
       <div className="flex h-[60px] items-stretch">
         <Link href="/" className={item(path === "/")} aria-current={path === "/" ? "page" : undefined}>
-          {ikon(path === "/", <IconHome size={20} />)}
-          Katalog
+          <IsiTautan label="Katalog" ikon={ikon(path === "/", <IconHome size={20} />)} teks />
         </Link>
         <Link
           href="/pasang"
           className={item(path === "/pasang")}
           aria-current={path === "/pasang" ? "page" : undefined}
         >
-          {ikon(path === "/pasang", <IconPlus size={20} />)}
-          Pasang
+          <IsiTautan label="Pasang" ikon={ikon(path === "/pasang", <IconPlus size={20} />)} teks />
         </Link>
         <Link href="/tentang" className={item(path === "/tentang")} aria-current={path === "/tentang" ? "page" : undefined}>
-          {ikon(path === "/tentang", <IconUser size={20} />)}
-          Tentang
+          <IsiTautan label="Tentang" ikon={ikon(path === "/tentang", <IconUser size={20} />)} teks />
         </Link>
       </div>
     </nav>
@@ -187,8 +224,15 @@ export function FabPasang() {
         sembunyi && "hidden",
       )}
     >
-      <IconPlus size={18} />
-      <span className="text-[14px]">Pasang Barang</span>
+      <IsiTautan
+        label="Pasang Barang"
+        ikon={
+          <>
+            <IconPlus size={18} />
+            <span className="text-[14px]">Pasang Barang</span>
+          </>
+        }
+      />
     </Link>
   );
 }

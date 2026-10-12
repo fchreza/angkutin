@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { FilterPills, type Kategori } from "@/components/feed/filter-pills";
 import { ListingCard } from "@/components/feed/listing-card";
-import { SkeletonGrid, Reveal } from "@/components/shared/skeleton-card";
+import { Reveal } from "@/components/shared/skeleton-card";
+import { MuatHalaman } from "@/components/shared/apple-breathe";
 import { Select } from "@/components/shared/select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/shared/button";
@@ -431,7 +432,17 @@ export function FeedClient({
 
       {/* Konten */}
       {memuat ? (
-        <SkeletonGrid jumlah={8} />
+        /*
+         * Memakai loader "napas", bukan skeleton grid.
+         *
+         * Skeleton grid menjanjikan tata letak: jumlah dan posisi kotaknya
+         * seolah-olah menggambarkan hasil yang akan datang. Padahal filter
+         * bisa menghasilkan 3 kartu atau 0 kartu, jadi skeleton dengan 8
+         * kotak justru membuat tata letak melompat saat data asli tiba —
+         * dan itu lebih terasa mengganggu daripada indikator yang jujur
+         * tidak menjanjikan apa pun.
+         */
+        <MuatHalaman teks="Memuat barang…" />
       ) : galat ? (
         <EmptyState
           judul="Gagal memuat barang"
