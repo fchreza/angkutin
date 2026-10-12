@@ -30,6 +30,14 @@
 
   /* Kanvas & permukaan */
   --w-bg: 247 247 246; /* #F7F7F6 — kanvas off-white hangat */
+
+  /* Dua warna kanvas yang TETAP — sengaja TIDAK ditimpa di `.dark`.
+     Dipakai oleh sapuan eclipse: lapisan sapuan harus memakai warna tema
+     TUJUAN, dan saat lapisan itu disiapkan kelas tema lama masih terpasang.
+     Kalau membaca `--w-bg` (yang berbeda per mode), yang terbaca selalu warna
+     halaman yang sedang ditinggalkan. */
+  --kanvas-terang: 247 247 246;
+  --kanvas-gelap: 24 24 23;
   --w-surface: 255 255 255; /* kartu */
   --w-surface2: 241 241 240; /* kartu tenggelam, baris tabel */
 
@@ -458,39 +466,99 @@ body {
    (rotate 30deg masuk mode terang, -30deg masuk mode gelap). Keduanya berputar
    ke arah yang sama sehingga terbaca sebagai satu rotasi, bukan dua pudaran.
    Dipicu lewat perubahan `key` di React, bukan class yang dipasang sekali. */
-@keyframes ikonTemaMasuk {
+/* DUA animasi terpisah, bukan satu.
+   Referensinya mencatat alasannya: putaran dan skala memakai pegas yang
+   MELEWATI nilai akhir (overshoot) supaya terasa hidup, sedangkan opacity dan
+   blur harus berhenti tepat di nilai akhir. Kalau digabung dalam satu animasi
+   ber-overshoot, blur ikut melewati nol — dan `blur()` negatif bukan nilai
+   yang sah. Jadi: transform pakai easing memantul, opacity+blur pakai easing
+   biasa yang lebih cepat.
+
+   Sudut masuknya mengikuti arah: masuk mode gelap berputar searah jarum jam
+   (dari -30 derajat), keluar dari mode gelap berlawanan. Dua ikon yang
+   berputar searah terbaca sebagai SATU gerakan; kalau arahnya sama terus,
+   pergantiannya terasa seperti dua benda berbeda yang muncul bergantian. */
+@keyframes ikonTemaPutar {
+  from {
+    transform: scale(0.7) rotate(var(--ikon-sudut, 30deg));
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes ikonTemaFokus {
   from {
     opacity: 0;
-    transform: scale(0.7) rotate(30deg);
     filter: blur(2px);
   }
   to {
     opacity: 1;
-    transform: scale(1) rotate(0deg);
     filter: blur(0);
   }
 }
 
+/* Kebalikannya: dari tegak menuju sudut ikon. Dipakai ikon yang KELUAR.
+   Karena tiap ikon punya sudutnya sendiri, dan arah putarannya sama dengan
+   ikon yang masuk, keduanya terbaca sebagai satu gerakan. */
+@keyframes ikonTemaPutarKeluar {
+  from {
+    transform: scale(1) rotate(0deg);
+  }
+  to {
+    transform: scale(0.7) rotate(var(--ikon-sudut, 30deg));
+  }
+}
+
+@keyframes ikonTemaFokusKeluar {
+  from {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
 .ikon-tema-masuk {
-  animation: ikonTemaMasuk 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation:
+    ikonTemaPutar 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    ikonTemaFokus 0.16s ease-out both;
 }
 
-/* Petunjuk arah sapuan: saat mode gelap, ikon digeser 2px ke kiri — sama
-   seperti varian eclipse di referensi. Hanya berlaku setelah halaman menetap,
-   supaya pergantian tema saat hidrasi tidak menggeser apa pun. */
-.ikon-tema {
-  transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+.ikon-tema-keluar {
+  animation:
+    ikonTemaPutarKeluar 0.24s ease-in both,
+    ikonTemaFokusKeluar 0.16s ease-in both;
 }
 
-[role="radio"][data-gelap="true"] .ikon-tema {
+/* Petunjuk arah sapuan (varian eclipse): saat mode gelap, ikon yang terpilih
+   digeser 2px ke kiri — searah dengan sapuan halaman yang bergerak horizontal.
+
+   DUA HAL YANG MUDAH SALAH DI SINI:
+   1. Pergeseran hanya boleh berlaku pada tombol yang SEDANG TERPILIH
+      (`[aria-checked="true"]`). Kalau tidak, ikon bulan selalu tergeser 2px
+      — bahkan saat pilihan terang sedang aktif — dan terlihat tidak sejajar
+      dengan ikon lain, permanen.
+   2. `data-gelap` dibaca dari MODE YANG SEDANG TAMPIL, bukan dari tombol
+      "Gelap". Jadi saat "ikut sistem" kebetulan sedang gelap, arahnya benar. */
+[data-gelap="true"] [role="radio"][aria-checked="true"] .ikon-bungkus {
   transform: translateX(-2px);
 }
 
+/* Transisi pergeseran hanya aktif setelah halaman menetap. Tanpa penjaga ini,
+   tema yang tiba saat hidrasi akan menggeser ikon di depan mata pengguna. */
+.menetap .ikon-bungkus {
+  transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ikon-tema-masuk {
+  .ikon-tema-masuk,
+  .ikon-tema-keluar {
     animation: none;
   }
-  .ikon-tema {
+  .menetap .ikon-bungkus {
     transition: none;
   }
 }
