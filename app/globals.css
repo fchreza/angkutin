@@ -224,6 +224,95 @@ body {
   }
 }
 
+/* === Dropdown: nilai bergulir + menu masuk ===
+ *
+ * Dua animasi kecil untuk komponen select (referensi:
+ * uiarc.dev/components/select). Keduanya CSS murni.
+ *
+ * 1. NILAI BERGULIR mengikuti arah daftar. Memilih opsi yang lebih bawah
+ *    membuat teks baru masuk dari bawah; memilih yang lebih atas membuatnya
+ *    masuk dari atas. Arahnya datang dari data-arah, bukan ditebak durasinya.
+ *
+ * 2. MENU MASUK dengan sedikit mengecil dan memudar. Transform-origin-nya
+ *    diberikan Radix lewat --radix-select-content-transform-origin, jadi
+ *    menu selalu tumbuh dari tepi pemicunya, bukan dari tengahnya.
+ *
+ * Hanya opacity dan transform yang dianimasikan.
+ */
+@keyframes nilaiDariBawah {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+    filter: blur(4px);
+  }
+}
+
+@keyframes nilaiDariAtas {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35em);
+    filter: blur(4px);
+  }
+}
+
+.nilai-pilihan {
+  animation-duration: 0.24s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.nilai-pilihan[data-arah="bawah"] {
+  animation-name: nilaiDariBawah;
+}
+
+.nilai-pilihan[data-arah="atas"] {
+  animation-name: nilaiDariAtas;
+}
+
+@keyframes menuPilihanMasuk {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+
+@keyframes menuPilihanKeluar {
+  to {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.98);
+  }
+}
+
+/* Radix menahan animasinya sampai menu selesai diposisikan, jadi menu tidak
+   pernah terlihat "melompat" ke tempatnya. */
+.menu-pilihan {
+  transform-origin: var(--radix-select-content-transform-origin);
+  animation: menuPilihanMasuk 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.menu-pilihan[data-side="top"] {
+  animation-name: menuPilihanMasukAtas;
+}
+
+.menu-pilihan[data-state="closed"] {
+  animation: menuPilihanKeluar 0.12s ease-in both;
+}
+
+@keyframes menuPilihanMasukAtas {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nilai-pilihan,
+  .menu-pilihan,
+  .menu-pilihan[data-state="closed"] {
+    animation: none;
+  }
+}
+
 /* === Matikan transisi selama pergantian tema ===
  *
  * Banyak komponen punya `transition-colors` untuk hover, dan `.press`
