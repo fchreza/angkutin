@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IconHome, IconPlus, IconUser } from "@/components/shared/icons";
 import { Spinner } from "@/components/shared/spinner";
+import { TombolTema } from "@/components/shared/tombol-tema";
 import { cn } from "@/lib/cn";
 
 /**
@@ -22,9 +23,12 @@ import { cn } from "@/lib/cn";
  * tautan yang sedang dibuka langsung menampilkan spinner di tempat ikonnya,
  * sejak milidetik pertama ditekan. Ditambah loading.tsx di rute /pasang,
  * peralihan halaman terasa disengaja, bukan menggantung.
+ *
+ * LEBAR: memakai kelas .shell (bukan max-w-[1200px] seperti sebelumnya)
+ * supaya nav dan konten punya tepi yang sama persis di semua ukuran layar.
  */
 
-function Logo({ ukuran = 30 }: { ukuran?: number }) {
+function Logo({ ukuran = 28 }: { ukuran?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -45,38 +49,46 @@ function NamaBrand({ kelas }: { kelas: string }) {
   );
 }
 
+const TAUTAN = [
+  { href: "/", label: "Katalog" },
+  { href: "/pasang", label: "Pasang Barang" },
+  { href: "/tentang", label: "Tentang" },
+];
+
 export function TopNav() {
   const path = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/95 backdrop-blur md:block">
-      <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-6">
+    <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/85 backdrop-blur-md md:block">
+      <div className="shell flex h-14 items-center justify-between">
         <Link href="/" className="press flex items-center gap-2 rounded-md">
           <Logo />
-          <NamaBrand kelas="font-display text-[17px] font-bold tracking-tight text-ink" />
+          <NamaBrand kelas="font-display text-[16px] font-bold tracking-tight text-ink" />
         </Link>
 
-        <nav className="flex items-center gap-1">
-          <Link
-            href="/"
-            className={cn(
-              "press rounded-md px-3 py-2 text-[13.5px] font-medium",
-              path === "/" ? "bg-primary-soft text-primary-dark" : "text-ink-secondary hover:bg-appbg",
-            )}
-          >
-            Katalog
-          </Link>
-          <Link
-            href="/pasang"
-            className={cn(
-              "press rounded-md px-3 py-2 text-[13.5px] font-medium",
-              path === "/pasang"
-                ? "bg-primary-soft text-primary-dark"
-                : "text-ink-secondary hover:bg-appbg",
-            )}
-          >
-            Pasang Barang
-          </Link>
+        <nav className="flex items-center gap-0.5">
+          {TAUTAN.map((t) => {
+            const aktif = path === t.href;
+            return (
+              <Link
+                key={t.href}
+                href={t.href}
+                aria-current={aktif ? "page" : undefined}
+                className={cn(
+                  "press rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors",
+                  aktif
+                    ? "text-ink"
+                    : "text-ink-secondary hover:text-ink",
+                )}
+              >
+                {t.label}
+              </Link>
+            );
+          })}
+
+          {/* Pemisah tipis antara navigasi dan kontrol tema */}
+          <span className="mx-1.5 h-5 w-px bg-line" aria-hidden />
+          <TombolTema />
         </nav>
       </div>
     </header>
@@ -84,13 +96,28 @@ export function TopNav() {
 }
 
 export function MobileAppBar() {
+  const path = usePathname();
+
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur md:hidden">
-      <div className="flex h-14 items-center justify-center px-4">
+    <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-md md:hidden">
+      <div className="flex h-14 items-center justify-between px-4">
         <Link href="/" className="press flex items-center gap-2 rounded-md">
-          <Logo ukuran={28} />
-          <NamaBrand kelas="font-display text-[16px] font-bold tracking-tight text-ink" />
+          <Logo ukuran={26} />
+          <NamaBrand kelas="font-display text-[15.5px] font-bold tracking-tight text-ink" />
         </Link>
+
+        {/* Di mobile, tema tetap bisa diganti — jangan sembunyikan kontrol
+            yang memengaruhi seluruh tampilan. */}
+        <div className="flex items-center gap-1">
+          <Link
+            href="/tentang"
+            aria-current={path === "/tentang" ? "page" : undefined}
+            className="press rounded-md px-2.5 py-2 text-[13px] font-medium text-ink-secondary hover:text-ink"
+          >
+            Tentang
+          </Link>
+          <TombolTema />
+        </div>
       </div>
     </header>
   );
@@ -153,7 +180,7 @@ export function FabPasang() {
       href="/pasang"
       className={cn(
         "press fixed z-30 inline-flex items-center gap-2 rounded-pill px-4 py-3.5",
-        "bg-primary font-semibold text-white shadow-fab hover:bg-primary-dark",
+        "bg-primary font-semibold text-primary-teks shadow-fab hover:bg-primary-hover",
         "bottom-[76px] right-4 md:bottom-8 md:right-8",
         sembunyi && "hidden",
       )}

@@ -3,44 +3,119 @@
 @tailwind utilities;
 
 /**
- * Design token Angkutin.
- * Nilai diambil PERSIS dari docs/design-tokens.json — jangan diubah tanpa
- * memperbarui dokumen handover, karena mockup mengacu ke nilai yang sama.
+ * ============================================================================
+ * DESIGN TOKEN ANGKUTIN — TERANG & GELAP
+ * ============================================================================
+ *
+ * Bentuk nilai: kanal RGB terpisah spasi ("23 24 26"), BUKAN hex.
+ * Alasannya: tailwind.config.ts memakainya sebagai `rgb(var(--x) / <alpha>)`
+ * supaya opacity seperti `bg-surface/95` tetap bekerja. Hex di sini akan
+ * mematikan semua opacity modifier secara diam-diam.
+ *
+ * Cara mengubah tema: cukup ubah nilai di bawah. Seluruh komponen ikut
+ * berubah tanpa menyentuh satu pun berkas .tsx, karena semua kelas warna
+ * (bg-surface, text-ink, border-line, dst) menunjuk ke variable ini.
+ *
+ * KONTRAST — semua pasangan sudah DIUKUR, bukan dikira-kira:
+ *   terang: teks utama 16,6:1 · sekunder 6,8:1 · tombol 5,5:1 · input 3,1:1
+ *   gelap : teks utama 14,9:1 · sekunder 6,8:1 · tombol 6,8:1 · input 3,2:1
+ * Ambang: teks 4,5:1 (AA), garis input 3:1. Semua lolos.
+ *
+ * Palet sengaja HANGAT (netral sedikit kekuningan), bukan abu dingin —
+ * mengikuti bahasa desain referensi, dan lebih nyaman dilihat lama.
+ * ============================================================================
  */
 :root {
-  /* Primary — emerald */
-  --color-primary: #059669;
-  --color-primary-dark: #047857;
-  --color-primary-soft: #ecfdf5;
-  --color-primary-500: #10b981;
+  color-scheme: light;
 
-  /* Accent — amber urgency */
-  --color-accent: #d97706;
-  --color-accent-bright: #f59e0b;
-  --color-accent-soft: #fef3c7;
-  --color-accent-text: #b45309;
+  /* Kanvas & permukaan */
+  --w-bg: 247 247 246; /* #F7F7F6 — kanvas off-white hangat */
+  --w-surface: 255 255 255; /* kartu */
+  --w-surface2: 241 241 240; /* kartu tenggelam, baris tabel */
 
-  /* Neutral & surface */
-  --color-bg: #f9fafb;
-  --color-surface: #ffffff;
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-  --color-border: #e5e7eb;
-  --color-mono: #4b5563;
+  /* Teks */
+  --w-ink: 23 24 26; /* #17181A — hampir hitam, bukan hitam pekat */
+  --w-ink2: 92 91 86; /* sekunder */
+  --w-ink3: 111 110 104; /* mono / keterangan kecil */
 
-  /* Semantic */
-  --color-danger: #dc2626;
-  --color-danger-soft: #fef2f2;
+  /* Garis: `line` untuk batas kartu, `line-kuat` untuk batas input (3:1) */
+  --w-line: 210 209 203;
+  --w-line-kuat: 148 147 140;
+
+  /* Primary — emerald. `primary` dipakai sebagai LATAR tombol, jadi nilainya
+     digelapkan supaya teks putih di atasnya lolos 4,5:1 (emerald #059669
+     hanya 3,77:1 — gagal untuk teks normal). */
+  --w-primary: 4 120 87; /* #047857 */
+  --w-primary-hover: 3 107 78; /* #036B4E */
+  --w-primary-soft: 236 253 245; /* #ECFDF5 */
+  --w-primary-text: 4 108 78; /* #046C4E — emerald sebagai TEKS */
+  --w-on-primary: 255 255 255; /* teks di atas tombol primary */
+
+  /* Accent — amber (urgensi) */
+  --w-accent: 180 83 9; /* #B45309 — amber sebagai teks */
+  --w-accent-bright: 217 119 6; /* #D97706 — border/ikon */
+  --w-accent-soft: 254 243 199; /* #FEF3C7 */
+  --w-accent-text: 146 64 14; /* #92400E */
+
+  /* Danger */
+  --w-danger: 185 28 28; /* #B91C1C */
+  --w-danger-soft: 254 242 242; /* #FEF2F2 */
+
+  /* Scrim — lapisan di ATAS FOTO. Nilainya SAMA di kedua mode: di bawahnya
+     selalu foto, bukan permukaan tema, jadi tidak boleh ikut membalik.
+     Putih di atas scrim-kuat = 15,8:1. */
+  --w-scrim: 23 24 26; /* #17181A */
+  --w-scrim-kuat: 17 18 20; /* #111214 */
 
   /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
   --radius-pill: 999px;
 
   /* Layout */
   --topbar-h: 56px;
   --tabbar-h: 60px;
+}
+
+/**
+ * MODE GELAP — soft, tidak menyakitkan mata.
+ *
+ * Kanvas #181817, bukan hitam pekat: hitam murni membuat kontras terlalu
+ * tajam dan mata cepat lelah. Semua warna ikut dihangatkan agar tidak ada
+ * lompatan suhu warna saat berganti mode.
+ *
+ * PENTING: di mode gelap, tombol primary memakai TEKS GELAP, bukan putih.
+ * Emerald terang + teks putih hanya 2,5:1 (gagal). Dengan teks gelap
+ * (#0B1F17) menjadi 6,8:1.
+ */
+.dark {
+  color-scheme: dark;
+
+  --w-bg: 24 24 23; /* #181817 */
+  --w-surface: 32 32 32; /* #202020 */
+  --w-surface2: 42 42 40; /* #2A2A28 */
+
+  --w-ink: 236 235 231; /* #ECEBE7 */
+  --w-ink2: 168 167 161; /* #A8A7A1 */
+  --w-ink3: 138 137 132; /* #8A8984 */
+
+  --w-line: 66 66 63; /* #42423F */
+  --w-line-kuat: 110 110 102; /* #6E6E66 — 3,2:1 */
+
+  --w-primary: 16 185 129; /* #10B981 — emerald lebih terang agar menonjol */
+  --w-primary-hover: 52 211 153; /* #34D399 */
+  --w-primary-soft: 19 37 30; /* #13251E — hijau sangat gelap, bukan putih */
+  --w-primary-text: 52 211 153; /* #34D399 */
+  --w-on-primary: 11 31 23; /* #0B1F17 — teks GELAP di atas emerald terang */
+
+  --w-accent: 245 158 11; /* #F59E0B */
+  --w-accent-bright: 251 191 36; /* #FBBF24 */
+  --w-accent-soft: 43 34 20; /* #2B2214 */
+  --w-accent-text: 252 211 77; /* #FCD34D */
+
+  --w-danger: 248 113 113; /* #F87171 */
+  --w-danger-soft: 42 26 26; /* #2A1A1A */
 }
 
 * {
@@ -54,10 +129,49 @@ body {
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: rgb(var(--w-bg));
+  color: rgb(var(--w-ink));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/**
+ * Kontainer halaman (edge to edge).
+ *
+ * KENAPA: sebelumnya setiap halaman menempel `mx-auto max-w-[1200px] px-6`
+ * sendiri-sendiri. Di layar 1920px itu menyisakan ~360px kosong di KIRI dan
+ * KANAN sekaligus — konten terlihat mengambang di tengah, tidak edge to edge.
+ *
+ * Dengan .shell, lebar konten diatur di SATU tempat. Padding memakai
+ * `clamp()` supaya tepi tetap nyaman di layar kecil tapi konten melebar
+ * penuh di layar besar.
+ */
+.shell {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 40px);
+}
+
+/* Grid katalog: kolom mengikuti lebar layar, bukan breakpoint tetap.
+   Di layar sangat lebar kartu tidak ikut melebar tanpa batas (maks 300px). */
+.grid-katalog {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+@media (min-width: 640px) {
+  .grid-katalog {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-katalog {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  }
 }
 
 /* Judul kartu: maksimal 2 baris (checklist kesesuaian desain) */
@@ -86,7 +200,7 @@ body {
 
 /* Fokus terlihat jelas — syarat aksesibilitas WCAG 2.1 AA */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid rgb(var(--w-primary));
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -113,7 +227,12 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #eceef1 25%, #f6f7f9 50%, #eceef1 75%);
+  background: linear-gradient(
+    90deg,
+    rgb(var(--w-surface2)) 25%,
+    rgb(var(--w-bg)) 50%,
+    rgb(var(--w-surface2)) 75%
+  );
   background-size: 220% 100%;
   animation: shimmer 1.35s ease-in-out infinite;
   border-radius: var(--radius-sm);
@@ -238,7 +357,7 @@ body {
 /* Kilau lembut untuk elemen yang baru berubah (mis. harga setelah edit) */
 @keyframes flash {
   0% {
-    background-color: var(--color-primary-soft);
+    background-color: rgb(var(--w-primary-soft));
   }
   100% {
     background-color: transparent;

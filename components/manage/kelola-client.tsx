@@ -154,7 +154,7 @@ export function KelolaClient({
           kedaluwarsa atau sudah diambil. */}
       {status === "AVAILABLE" ? (
         <div className="animate-slide-up flex items-start gap-3 rounded-md border border-primary/25 bg-primary-soft p-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-teks">
             <IconCheck size={18} />
           </div>
           <div>

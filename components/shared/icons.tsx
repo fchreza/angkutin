@@ -158,3 +158,33 @@ export const IconWhatsApp = ({ className, size = 18 }: P) => (
     <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 1.67c2.2 0 4.27.86 5.83 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.25 8.24a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24Zm-2.6 3.9c-.13 0-.35.05-.53.25-.18.2-.7.68-.7 1.66 0 .98.72 1.93.82 2.06.1.13 1.4 2.24 3.47 3.06 1.72.68 2.07.54 2.44.51.37-.03 1.2-.49 1.37-.96.17-.47.17-.88.12-.96-.05-.08-.18-.13-.38-.23-.2-.1-1.2-.59-1.38-.66-.19-.07-.32-.1-.46.1-.13.2-.52.66-.64.8-.12.13-.24.15-.44.05-.2-.1-.86-.32-1.63-1.01-.6-.54-1.01-1.2-1.13-1.4-.12-.2-.01-.31.09-.41.09-.09.2-.24.3-.36.1-.12.13-.2.2-.34.07-.13.03-.25-.02-.35-.05-.1-.44-1.1-.62-1.5-.16-.39-.33-.4-.46-.4h-.4Z" />
   </svg>
 );
+
+/** Matahari — mode terang. */
+export const IconSun = ({ className, size = 16 }: P) => (
+  <svg {...base(size)} className={className} aria-hidden>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+  </svg>
+);
+
+/** Bulan — mode gelap. */
+export const IconMoon = ({ className, size = 16 }: P) => (
+  <svg {...base(size)} className={className} aria-hidden>
+    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+  </svg>
+);
+
+/** Monitor — ikut pengaturan sistem. */
+export const IconMonitor = ({ className, size = 16 }: P) => (
+  <svg {...base(size)} className={className} aria-hidden>
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <path d="M8 21h8M12 17v4" />
+  </svg>
+);
+
+/** Chevron kiri — dipakai panah carousel dan tautan kembali. */
+export const IconChevronLeft = ({ className, size = 16 }: P) => (
+  <svg {...base(size)} className={className} aria-hidden>
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+);

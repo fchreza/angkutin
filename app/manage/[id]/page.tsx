@@ -52,7 +52,7 @@ export default async function KelolaPage({
   if (!/^[0-9a-f-]{36}$/i.test(id)) {
     return (
       <>
-        <main className="mx-auto w-full max-w-[1200px] px-4 md:px-6">
+        <main className="shell w-full">
           {gagalTautan}
         </main>
       </>
@@ -94,7 +94,7 @@ export default async function KelolaPage({
   if (!row || !tokenCocok(token, row.secretToken)) {
     return (
       <>
-        <main className="mx-auto w-full max-w-[1200px] px-4 md:px-6">
+        <main className="shell w-full">
           {gagalTautan}
         </main>
       </>
@@ -173,7 +173,7 @@ export default async function KelolaPage({
   return (
     <>
 
-      <main className="mx-auto w-full max-w-[1200px] px-4 pb-[110px] pt-4 md:px-6 md:pb-24 md:pt-6">
+      <main className="shell w-full pb-[110px] pt-4 md:pb-24 md:pt-6">
         <KelolaClient
           data={data}
           token={token}

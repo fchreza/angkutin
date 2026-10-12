@@ -223,7 +223,7 @@ export function LocationPicker({
           disabled={gps.status === "memuat"}
           className={cn(
             "mb-2 flex w-full items-center justify-center gap-2 rounded-md px-3.5 py-3",
-            "bg-primary text-[13.5px] font-semibold text-white transition-colors",
+            "bg-primary text-[13.5px] font-semibold text-primary-teks transition-colors",
             "hover:bg-primary-dark disabled:cursor-wait disabled:opacity-70",
           )}
         >

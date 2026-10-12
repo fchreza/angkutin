@@ -52,7 +52,7 @@ export function ListingCard({ item }: { item: KartuListing }) {
               GRATIS
             </Badge>
           ) : (
-            <span className="inline-block rounded-pill bg-white px-2.5 py-1 text-[13px] font-bold text-ink shadow-card">
+            <span className="inline-block rounded-pill bg-white px-2.5 py-1 text-[13px] font-bold text-[#17181A] shadow-card">
               {formatRupiah(item.price)}
             </span>
           )}
@@ -60,14 +60,14 @@ export function ListingCard({ item }: { item: KartuListing }) {
 
         {/* Jumlah foto (kalau lebih dari 1) */}
         {item.jumlah_foto > 1 && (
-          <span className="absolute right-2 top-2 rounded-pill bg-ink/70 px-2 py-[3px] text-[11px] font-medium text-white">
+          <span className="absolute right-2 top-2 rounded-pill bg-scrim/80 px-2 py-[3px] text-[11px] font-medium text-white">
             {item.jumlah_foto} foto
           </span>
         )}
 
         {/* Overlay TAKEN */}
         {ambil && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/75">
+          <div className="absolute inset-0 flex items-center justify-center bg-scrim/70">
             <Badge varian="taken" className="px-3 py-1.5 text-[11px] tracking-wide">
               SUDAH DIAMBIL
             </Badge>

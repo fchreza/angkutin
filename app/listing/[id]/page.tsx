@@ -119,7 +119,7 @@ export default async function DetailPage({
   return (
     <>
 
-      <main className="mx-auto w-full max-w-[1200px] px-4 pb-[190px] pt-4 md:px-6 md:pb-24 md:pt-6">
+      <main className="shell w-full pb-[190px] pt-4 md:pb-24 md:pt-6">
         {/* Breadcrumb (desktop) */}
         <nav className="mb-4 hidden items-center gap-1.5 text-[12.5px] text-ink-secondary md:flex">
           <Link href="/" className="hover:text-primary">
@@ -156,7 +156,7 @@ export default async function DetailPage({
               </h1>
               <div className="mt-3">
                 {d.is_free ? (
-                  <span className="inline-block rounded-md bg-primary px-3 py-1.5 text-[18px] font-bold text-white">
+                  <span className="inline-block rounded-md bg-primary px-3 py-1.5 text-[18px] font-bold text-primary-teks">
                     GRATIS
                   </span>
                 ) : (

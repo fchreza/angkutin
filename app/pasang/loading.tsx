@@ -16,7 +16,7 @@
  */
 export default function Loading() {
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-4 pb-[130px] pt-4 md:px-6 md:pb-24 md:pt-6">
+    <main className="shell w-full pb-[130px] pt-4 md:pb-24 md:pt-6">
       {/* Kepala halaman */}
       <div className="mb-5">
         <div className="skeleton h-[26px] w-[220px]" />

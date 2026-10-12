@@ -36,8 +36,8 @@ export function Button({
 }: Props) {
   const gaya = {
     primary:
-      "bg-primary text-white hover:bg-primary-dark active:bg-primary-dark shadow-fab",
-    wa: "bg-primary text-white hover:bg-primary-dark active:bg-primary-dark shadow-fab",
+      "bg-primary text-primary-teks hover:bg-primary-dark active:bg-primary-dark shadow-fab",
+    wa: "bg-primary text-primary-teks hover:bg-primary-dark active:bg-primary-dark shadow-fab",
     outline:
       "bg-surface text-ink border border-line hover:bg-appbg active:bg-appbg",
     danger:
@@ -63,7 +63,7 @@ export function Button({
         "disabled:cursor-not-allowed disabled:opacity-50",
         tinggi,
         gaya,
-        sukses && "!bg-primary !text-white",
+        sukses && "!bg-primary !text-primary-teks",
         penuh && "w-full",
         className,
       )}

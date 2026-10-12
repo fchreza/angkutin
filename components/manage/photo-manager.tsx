@@ -205,7 +205,7 @@ export function PhotoManager({
             />
 
             {i === 0 && (
-              <span className="absolute left-1.5 top-1.5 rounded-pill bg-primary px-2 py-[2px] text-[10px] font-bold text-white">
+              <span className="absolute left-1.5 top-1.5 rounded-pill bg-scrim-kuat/90 px-2 py-[2px] text-[10px] font-bold text-white">
                 UTAMA
               </span>
             )}
@@ -216,7 +216,7 @@ export function PhotoManager({
                   type="button"
                   onClick={() => void hapus(f.image_url)}
                   aria-label={`Hapus foto ${i + 1}`}
-                  className="press absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/75 text-white hover:bg-danger"
+                  className="press absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-scrim-kuat/85 text-white hover:bg-danger"
                 >
                   <IconX size={13} />
                 </button>
@@ -228,7 +228,7 @@ export function PhotoManager({
                     onClick={() => void geser(i, -1)}
                     disabled={i === 0}
                     aria-label="Jadikan lebih utama"
-                    className="press flex h-6 w-6 items-center justify-center rounded-full bg-ink/75 text-white hover:bg-primary disabled:opacity-30"
+                    className="press flex h-6 w-6 items-center justify-center rounded-full bg-scrim-kuat/85 text-white hover:bg-primary disabled:opacity-30"
                   >
                     <IconChevronRight size={13} className="rotate-180" />
                   </button>
@@ -237,7 +237,7 @@ export function PhotoManager({
                     onClick={() => void geser(i, 1)}
                     disabled={i === foto.length - 1}
                     aria-label="Geser ke belakang"
-                    className="press flex h-6 w-6 items-center justify-center rounded-full bg-ink/75 text-white hover:bg-primary disabled:opacity-30"
+                    className="press flex h-6 w-6 items-center justify-center rounded-full bg-scrim-kuat/85 text-white hover:bg-primary disabled:opacity-30"
                   >
                     <IconChevronRight size={13} />
                   </button>
@@ -246,7 +246,7 @@ export function PhotoManager({
             )}
 
             {terkunci && sedang && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+              <div className="absolute inset-0 flex items-center justify-center bg-scrim/60">
                 <Spinner ukuran={18} className="text-primary" />
               </div>
             )}

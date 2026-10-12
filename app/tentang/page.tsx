@@ -31,7 +31,14 @@ export default function TentangPage() {
   return (
     <>
 
-      <main className="mx-auto w-full max-w-[820px] px-4 pb-[110px] pt-4 md:px-6 md:pb-24 md:pt-8">
+      {/*
+        Halaman bacaan: sengaja TIDAK selebar katalog. Teks sepanjang ini
+        nyaman dibaca pada ~68 karakter per baris; kalau dipaksa selebar
+        1600px, mata harus menyapu terlalu jauh dan baris mudah tertukar.
+        Tetap memakai .shell supaya tepi kirinya sejajar dengan halaman lain.
+      */}
+      <main className="shell w-full pb-24 pt-5 md:pt-8">
+        <div className="max-w-[68ch]">
         {/* Lockup resmi dari berkas brand */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -95,6 +102,7 @@ export default function TentangPage() {
               Pasang Barang
             </Button>
           </Link>
+        </div>
         </div>
       </main>
 

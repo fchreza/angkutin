@@ -33,7 +33,7 @@ export default async function PasangPage() {
   return (
     <>
 
-      <main className="mx-auto w-full max-w-[1200px] px-4 pb-[130px] pt-4 md:px-6 md:pb-24 md:pt-6">
+      <main className="shell w-full pb-[130px] pt-4 md:pb-24 md:pt-6">
         <div className="mb-5">
           <h1 className="font-display text-[22px] font-bold tracking-tight text-ink md:text-[26px]">
             Lepas Barang Pindahan

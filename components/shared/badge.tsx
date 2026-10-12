@@ -10,10 +10,10 @@ import { cn } from "@/lib/cn";
 type Varian = "gratis" | "harga" | "kondisi" | "taken" | "wilayah" | "netral";
 
 const gaya: Record<Varian, string> = {
-  gratis: "bg-primary text-white font-bold",
-  harga: "bg-white text-ink font-bold border border-line",
+  gratis: "bg-primary text-primary-teks font-bold",
+  harga: "bg-surface text-ink font-bold border border-line",
   kondisi: "bg-appbg text-ink-secondary border border-line",
-  taken: "bg-ink-mono text-white font-semibold",
+  taken: "bg-ink-mono text-surface font-semibold",
   wilayah: "bg-primary-soft text-primary-dark border border-primary-500/30",
   netral: "bg-appbg text-ink-secondary border border-line",
 };

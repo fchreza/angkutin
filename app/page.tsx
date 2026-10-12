@@ -79,10 +79,14 @@ export default async function BerandaPage() {
 
   return (
     <>
-
-      <main className="mx-auto w-full max-w-[1200px] px-4 pb-[100px] pt-4 md:px-6 md:pb-24 md:pt-6">
-        <div className="mb-4 hidden md:block">
-          <h1 className="font-display text-[24px] font-bold tracking-tight text-ink">
+      {/*
+        Memakai .shell (bukan mx-auto max-w-[1200px] px-6 seperti sebelumnya).
+        Di layar 1920px, 1200px menyisakan 360px kosong di kiri DAN kanan
+        sekaligus — konten terlihat mengambang, bukan edge to edge.
+      */}
+      <main className="shell w-full pb-24 pt-5 md:pt-7">
+        <div className="mb-5 hidden md:block">
+          <h1 className="font-display text-[26px] font-bold tracking-tight text-ink">
             Barang pindahan di sekitarmu
           </h1>
           <p className="mt-1 text-[13.5px] text-ink-secondary">
@@ -97,7 +101,6 @@ export default async function BerandaPage() {
           totalAwal={feed.total}
         />
       </main>
-
     </>
   );
 }

@@ -82,8 +82,8 @@ export function SuksesPasang({
       >
         <div
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white",
-            fotoGagal ? "bg-accent" : "bg-primary",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            fotoGagal ? "bg-accent text-white" : "bg-primary text-primary-teks",
           )}
         >
           {fotoGagal ? <IconAlert size={19} /> : <IconCheck size={19} />}

@@ -168,7 +168,7 @@ export function ConfirmDialog({
             aria-busy={sedangProses || undefined}
             className={cn(
               "press inline-flex h-11 items-center justify-center gap-2 rounded-md px-4",
-              "text-[14px] font-semibold text-white",
+              "text-[14px] font-semibold text-surface",
               "disabled:cursor-not-allowed disabled:opacity-60",
               merusak ? "bg-danger hover:bg-[#b91c1c]" : "bg-primary hover:bg-primary-dark",
             )}

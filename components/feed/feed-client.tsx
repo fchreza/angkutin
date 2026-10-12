@@ -403,7 +403,7 @@ export function FeedClient({
         />
       ) : (
         <Reveal kunci={`${lokasi.jenis}-${lokasi.kode ?? ""}-${kategoriId}-${qDebounce}-${sort}-${data.length}`}>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+          <div className="grid-katalog">
             {data.map((item, i) => (
               <div
                 key={item.id}

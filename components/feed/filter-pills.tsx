@@ -33,7 +33,7 @@ export function FilterPills({
             className={cn(
               "press shrink-0 rounded-pill border px-3.5 py-2 text-[13px] font-medium",
               terpilih
-                ? "border-primary bg-primary text-white shadow-card"
+                ? "border-primary bg-primary text-primary-teks shadow-card"
                 : "border-line bg-surface text-ink-secondary hover:border-primary/40 hover:text-ink",
             )}
           >

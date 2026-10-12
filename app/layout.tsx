@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Instrument_Sans } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import { ToastProvider } from "@/components/shared/toast";
+import { ThemeProvider, SKRIP_TEMA } from "@/components/shared/theme";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
@@ -11,10 +12,19 @@ const inter = Inter({
   display: "swap",
 });
 
-const jakarta = Plus_Jakarta_Sans({
+/**
+ * Instrument Sans untuk judul.
+ *
+ * Dipilih menggantikan Plus Jakarta Sans: bentuknya lebih netral dan rapat,
+ * sehingga judul terasa tegas dan modern — sejalan dengan bahasa desain
+ * referensi. Plus Jakarta Sans punya sudut membulat yang membuat tampilan
+ * cenderung "ramah anak", yang tidak cocok untuk katalog barang.
+ */
+const instrument = Instrument_Sans({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-instrument",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 /**
@@ -90,9 +100,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Nilai ini HARUS sama dengan theme_color di manifest.json, kalau tidak
+  // Warna bar browser di Android/iOS. Dua nilai supaya bar ikut menyesuaikan
+  // saat pengguna memakai mode gelap — kalau hanya satu, bar tetap terang di
+  // mode gelap dan terlihat seperti sisa halaman yang belum dimuat.
+  // Nilai terang HARUS sama dengan theme_color di manifest.json, kalau tidak
   // warna akan berkedip saat aplikasi diluncurkan dari layar utama.
-  themeColor: "#059669",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F7F7F6" },
+    { media: "(prefers-color-scheme: dark)", color: "#181817" },
+  ],
   maximumScale: 5,
   viewportFit: "cover",
 };
@@ -103,14 +119,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${inter.variable} ${jakarta.variable}`}>
+    <html lang="id" className={`${inter.variable} ${instrument.variable}`}>
+      <head>
+        {/*
+          Anti-kedip mode gelap.
+          Skrip ini berjalan SINKRON saat HTML di-parse, sebelum halaman
+          digambar. Tanpa ini, pengguna mode gelap melihat kilatan putih
+          ~200ms di setiap pemuatan halaman.
+          Lihat components/shared/theme.tsx untuk isi skripnya.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: SKRIP_TEMA }} />
+      </head>
       <body className="font-sans">
-        {/* ToastProvider di akar supaya halaman mana pun bisa memunculkan
-            notifikasi lewat useToast(). */}
-        <ToastProvider>
-          <AppShell>{children}</AppShell>
-          <ServiceWorkerRegister />
-        </ToastProvider>
+        {/* ThemeProvider di akar supaya tombol ganti tema bisa dipakai di
+            mana saja (nav, footer, halaman). */}
+        <ThemeProvider>
+          {/* ToastProvider di akar supaya halaman mana pun bisa memunculkan
+              notifikasi lewat useToast(). */}
+          <ToastProvider>
+            <AppShell>{children}</AppShell>
+            <ServiceWorkerRegister />
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
