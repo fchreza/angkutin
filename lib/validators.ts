@@ -103,10 +103,22 @@ export function validasiTenggat(ymd: string, now = new Date()): string | null {
   const hariIni = tanggalHariIniID(now);
   if (ymd < hariIni) return "Tanggal tidak boleh sebelum hari ini";
 
-  const maks = new Date(now.getTime() + (MAX_HARI_TENGGAT + 1) * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
-  if (ymd > maks) return `Maksimal ${MAX_HARI_TENGGAT} hari dari sekarang`;
+  /**
+   * Batas atas = hari ini + MAX_HARI_TENGGAT, dihitung dalam zona WIB.
+   *
+   * JANGAN memakai `now.getTime() + n * 86_400_000` lalu `toISOString()`:
+   * itu kembali ke tanggal UTC dan menggeser batasnya sehari untuk pengguna
+   * Indonesia. Geser tanggalnya dulu, baru ambil tanggal WIB-nya.
+   *
+   * CATATAN: sebelumnya di sini tertulis `MAX_HARI_TENGGAT + 1`, sehingga
+   * server menerima tenggat 15 hari padahal aturannya 14 — kalender di form
+   * sudah benar sejak awal, tapi server terlalu longgar. Terbukti dengan uji:
+   * POST tenggat +15 hari dijawab 201, seharusnya 400.
+   */
+  const batasMaks = tanggalHariIniID(
+    new Date(now.getTime() + MAX_HARI_TENGGAT * 86_400_000),
+  );
+  if (ymd > batasMaks) return `Maksimal ${MAX_HARI_TENGGAT} hari dari sekarang`;
   return null;
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { IconAlert } from "@/components/shared/icons";
+import { KalenderTenggat } from "./kalender-tenggat";
 import { Select } from "@/components/shared/select";
 import { cn } from "@/lib/cn";
 import { keYMD } from "@/lib/format";
@@ -309,17 +310,13 @@ export function FormListingFields({
           <label htmlFor="tenggat" className="mb-2 block text-[13px] font-semibold text-ink">
             Batas pengambilan <span className="text-danger">*</span>
           </label>
-          <input
-            id="tenggat"
-            type="date"
-            value={nilai.tenggat}
-            min={hariIni}
-            max={maksTenggat}
-            onChange={(e) => onUbah("tenggat", e.target.value)}
-            className={cn(
-              "h-11 w-full rounded-md border px-3 text-[14px] focus:outline-none",
-              galat.tenggat ? "border-danger" : "border-line focus:border-primary",
-            )}
+          <KalenderTenggat
+            nilai={nilai.tenggat}
+            onUbah={(ymd) => onUbah("tenggat", ymd)}
+            hariIni={hariIni}
+            maksTenggat={maksTenggat}
+            adaGalat={Boolean(galat.tenggat)}
+            maksHari={MAKS_HARI}
           />
           {galat.tenggat ? (
             <p className="mt-1.5 text-[12px] text-danger">{galat.tenggat}</p>

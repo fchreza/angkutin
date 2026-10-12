@@ -420,6 +420,40 @@ body {
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Geser bulan pada kalender.
+   Arahnya mengikuti arah navigasi supaya pengguna merasakan perpindahannya:
+   maju = isi masuk dari kanan, mundur = masuk dari kiri.
+   Hanya transform + opacity (GPU), tidak menyentuh layout. */
+@keyframes geserKiri {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes geserKanan {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-geser-kiri {
+  animation: geserKiri 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-geser-kanan {
+  animation: geserKanan 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Baris daftar yang masuk berurutan (stagger).
    Delay diatur lewat style inline --d. */
 @keyframes listIn {
