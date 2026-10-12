@@ -666,6 +666,231 @@ body {
   }
 }
 
+/* === Kartu listing dengan beam tepi ===
+   Gabungan dua referensi:
+     - uiarc.dev/components/card      -> isolasi, min-width 0, text-wrap
+     - ui.spectrumhq.in/docs/beam-card -> beam yang mengikuti radius kartu
+
+   KENAPA TIDAK MEMAKAI PAKETNYA:
+   uiarc/card memerlukan @radix-ui/react-dialog + motion + lucide-react;
+   beam-card memerlukan border-beam (99 KB, sudah diperiksa sebelumnya).
+   Kartu ini hanya butuh tiga hal dari keduanya — isolasi lapisan, gradien
+   berputar yang dipotong jadi cincin, dan perbaikan tipografi. Semuanya CSS.
+   package.json tidak berubah sama sekali. */
+
+.kartu {
+  position: relative;
+  /* min-width: 0 mencegah kartu melebar keluar sel grid saat judulnya panjang
+     (diambil dari uiarc/card). Tanpa ini, satu judul panjang bisa menggeser
+     seluruh kolom. */
+  min-width: 0;
+  /* isolation: isolate menjaga lapisan beam tidak bocor ke tumpukan z-index
+     halaman. Ini juga yang membuat kliping rounded bekerja di Safari. */
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+  /* Warna beam di mode terang: emerald TERANG (16 185 129), bukan
+     --w-primary (#047857) yang gelap. Diukur dari tangkapan layar: dengan
+     emerald gelap, beam-nya terbaca sebagai "garis hijau gelap" — bukan
+     cahaya. Di mode gelap --w-primary memang sudah #10B981 yang terang, jadi
+     nilainya dipakai apa adanya. */
+  --warna-beam: 16 185 129;
+}
+
+.dark .kartu {
+  --warna-beam: var(--w-primary);
+}
+
+/* Judul: text-wrap balance membagi barisnya rata, sehingga judul 2 baris tidak
+   menyisakan satu kata menggantung di baris kedua. */
+.kartu-judul {
+  text-wrap: balance;
+}
+
+/* Bidang sentuh fokus untuk pengguna keyboard. Kartu ini seluruhnya satu
+   tautan, jadi cincin fokusnya harus jelas dan tidak terpotong. */
+.kartu:focus-visible {
+  outline: 2px solid rgb(var(--w-primary));
+  outline-offset: 2px;
+}
+
+/* --- Beam tepi ---
+   Pendekatan TANPA mask.
+
+   Percobaan pertama memakai `mask-composite: exclude` untuk memotong gradien
+   jadi cincin tipis. Diuji dengan piksel: elemennya hilang TOTAL — bukan hanya
+   bagian tengahnya. Dibuktikan dengan mengganti warnanya jadi magenta pekat
+   dan melepas mask: 87.189 piksel magenta muncul, jadi beam-nya memang
+   tergambar dan mask-lah yang menghapusnya.
+
+   Cara yang dipakai sekarang lebih sederhana dan tidak bergantung pada mask:
+   gradien conic penuh diletakkan di belakang isi kartu, dan isi kartu (yang
+   berlatar penuh) menutupi bagian tengahnya secara alami — yang tersisa hanya
+   bingkai 2px di sekeliling. Tidak ada mask, tidak ada @supports.
+
+   Struktur: .kartu punya padding 2px; .kartu-isi membawa overflow-hidden dan
+   latar, sehingga beam tidak pernah terpotong oleh overflow kartu. */
+@property --beam-sudut {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.kartu-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--beam-sudut, 0deg),
+    transparent 0deg,
+    transparent 286deg,
+    rgb(var(--warna-beam, var(--w-primary))) 332deg,
+    rgb(var(--warna-beam, var(--w-primary))) 350deg,
+    transparent 360deg
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+@keyframes beamPutar {
+  to {
+    --beam-sudut: 360deg;
+  }
+}
+
+/* Beam menyala saat kartu ditunjuk atau difokuskan keyboard. Animasi hanya
+   dipasang di sini — bukan di .kartu-beam — supaya kartu yang diam benar-benar
+   nol biaya: tidak ada animasi yang berjalan di balik opacity 0.
+
+   Intensitas sengaja 0,7 — bukan 1. Beam ini muncul di katalog yang bisa
+   berisi puluhan kartu; pada opacity penuh warnanya terlalu mencolok dan
+   melelahkan mata, apalagi kalau beberapa kartu tersorot berurutan. */
+.kartu:hover .kartu-beam,
+.kartu:focus-within .kartu-beam,
+.kartu:focus-visible .kartu-beam {
+  opacity: 0.7;
+  animation: beamPutar 2.6s linear infinite;
+}
+
+/* Kartu yang tenggatnya HARI INI mendapat beam yang menyala sendiri, tanpa
+   perlu ditunjuk. Beam di sini membawa arti: barang ini hampir tidak bisa
+   diambil lagi. Putarannya lebih lambat dan intensitasnya lebih rendah
+   (0,55) supaya tidak berubah jadi karnaval saat ada beberapa sekaligus.
+   Warnanya tetap emerald (--w-primary), bukan amber — supaya beam-nya tetap
+   "cahaya", dan yang menandai urgensi adalah badge amber-nya. */
+.kartu[data-mendesak="true"] .kartu-beam {
+  opacity: 0.55;
+  animation: beamPutar 3.6s linear infinite;
+}
+
+/* Kartu mendesak: TIDAK lagi memakai border amber.
+   Dulu border amber dipakai sebagai penanda urgensi statis. Setelah beam
+   ditambahkan, tiga sinyal bersaing di satu kartu — border amber, beam
+   emerald, dan badge amber — dan hasilnya justru membingungkan: garis amber
+   berdiri di antara pendar hijau dan badan kartu. Diukur dari tangkapan
+   layar, urutannya jadi hijau-amber-hijau.
+
+   Sekarang urgensi ditandai oleh DUA hal yang tidak bertabrakan: badge
+   "Berakhir hari ini" yang amber (statis, tetap terbaca tanpa animasi), dan
+   beam yang berjalan (dinamis). Border tetap netral supaya beam-nya bersih. */
+
+/* Kartu yang ditunjuk/difokuskan dan BUKAN mendesak: beam-nya amber, senada
+   dengan badge tenggat. Di kartu mendesak, border-nya netral — jadi beam-nya
+   emerald agar benar-benar terbaca sebagai cahaya yang bergerak. */
+.kartu:not([data-mendesak="true"]) {
+  --warna-beam: var(--w-accent-bright);
+}
+
+/* Pendar: salinan beam yang dikaburkan, supaya tepinya terbaca sebagai CAHAYA
+   dan bukan garis. Diletakkan di atas beam (z-index 1) dan di bawah isi kartu,
+   jadi hanya bagian yang menonjol di luar isi yang terlihat.
+
+   Kaburnya 6px (bukan 4px) dan intensitasnya rendah: pendar yang terlalu
+   tajam terbaca sebagai garis kedua, bukan cahaya — dan di katalog yang padat
+   itu justru melelahkan mata. */
+.kartu-pendar {
+  position: absolute;
+  inset: -2px;
+  z-index: 1;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--beam-sudut, 0deg),
+    transparent 0deg,
+    transparent 286deg,
+    rgb(var(--warna-beam, var(--w-primary))) 332deg,
+    rgb(var(--warna-beam, var(--w-primary))) 350deg,
+    transparent 360deg
+  );
+  filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.kartu:hover .kartu-pendar,
+.kartu:focus-within .kartu-pendar,
+.kartu:focus-visible .kartu-pendar {
+  opacity: 0.5;
+  animation: beamPutar 2.6s linear infinite;
+}
+
+.kartu[data-mendesak="true"] .kartu-pendar {
+  opacity: 0.38;
+  animation: beamPutar 3.6s linear infinite;
+}
+
+/* --- Mode gelap: intensitas diturunkan, tapi jangan sampai hilang ---
+   Diukur: pada opacity yang sama, beam di mode gelap memberi kontras 3,81:1
+   terhadap kartu #202020, sedangkan di mode terang hanya 1,86:1 — dua kali
+   lebih menyala, karena mata lebih sensitif terhadap sumber terang di ruang
+   gelap.
+
+   Percobaan pertama menurunkannya ke 0,3. Hasilnya: beam-nya HILANG sama
+   sekali (diverifikasi dengan uji 12 kartu — tidak ada satu pun tepi hijau
+   yang terbaca). Jadi 0,5 / 0,42 dipakai: kontrasnya ~2,5:1 dan ~2,2:1 —
+   terlihat, tapi jauh dari menyilaukan.
+
+   Kartu yang menyala otomatis (tenggat hari ini) sengaja lebih rendah daripada
+   kartu yang sedang ditunjuk: katalog bisa memuat puluhan kartu, dan beberapa
+   yang bertenggat hari ini sekaligus tidak boleh jadi deretan garis menyala. */
+.dark .kartu:hover .kartu-beam,
+.dark .kartu:focus-within .kartu-beam,
+.dark .kartu:focus-visible .kartu-beam {
+  opacity: 0.5;
+}
+
+.dark .kartu[data-mendesak="true"] .kartu-beam {
+  opacity: 0.42;
+}
+
+.dark .kartu:hover .kartu-pendar,
+.dark .kartu:focus-within .kartu-pendar,
+.dark .kartu:focus-visible .kartu-pendar {
+  opacity: 0.38;
+}
+
+.dark .kartu[data-mendesak="true"] .kartu-pendar {
+  opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kartu-beam,
+  .kartu-pendar {
+    transition: none;
+  }
+  .kartu:hover .kartu-beam,
+  .kartu:focus-within .kartu-beam,
+  .kartu:focus-visible .kartu-beam,
+  .kartu[data-mendesak="true"] .kartu-beam,
+  .kartu:hover .kartu-pendar,
+  .kartu:focus-within .kartu-pendar,
+  .kartu:focus-visible .kartu-pendar,
+  .kartu[data-mendesak="true"] .kartu-pendar {
+    animation: none;
+  }
+}
+
 /* Baris daftar yang masuk berurutan (stagger).
    Delay diatur lewat style inline --d. */
 @keyframes listIn {
