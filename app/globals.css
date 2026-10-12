@@ -474,6 +474,80 @@ body {
   animation: ikonMasuk 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* === Beam pencarian ===
+   Garis cahaya yang berjalan di tepi bawah kolom pencarian saat difokuskan.
+   Referensi: ui.spectrumhq.in/docs/beam-search.
+
+   KENAPA TIDAK MEMAKAI PAKETNYA (border-beam):
+   Komponen referensi bergantung pada border-beam + lucide-react. Setelah
+   diperiksa, border-beam ternyata CSS keyframes murni (21 keyframes, nol
+   dependensi runtime) tetapi ter-bundle 99 KB untuk satu efek dekoratif.
+   Efek yang sama ditulis dalam ~30 baris di sini, jadi tidak ada paket baru
+   dan tidak ada JS animasi yang berjalan terus-menerus.
+
+   Nyala/mati mengikuti :focus-within, jadi React tidak perlu state untuk
+   memutuskan kapan beam berjalan. */
+.beam-rel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 10px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.wadah-beam:focus-within .beam-rel {
+  opacity: 1;
+}
+
+@keyframes beamJalan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+
+/* Inti beam dan pendar memakai gradien + animasi yang sama supaya bergerak
+   serempak. Lebarnya 25% dan digeser -100%..400% (dari 25% container),
+   sehingga ia masuk dari tepi kiri lalu keluar di tepi kanan tanpa jeda. */
+.beam-cahaya,
+.beam-pendar {
+  position: absolute;
+  left: 0;
+  width: 25%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--w-primary)) 40%,
+    rgb(var(--w-primary)) 60%,
+    transparent
+  );
+  animation: beamJalan 1.5s linear infinite;
+  will-change: transform;
+}
+
+/* Garis tajam di tepi bawah. */
+.beam-cahaya {
+  bottom: 0;
+  height: 3px;
+  border-radius: 9999px;
+}
+
+/* Salinan kabur yang lebih tinggi supaya cahayanya terasa menyala ke atas.
+   Dipisah dari .beam-cahaya karena pendar yang dikaburkan akan ikut terpotong
+   kalau diletakkan di dalam rel setinggi 3px. */
+.beam-pendar {
+  bottom: 0;
+  height: 10px;
+  filter: blur(5px);
+  opacity: 0.7;
+}
+
 /* Baris daftar yang masuk berurutan (stagger).
    Delay diatur lewat style inline --d. */
 @keyframes listIn {

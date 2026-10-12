@@ -244,32 +244,76 @@ export function FeedClient({
             />
           </button>
 
-          <div className="relative flex-1">
-            <IconSearch
-              size={17}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-secondary"
-            />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Cari barang atau patokan lokasi…"
-              aria-label="Cari barang"
-              className={cn(
-                "h-11 w-full rounded-md border border-line bg-surface pl-10 pr-9",
-                "text-[14px] text-ink placeholder:text-ink-secondary/70",
-                "focus:border-primary focus:outline-none",
+          {/*
+            Kolom pencarian dengan beam yang berjalan di tepi bawah saat
+            difokuskan. Referensi: ui.spectrumhq.in/docs/beam-search.
+
+            Nilai terkendali (value + onChange) dan tombol hapus tetap seperti
+            sebelumnya — yang berubah hanya tampilannya. Enter dan Escape
+            ditangani sama seperti komponen referensi.
+
+            `wadah-beam` ada di sini (bukan di dalam globals) supaya nama
+            kelasnya jelas berasal dari komponen ini.
+          */}
+          <div className="wadah-beam relative flex-1">
+            <div className="relative">
+              <IconSearch
+                size={17}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-secondary"
+              />
+              <input
+                type="search"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => {
+                  // Escape mengosongkan pencarian, seperti komponen referensi.
+                  if (e.key === "Escape") setQ("");
+                }}
+                placeholder="Cari barang atau patokan lokasi…"
+                aria-label="Cari barang"
+                className={cn(
+                  "h-11 w-full rounded-md border border-line bg-surface pl-10 pr-9",
+                  "text-[14px] text-ink placeholder:text-ink-secondary/70",
+                  /*
+                   * SENGAJA TIDAK memakai `focus:border-primary`.
+                   *
+                   * Dulu garis bawahnya berubah emerald #047857 saat fokus.
+                   * Setelah beam ditambahkan, keduanya jadi warna yang sama
+                   * persis — diukur: border fokus rgb(4,120,87) dan warna beam
+                   * juga rgb(4,120,87). Akibatnya beam yang berjalan tidak
+                   * bisa dibedakan dari garis statis di bawahnya, dan efeknya
+                   * hilang sama sekali.
+                   *
+                   * Sekarang border fokus hanya menguat (line-kuat), dan
+                   * seluruh penanda fokus diserahkan ke beam yang bergerak.
+                   * Ini juga lebih baik untuk aksesibilitas: `:focus-within`
+                   * tetap bekerja untuk pengguna keyboard, dan sinyal fokusnya
+                   * bukan warna saja.
+                   */
+                  "focus:border-line-kuat focus:outline-none",
+                  // Sembunyikan tombol hapus bawaan WebKit: kita punya sendiri,
+                  // dan yang bawaan tidak bisa ditata agar cocok dengan tema.
+                  "[&::-webkit-search-cancel-button]:hidden",
+                )}
+              />
+              {q && (
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  aria-label="Hapus pencarian"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-secondary hover:bg-appbg"
+                >
+                  <IconX size={15} />
+                </button>
               )}
-            />
-            {q && (
-              <button
-                type="button"
-                onClick={() => setQ("")}
-                aria-label="Hapus pencarian"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-secondary hover:bg-appbg"
-              >
-                <IconX size={15} />
-              </button>
-            )}
+            </div>
+
+            {/* Beam: murni dekoratif, jadi aria-hidden. Nyala hanya saat
+                kolom di dalam wadah ini difokuskan (lihat :focus-within). */}
+            <span className="beam-rel" aria-hidden>
+              <span className="beam-cahaya" />
+              <span className="beam-pendar" />
+            </span>
           </div>
 
           <Select
