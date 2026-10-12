@@ -188,3 +188,10 @@ export const IconChevronLeft = ({ className, size = 16 }: P) => (
     <path d="m15 18-6-6 6-6" />
   </svg>
 );
+
+/** Panah kanan — penanda aksi maju pada tautan dan tombol. */
+export const IconArrowRight = ({ className, size = 16 }: P) => (
+  <svg {...base(size)} className={className} aria-hidden>
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+);

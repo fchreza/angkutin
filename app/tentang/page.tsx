@@ -1,99 +1,221 @@
 import Link from "next/link";
 import { Button } from "@/components/shared/button";
-import { IconWhatsApp, IconCheck } from "@/components/shared/icons";
+import { IconWhatsApp, IconArrowRight } from "@/components/shared/icons";
 
 export const metadata = {
   title: "Tentang — Angkutin",
   description:
-    "Angkutin menghubungkan mahasiswa yang pindahan dengan orang yang butuh barangnya. Tanpa akun, tanpa biaya.",
+    "Angkutin membantu memasarkan barang yang ingin cepat dilepas karena pindahan kos. Kami hanya perantara — transaksi tetap antara penjual dan pembeli.",
 };
 
-const CARA = [
-  {
-    judul: "Untuk yang pindahan",
-    langkah: [
-      "Isi formulir singkat dan unggah foto barang.",
-      "Tentukan batas pengambilan (maks 14 hari).",
-      "Simpan tautan rahasia untuk menandai barang sudah diambil.",
-    ],
-  },
-  {
-    judul: "Untuk yang mencari barang",
-    langkah: [
-      "Pilih kota/kabupatenmu, telusuri katalog.",
-      "Tekan tombol WhatsApp untuk menghubungi pemilik.",
-      "Jemput sendiri barangnya sesuai patokan lokasi.",
-    ],
-  },
+/**
+ * Halaman Tentang — gaya EDITORIAL.
+ *
+ * KENAPA DITULIS ULANG TOTAL:
+ * Versi sebelumnya menumpuk kartu berbingkai, badge, dan ikon centang di
+ * dalam kotak. Pola itu (border + latar + sudut membulat untuk setiap blok)
+ * adalah ciri khas keluaran generator UI, dan justru yang membuat halaman
+ * terasa jadul. Struktur dibangun dari kotak, bukan dari tulisan.
+ *
+ * Pendekatan baru mengikuti bahasa desain editorial: hierarki dibangun dari
+ * UKURAN dan JARAK huruf saja.
+ *   - Judul besar tapi BERAT RINGAN (400, bukan 700) — inilah penanda utama
+ *     tampilan editorial modern; judul tebal besar justru terasa kuno.
+ *   - Kolom teks sempit supaya mata tidak menyapu terlalu jauh.
+ *   - Tanpa kartu, tanpa bingkai, tanpa badge. Pemisah antar bagian memakai
+ *     satu garis rambut tipis.
+ *   - Ruang kosong yang lega sebagai pemisah, bukan garis.
+ *
+ * Dua hal yang WAJIB ada di halaman ini (permintaan pemilik produk):
+ *   1. Penegasan bahwa Angkutin HANYA perantara pemasaran.
+ *   2. Imbauan berhati-hati dan teliti saat bertransaksi.
+ * Keduanya diletakkan sebagai bagian tersendiri supaya tidak terlewat
+ * pembaca, dan yang kedua diberi penekanan visual karena menyangkut
+ * keamanan pengguna.
+ */
+
+const LANGKAH_JUAL = [
+  "Isi formulir singkat dan unggah foto barang.",
+  "Tentukan batas pengambilan, maksimal 14 hari.",
+  "Simpan tautan rahasia untuk menandai barang sudah diambil.",
+];
+
+const LANGKAH_CARI = [
+  "Pilih kabupaten/kota, lalu telusuri katalognya.",
+  "Tekan tombol WhatsApp untuk menghubungi pemilik.",
+  "Jemput sendiri barangnya sesuai patokan lokasi.",
 ];
 
 export default function TentangPage() {
   return (
-    <>
-
-      {/*
-        Halaman bacaan: sengaja TIDAK selebar katalog. Teks sepanjang ini
-        nyaman dibaca pada ~68 karakter per baris; kalau dipaksa selebar
-        1600px, mata harus menyapu terlalu jauh dan baris mudah tertukar.
-        Tetap memakai .shell supaya tepi kirinya sejajar dengan halaman lain.
-      */}
-      <main className="shell w-full pb-24 pt-5 md:pt-8">
-        <div className="max-w-[68ch]">
-        {/* Lockup resmi dari berkas brand */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/brand/lockup.png"
-          alt="angkutin — Lepas barang pindahan, ambil sendiri."
-          width={1199}
-          height={1197}
-          className="mx-auto mb-6 h-auto w-[190px] md:w-[220px]"
-        />
-
-        <h1 className="font-display text-[24px] font-bold tracking-tight text-ink md:text-[30px]">
-          Tentang Angkutin
-        </h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-secondary">
-          Setiap tahun ribuan barang masih layak pakai dibuang begitu saja saat
-          mahasiswa pindahan. Angkutin membuat barang-barang itu berpindah
-          tangan dengan cepat — gratis, tanpa daftar akun.
+    <main className="shell w-full pb-24 pt-10 md:pt-16">
+      {/* Kolom bacaan. 62ch adalah batas nyaman sebelum mata mulai kehilangan
+          baris saat kembali ke kiri. */}
+      <article className="mx-auto max-w-[62ch]">
+        {/* Label kecil di atas judul — penanda bagian, bukan hiasan. */}
+        <p className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-mono">
+          Tentang
         </p>
 
-        <div className="mt-7 space-y-4">
-          {CARA.map((blok) => (
-            <section
-              key={blok.judul}
-              className="rounded-md border border-line bg-surface p-4"
-            >
-              <h2 className="font-display text-[16px] font-bold text-ink">
-                {blok.judul}
-              </h2>
-              <ul className="mt-3 space-y-2.5">
-                {blok.langkah.map((l) => (
-                  <li key={l} className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink">
-                    <IconCheck size={15} className="mt-[3px] shrink-0 text-primary" />
+        {/*
+          Judul: besar tapi RINGAN. Ini yang membedakan editorial modern dari
+          tampilan kuno — bukan ukurannya, melainkan beratnya.
+        */}
+        <h1 className="mt-4 font-display text-[34px] font-normal leading-[1.12] tracking-[-0.02em] text-ink sm:text-[42px] md:text-[50px]">
+          Barang yang masih layak tidak perlu berakhir jadi sampah.
+        </h1>
+
+        <p className="mt-6 text-[17px] leading-[1.65] text-ink-secondary md:text-[18px]">
+          Setiap tahun, ribuan barang masih bagus dibuang begitu saja saat
+          penghuni kos pindahan. Angkutin mempertemukan barang itu dengan orang
+          yang membutuhkannya — tanpa daftar akun, tanpa biaya.
+        </p>
+
+        <hr className="my-10 border-0 border-t border-line md:my-14" />
+
+        {/* ---------- Apa itu Angkutin ---------- */}
+        <section>
+          <h2 className="font-display text-[20px] font-medium tracking-[-0.01em] text-ink md:text-[22px]">
+            Apa itu Angkutin
+          </h2>
+          <div className="mt-4 space-y-4 text-[15.5px] leading-[1.75] text-ink">
+            <p>
+              Angkutin adalah papan pengumuman terbuka untuk barang pindahan.
+              Siapa pun bisa memasang barang yang ingin dilepas, dan siapa pun
+              bisa melihat apa yang tersedia di sekitarnya.
+            </p>
+            <p>
+              Barangnya diambil sendiri oleh yang menginginkan, jadi tidak ada
+              biaya kirim dan tidak ada kurir. Barang bisa dijual dengan harga
+              seadanya, atau diberikan gratis kalau memang sudah tidak sempat
+              dijual.
+            </p>
+          </div>
+        </section>
+
+        {/* ---------- Penegasan peran: HANYA perantara ---------- */}
+        <section className="mt-10 md:mt-14">
+          <h2 className="font-display text-[20px] font-medium tracking-[-0.01em] text-ink md:text-[22px]">
+            Angkutin hanya perantara
+          </h2>
+          <div className="mt-4 space-y-4 text-[15.5px] leading-[1.75] text-ink">
+            <p>
+              Angkutin <strong className="font-semibold">hanya membantu memasarkan</strong>{" "}
+              barang yang ingin cepat dilepas karena pindahan kos dan keperluan
+              sejenisnya. Kami bukan penjual, bukan pembeli, dan bukan pihak
+              yang menguasai barangnya.
+            </p>
+            <p>
+              Karena itu, seluruh proses transaksi terjadi langsung antara
+              penjual dan pembeli — mulai dari tawar-menawar, pembayaran,
+              sampai pengambilan barang. Angkutin tidak menerima uang, tidak
+              menahan barang, dan tidak menjamin kualitas apa pun yang
+              dipasang di sini.
+            </p>
+          </div>
+        </section>
+
+        {/* ---------- Imbauan keamanan ----------
+            Diberi penekanan visual karena menyangkut keamanan pengguna.
+            Tetap tanpa bingkai: latar lembut + sudut membulat, tanpa garis,
+            supaya tidak kembali ke pola kartu. */}
+        <section className="mt-10 rounded-lg bg-accent-soft px-5 py-5 md:mt-14 md:px-6 md:py-6">
+          <h2 className="font-display text-[18px] font-medium tracking-[-0.01em] text-accent-text md:text-[20px]">
+            Bertransaksi dengan hati-hati
+          </h2>
+          <div className="mt-3.5 space-y-3.5 text-[15px] leading-[1.7] text-accent-text">
+            <p>
+              Karena Angkutin tidak terlibat dalam transaksi, kamu perlu berhati-hati
+              dan teliti. Periksa barangnya langsung sebelum membayar, dan
+              pastikan kondisinya sesuai yang dijanjikan.
+            </p>
+            <p>
+              Jangan pernah mengirim uang muka sebelum barang dilihat, apalagi
+              ke rekening yang tidak bisa kamu pastikan. Untuk barang bernilai
+              besar, ajak teman saat mengambil, dan lakukan pertemuan di tempat
+              yang terang serta ramai.
+            </p>
+            <p>
+              Kalau ada yang mencurigakan — harga terlalu bagus untuk benar,
+              penjual menolak ditemui, atau meminta transfer lebih dulu —
+              sebaiknya tinggalkan saja. Keamananmu lebih penting daripada
+              barang murah.
+            </p>
+          </div>
+        </section>
+
+        {/* ---------- Cara kerjanya ----------
+            Tanpa kartu. Nomor kecil + judul, dipisah garis rambut. */}
+        <section className="mt-10 md:mt-14">
+          <h2 className="font-display text-[20px] font-medium tracking-[-0.01em] text-ink md:text-[22px]">
+            Cara kerjanya
+          </h2>
+
+          <div className="mt-6 space-y-8">
+            <div>
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-mono">
+                Kalau mau melepas barang
+              </p>
+              <ol className="mt-3.5 space-y-3">
+                {LANGKAH_JUAL.map((l, i) => (
+                  <li key={l} className="flex gap-3.5 text-[15px] leading-[1.65] text-ink">
+                    <span className="mt-[2px] w-4 shrink-0 text-[13px] font-semibold tabular-nums text-primary">
+                      {i + 1}
+                    </span>
                     <span>{l}</span>
                   </li>
                 ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+              </ol>
+            </div>
 
-        <section className="mt-4 rounded-md border border-primary/25 bg-primary-soft p-4">
-          <h2 className="font-display text-[15px] font-bold text-primary-dark">
+            <div className="border-t border-line pt-8">
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-mono">
+                Kalau mencari barang
+              </p>
+              <ol className="mt-3.5 space-y-3">
+                {LANGKAH_CARI.map((l, i) => (
+                  <li key={l} className="flex gap-3.5 text-[15px] leading-[1.65] text-ink">
+                    <span className="mt-[2px] w-4 shrink-0 text-[13px] font-semibold tabular-nums text-primary">
+                      {i + 1}
+                    </span>
+                    <span>{l}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- Privasi ---------- */}
+        <section className="mt-10 border-t border-line pt-8 md:mt-14">
+          <h2 className="font-display text-[20px] font-medium tracking-[-0.01em] text-ink md:text-[22px]">
             Soal privasi
           </h2>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">
+          <p className="mt-4 text-[15.5px] leading-[1.75] text-ink">
             Alamat kamar tidak pernah ditampilkan di halaman publik. Yang tampil
             hanya patokan lokasi umum. Nomor WhatsApp pemilik baru dikirim saat
             pembeli menekan tombol WhatsApp.
           </p>
         </section>
 
-        <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
+        {/* ---------- Tanda tangan ----------
+            Penutup bergaya editorial: siapa yang bicara, bukan blok CTA. */}
+        <div className="mt-12 border-t border-line pt-8 md:mt-16">
+          <p className="text-[15px] leading-[1.7] text-ink-secondary">
+            Terima kasih sudah memakai Angkutin. Semoga barangmu sampai ke
+            orang yang memang membutuhkannya.
+          </p>
+          <p className="mt-5 font-display text-[15px] font-medium text-ink">
+            — Tim Angkutin
+          </p>
+        </div>
+
+        {/* ---------- Aksi ---------- */}
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <Link href="/" className="flex-1">
             <Button varian="outline" penuh ukuran="lg">
               Telusuri Katalog
+              <IconArrowRight size={16} />
             </Button>
           </Link>
           <Link href="/pasang" className="flex-1">
@@ -103,9 +225,7 @@ export default function TentangPage() {
             </Button>
           </Link>
         </div>
-        </div>
-      </main>
-
-    </>
+      </article>
+    </main>
   );
 }
