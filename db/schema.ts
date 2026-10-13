@@ -104,6 +104,30 @@ export const listingImages = pgTable("listing_images", {
   displayOrder: smallint("display_order").default(0).notNull(),
 });
 
+/**
+ * Kunjungan halaman — analytics milik sendiri, tanpa pihak ketiga.
+ *
+ * KENAPA TIDAK ADA KOLOM IP SAMA SEKALI:
+ * Tabel ini sengaja tidak menyimpan apa pun yang bisa mengarah ke orang.
+ * Yang dicatat hanya halaman apa yang dibuka, dari jenis rujukan mana, dan
+ * perkiraan ukuran layar. Pertanyaan yang ingin dijawab adalah "halaman mana
+ * yang dipakai", bukan "siapa yang memakainya".
+ *
+ * `ip_hash` tetap disimpan di tabel rate_limits karena di sana memang perlu
+ * untuk membatasi penyalahgunaan, dan hanya berupa hash yang dibuang setelah
+ * 24 jam. Di sini tidak ada kebutuhan seperti itu.
+ */
+export const pageviews = pgTable("pageviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /** Jalur halaman saja, tanpa query string (token tidak pernah ikut). */
+  path: varchar("path", { length: 200 }).notNull(),
+  /** Klasifikasi jenis rujukan: langsung, internal, whatsapp, mesin-cari. */
+  referrer: varchar("referrer", { length: 16 }).notNull(),
+  /** Lebar viewport, dibulatkan ke 50px. Cukup untuk tahu ponsel vs desktop. */
+  width: smallint("width").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /** Tabel bantu untuk rate limiting POST /api/v1/listings (5/jam/IP). */
 export const rateLimits = pgTable("rate_limits", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -125,5 +149,6 @@ export type ListingStatus = (typeof STATUS_VALUES)[number];
 export type Listing = typeof listings.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Stall = typeof stalls.$inferSelect;
+export type Pageview = typeof pageviews.$inferSelect;
 
 export { sql };

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
+import { CatatKunjungan } from "@/components/shared/catat-kunjungan";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import { ToastProvider } from "@/components/shared/toast";
 import { ThemeProvider, SKRIP_TEMA } from "@/components/shared/theme";
@@ -160,6 +161,13 @@ export default function RootLayout({
           <ToastProvider>
             <AppShell>{children}</AppShell>
             <ServiceWorkerRegister />
+            {/*
+              Pencatat kunjungan: tidak merender apa pun, hanya mengirim satu
+              permintaan kecil setiap kali jalur berubah. Diletakkan di layout
+              akar supaya berlaku untuk semua halaman tanpa perlu ditambahkan
+              satu per satu.
+            */}
+            <CatatKunjungan />
           </ToastProvider>
         </ThemeProvider>
       </body>

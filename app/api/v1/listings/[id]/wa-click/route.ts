@@ -1,7 +1,8 @@
 import { db } from "@/db";
 import { listings } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { ok, gagal } from "@/lib/api";
+import { ok, gagal, ipKlien } from "@/lib/api";
+import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
@@ -18,12 +19,38 @@ export const dynamic = "force-dynamic";
  * Mengembalikan { url } — klien melakukan window.open(url).
  */
 export async function POST(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await ctx.params;
     if (!/^[0-9a-f-]{36}$/i.test(id)) return gagal("Barang tidak ditemukan.", 404);
+
+    /*
+     * Rate limit.
+     *
+     * KENAPA PERLU: tanpa batas, endpoint ini bisa dipanggil berulang untuk
+     * memanen nomor WhatsApp penjual satu per satu. Nomor memang tidak pernah
+     * dikirim ke browser, tapi URL wa.me yang dikembalikan MEMUAT nomor itu,
+     * jadi memanggil endpoint ini berkali-kali sama saja dengan mengambil
+     * nomornya. PRD §12 Risiko 2 menyebut proteksi dari "scraping otomatis",
+     * dan inilah tempat yang dimaksud.
+     *
+     * Batasnya 60/jam, jauh lebih longgar dari 5/jam milik pemasangan barang:
+     * pembeli wajar menghubungi beberapa penjual sekaligus, dan satu kampus
+     * sering berbagi satu alamat IP. Lihat lib/rate-limit.ts.
+     *
+     * Pemeriksaan dilakukan SEBELUM query database, jadi permintaan yang
+     * ditolak tidak membebani database sama sekali.
+     */
+    const ip = ipKlien(req);
+    const rl = await cekRateLimit(ip, "wa_click");
+    if (!rl.boleh) {
+      return gagal(
+        "Terlalu banyak percobaan menghubungi penjual. Coba lagi nanti ya.",
+        429,
+      );
+    }
 
     const [row] = await db
       .select({
@@ -49,6 +76,15 @@ export async function POST(
       .update(listings)
       .set({ whatsappClicks: sql`${listings.whatsappClicks} + 1` })
       .where(eq(listings.id, id));
+
+    /*
+     * Dicatat SETELAH link berhasil dibangun, bukan sebelum.
+     *
+     * Mengikuti pola yang sama dengan pemasangan barang: kuota hanya dipotong
+     * kalau aksinya benar-benar berhasil. Kalau ada galat di tengah jalan,
+     * pengguna tidak seharusnya kehilangan jatahnya.
+     */
+    await catatRateLimit(ip, "wa_click");
 
     const url = buildWhatsAppLink({
       sellerName: row.sellerName,

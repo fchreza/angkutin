@@ -4,6 +4,7 @@ import { and, eq, lt } from "drizzle-orm";
 import { tanggalHariIniID } from "@/lib/format";
 import { ok, gagal } from "@/lib/api";
 import { bersihkanRateLimit } from "@/lib/rate-limit";
+import { bersihkanPageview } from "@/lib/analytics";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -54,10 +55,21 @@ export async function GET(req: Request) {
 
     const dibersihkan = await bersihkanRateLimit();
 
+    /*
+     * Kunjungan lama juga dibersihkan di sini.
+     *
+     * KENAPA DI CRON YANG SAMA, bukan cron terpisah: Vercel Hobby hanya
+     * mengizinkan satu cron per hari. Menambah cron kedua berarti salah
+     * satunya tidak akan pernah jalan di paket ini, dan itu lebih buruk
+     * daripada menggabungkannya.
+     */
+    const kunjunganDibersihkan = await bersihkanPageview();
+
     return ok({
       ok: true,
       dijadikan_expired: kedaluwarsa.length,
       rate_limit_dibersihkan: dibersihkan,
+      kunjungan_dibersihkan: kunjunganDibersihkan,
       dijalankan_pada: new Date().toISOString(),
     });
   } catch (e) {
