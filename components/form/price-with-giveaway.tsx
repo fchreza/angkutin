@@ -59,7 +59,7 @@ export function PriceWithGiveaway({
                * memperbesar halaman otomatis saat kolomnya disentuh, dan itu
                * menggeser seluruh tata letak form.
                */
-              "h-11 w-full rounded-md border border-line pl-10 pr-3 text-[16px]",
+              "h-11 w-full rounded-md border border-line-kuat pl-10 pr-3 text-[16px]",
               "focus:border-primary focus:outline-none",
               gratis && "cursor-not-allowed bg-appbg text-ink-secondary",
             )}
@@ -77,7 +77,7 @@ export function PriceWithGiveaway({
           "flex cursor-pointer items-start gap-3 rounded-md border p-3.5 transition-colors",
           gratis
             ? "border-primary bg-primary-soft"
-            : "border-line bg-surface hover:border-primary/40",
+            : "border-line-kuat bg-surface hover:border-primary/40",
         )}
       >
         <input
@@ -90,11 +90,19 @@ export function PriceWithGiveaway({
           aria-hidden
           className={cn(
             "mt-[2px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-2 transition-colors",
-            gratis ? "border-primary bg-primary" : "border-line bg-surface",
+            /*
+             * `text-primary-teks` dipakai supaya centangnya mengikuti warna
+             * teks-di-atas-aksi, bukan putih tetap. Di mode gelap aksi
+             * utamanya sekarang terang (#E0E0E0), dan centang putih di
+             * atasnya hanya 1,25:1 — praktis hilang.
+             */
+            gratis
+              ? "border-primary bg-primary text-primary-teks"
+              : "border-line-kuat bg-surface",
           )}
         >
           {gratis && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 6 9 17l-5-5" />
             </svg>
           )}

@@ -411,7 +411,7 @@ export function FeedClient({
                    * tetap bekerja untuk pengguna keyboard, dan sinyal fokusnya
                    * bukan warna saja.
                    */
-                  "focus:border-line-kuat focus:outline-none",
+                  "focus:border-primary focus:outline-none",
                   // Sembunyikan tombol hapus bawaan WebKit: kita punya sendiri,
                   // dan yang bawaan tidak bisa ditata agar cocok dengan tema.
                   "[&::-webkit-search-cancel-button]:hidden",

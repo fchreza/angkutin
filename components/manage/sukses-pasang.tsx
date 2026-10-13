@@ -113,7 +113,15 @@ export function SuksesPasang({
         <div
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-            fotoGagal ? "bg-accent text-white" : "bg-primary text-primary-teks",
+            /*
+             * Ikon memakai token teks-di-atas-aksen, BUKAN `text-white`.
+             *
+             * Di mode gelap aksen sekarang abu terang (#E0E0E0), dan ikon
+             * putih di atasnya hanya 1,25:1 — praktis hilang. Token ini berisi
+             * putih di mode terang dan gelap di mode gelap, jadi selalu
+             * terbaca di kedua mode.
+             */
+            fotoGagal ? "bg-accent text-primary-teks" : "bg-primary text-primary-teks",
           )}
         >
           {fotoGagal ? <IconAlert size={19} /> : <IconCheck size={19} />}

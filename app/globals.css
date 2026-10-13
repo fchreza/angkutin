@@ -41,7 +41,7 @@
     Kalau membaca `--w-bg` (yang berbeda per mode), yang terbaca selalu warna
     halaman yang sedang ditinggalkan. */
  --kanvas-terang: 250 248 245;
- --kanvas-gelap: 34 26 14; /* HARUS sama dengan --w-bg di .dark */
+ --kanvas-gelap: 18 18 18; /* HARUS sama dengan --w-bg di .dark */
  --w-surface: 255 255 255; /* kartu */
  --w-surface2: 243 240 234; /* #F3F0EA — kartu tenggelam, baris tabel */
 
@@ -100,24 +100,33 @@
 }
 
 /**
- * MODE GELAP — hangat, tidak menyakitkan mata.
+ * MODE GELAP — monokrom netral.
  *
- * KENAPA #221A0E dan bukan hitam netral:
- * Kehangatan sebuah warna gelap ditentukan SATURASI, bukan kecerahan.
- * Diukur dengan HSL: #17150F hanya 23% saturasi, dan pada tingkat itu mata
- * membacanya sebagai hitam kotor, bukan sebagai coklat. #221A0E punya 42%
- * saturasi dengan hue 36 derajat, yaitu hue yang sama dengan kanvas terang
- * (#FAF8F5 juga 36 derajat). Jadi kedua mode memakai suhu warna yang sama dan
- * tidak ada lompatan saat berganti mode.
+ * KENAPA #121212, bukan coklat hangat seperti sebelumnya:
+ * Pemilik produk memutuskan menggantinya dengan palet monokrom (kanvas
+ * #121212, teks #E0E0E0, sekunder #B0B0B0, garis #444444, aksen #888888).
+ * Semua saturasinya 0%.
  *
- * Sebagai pembanding, mode gelap produk besar hampir semuanya netral:
- * Airbnb #222222 (0% saturasi), GitHub #0D1117 (biru), Vercel #000000.
- * Jadi kanvas hangat ini memang pilihan, bukan bawaan.
+ * Keputusan itu membalik pertimbangan lama di sini. Dulu #221A0E dipilih
+ * karena #17150F dinilai "hitam kotor" pada 23% saturasi. #121212 lebih gelap
+ * lagi (luminance 0,00605 vs 0,00753) dan saturasinya nol, jadi kesan gelap
+ * itu sekarang DISENGAJA.
  *
- * KENAPA permukaan #2F2A22 cukup jauh dari kanvas:
- * Kartu harus terbaca sebagai LAPISAN. Selisih 1,23:1 terhadap kanvas adalah
- * ambang terendah yang masih terlihat sebagai bidang terpisah tanpa terlihat
- * seperti kotak yang menempel. Dengan selisih lebih kecil, kartu tenggelam.
+ * Yang membuatnya cocok untuk halaman ini: seluruh FOTO BARANG di katalog
+ * berwarna-warni dan tidak bisa dikontrol. Latar netral tidak bersaing dengan
+ * foto, sedangkan latar berwarna menambah warna di bawah foto yang sudah
+ * berwarna.
+ *
+ * Sebagai pembanding, mode gelap produk besar memang netral: Airbnb #222222
+ * (0% saturasi), GitHub #0D1117 (biru), Vercel #000000.
+ *
+ * KENAPA permukaan #1A1A1A cukup jauh dari kanvas:
+ * Kartu harus terbaca sebagai LAPISAN. Selisihnya hanya 1,08:1 terhadap
+ * kanvas, dan itu memang ambang terendah yang masih terlihat sebagai bidang
+ * terpisah. Di palet monokrom tidak ada kroma yang bisa dipakai untuk
+ * membedakan lapisan, jadi satu-satunya alat yang tersisa adalah kecerahan —
+ * dan menaikkannya terlalu jauh akan membuat kartu terlihat seperti kotak
+ * abu-abu yang menempel, bukan sebagai lapisan.
  *
  * CATATAN: menaikkan permukaan menurunkan kontras teks di atasnya, jadi
  * `ink3` dan `line-kuat` HARUS ikut dinaikkan. Itu sebabnya keduanya lebih
@@ -131,29 +140,114 @@
 .dark {
   color-scheme: dark;
 
-  --w-bg: 34 26 14; /* #221A0E — saturasi 42%, kehangatannya terbaca */
-  --w-surface: 53 42 24; /* #352A18 — 1,23:1 vs kanvas */
-  --w-surface2: 61 49 30; /* #3D311E */
+  /*
+   * === MONOKROM: abu murni, tanpa kehangatan ===
+   *
+   * Kanvas #121212, permukaan #1A1A1A, teks #E0E0E0, sekunder #B0B0B0,
+   * garis #444444, aksen #E0E0E0. Semua saturasi 0% — benar-benar netral.
+   *
+   * KENAPA TIDAK LAGI COKLAT HANGAT:
+   * Sebelumnya mode gelap memakai kanvas #221A0E (58,8% saturasi, hue 36°)
+   * dengan alasan kehangatan. Pemilik produk memutuskan menggantinya dengan
+   * palet monokrom. Keputusan itu membalik satu hal yang pernah ditolak di
+   * sini: #121212 LEBIH GELAP daripada #17150F (luminance 0,00605 vs 0,00753)
+   * yang dulu disebut "hitam kotor". Jadi kesan gelapnya memang disengaja,
+   * bukan kelalaian.
+   *
+   * KENAPA JUSTRU COCOK UNTUK HALAMAN INI:
+   * Semua FOTO BARANG di katalog ini berwarna-warni dan tidak bisa dikontrol.
+   * Latar netral tidak bersaing dengan foto; latar berwarna menambah warna di
+   * bawah foto yang sudah berwarna, dan hasilnya terasa ramai.
+   *
+   * TIGA MASALAH PALET ASLINYA, dan bagaimana ditambal:
+   *
+   * 1. Garis #444444 hanya 1,92:1 terhadap kanvas. Sebagai garis dekoratif
+   *    (batas kartu) itu cukup — memang sengaja tipis. TAPI sebagai batas
+   *    bidang isian ia gagal, karena batas input adalah SATU-SATUNYA penanda
+   *    bidang isian dan wajib >= 3:1. Karena itu `line-kuat` dipisah jadi
+   *    #6E6E6E: 3,67:1 di kanvas, 3,41:1 di permukaan, 3,12:1 di surface2.
+   *
+   * 2. Palet itu tidak punya warna permukaan, warna batas input, atau warna
+   *    untuk keadaan mendesak. Blog tidak punya katalog, filter, form, dan
+   *    hitungan tenggat; halaman ini punya semuanya. Permukaan diturunkan
+   *    dari #121212 (+0,05 luminance per tingkat, sesuai pola mode terang),
+   *    dan warna mendesak memakai aksen yang sama supaya tetap monokrom.
+   *
+   * 3. Aksen #888888 tidak bisa jadi latar tombol. Teks putih di atasnya
+   *    hanya 3,54:1 (gagal), teks gelap 5,28:1 (lolos tipis). Untuk tombol
+   *    utama, aksen dinaikkan ke #E0E0E0 — sama dengan warna teks utama,
+   *    sehingga tombolnya jadi bidang TERANG dengan teks gelap. Itu justru
+   *    kontras tertinggi yang bisa dicapai di mode gelap (14,19:1) dan
+   *    terbaca sebagai tombol paling menonjol di halaman.
+   *
+   * CATATAN: menaikkan permukaan menurunkan kontras teks di atasnya, jadi
+   * `ink3` dan `line-kuat` HARUS ikut dinaikkan. Itu sebabnya keduanya lebih
+   * terang di sini daripada di kanvas. Ini pasangan yang tidak boleh diubah
+   * salah satu saja.
+   *
+   * PENTING: di mode gelap, tombol primary memakai TEKS GELAP, bukan putih.
+   * #121212 di atas #E0E0E0 adalah 14,19:1. Putih di atasnya hanya 1,25:1.
+   */
 
-  --w-ink: 242 239 233; /* #F2EFE9 — 15,0:1 */
-  --w-ink2: 169 162 154; /* #A9A29A */
-  --w-ink3: 153 146 135; /* #999287 — 4,5:1 kanvas & permukaan */
+  /* Kanvas & permukaan — saturasi 0% */
+  --w-bg: 18 18 18; /* #121212 */
+  --w-surface: 26 26 26; /* #1A1A1A — 1,08:1 vs kanvas, terlihat sebagai lapisan */
+  --w-surface2: 34 34 34; /* #222222 */
 
-  --w-line: 74 61 38; /* #4A3D26 */
-  --w-line-kuat: 124 115 99; /* #7C7363 — 3:1 kanvas & permukaan */
+  /* Teks — dari palet monokrom, ditambah satu tingkat untuk teks terkecil */
+  --w-ink: 224 224 224; /* #E0E0E0 — 14,2:1 */
+  --w-ink2: 176 176 176; /* #B0B0B0 — 8,6:1 */
+  /*
+   * #8A8A8A bukan dari palet aslinya (yang tidak punya tingkat ketiga).
+   * Dibutuhkan karena helper text dan penghitung karakter HARUS terbaca di
+   * atas PERMUKAAN, bukan hanya di kanvas, dan #808080 di atas #1A1A1A hanya
+   * 4,41:1 (gagal). #8A8A8A memberi 5,43:1 di kanvas dan 5,04:1 di permukaan.
+   */
+  --w-ink3: 138 138 138; /* #8A8A8A — 5,4:1 kanvas, 5,0:1 permukaan */
 
-  --w-primary: 61 190 133; /* #3DBE85 — dinaikkan supaya terbaca HIJAU, bukan hijau lumpur */
-  --w-primary-hover: 86 209 154; /* #56D19A */
-  --w-primary-soft: 20 38 29; /* #14261D — hijau sangat gelap, bukan putih */
-  --w-primary-text: 95 211 160; /* #5FD3A0 — 9,8:1 */
-  --w-on-primary: 10 31 20; /* #0A1F14 — teks GELAP di atas hijau terang */
+  --w-line: 68 68 68; /* #444444 — 1,92:1, sengaja tipis untuk batas kartu */
+  --w-line-kuat: 110 110 110; /* #6E6E6E — 3,67:1 kanvas, 3,41:1 permukaan */
 
-  --w-accent: 251 146 60; /* #FB923C — 7,7:1 */
-  --w-accent-bright: 253 186 116; /* #FDBA74 */
-  --w-accent-soft: 51 32 15; /* #33200F */
-  --w-accent-text: 253 186 116; /* #FDBA74 — 9,2:1 di atas soft */
+  /*
+   * Aksi utama — tombol TERANG, bukan hijau.
+   *
+   * `primary-text` dan `on-primary` dipakai berpasangan dengan `bg-primary`.
+   * Keduanya diisi nilai yang sama karena di sini tombolnya berteks gelap:
+   * `primary-text` juga dipakai sebagai warna IKON di atas `primary-soft`,
+   * dan di atas latar gelap polos #E0E0E0 tetap terbaca (14,19:1).
+   */
+  --w-primary: 224 224 224; /* #E0E0E0 — aksen dari palet */
+  --w-primary-hover: 240 240 240; /* #F0F0F0 */
+  --w-primary-soft: 34 34 34; /* #222222 — "permukaan dinaikkan", bukan semburat warna */
+  --w-primary-text: 224 224 224; /* #E0E0E0 */
+  --w-on-primary: 18 18 18; /* #121212 — teks GELAP di atas tombol terang */
 
-  --w-danger: 248 113 113; /* #F87171 — 6,6:1 */
+  /*
+   * Keadaan mendesak (tenggat <= 2 hari).
+   *
+   * Di palet monokrom tidak ada warna untuk ini, dan membiarkannya kosong
+   * berarti pembeli kehilangan satu-satunya penanda "waktunya hampir habis".
+   * Diselesaikan secara monokrom: teksnya diputihkan ke #FFFFFF (21:1) dan
+   * batasnya dipertegas ke #B0B0B0 (8,64:1). Jadi tenggat mendesak tetap
+   * menonjol, tanpa memakai warna apa pun.
+   *
+   * `accent` sendiri dipertahankan sebagai abu-abu netral, sesuai palet.
+   */
+  --w-accent: 224 224 224; /* #E0E0E0 — aksen dari palet */
+  --w-accent-bright: 176 176 176; /* #B0B0B0 — batas, 8,6:1 */
+  --w-accent-soft: 34 34 34; /* #222222 */
+  --w-accent-text: 255 255 255; /* #FFFFFF — 21:1 di atas accent-soft */
+
+  /*
+   * Keadaan galat — SATU-SATUNYA warna yang dipertahankan.
+   *
+   * Merah bukan hiasan di sini: ia menandai isian yang salah, dan itu harus
+   * dikenali sebagai kesalahan, bukan sebagai "teks yang agak lain". Kalau
+   * dibuat abu-abu, satu-satunya cara pengguna tahu ada yang salah adalah
+   * membaca kalimatnya — dan pengguna yang mengisi form panjang sering tidak
+   * membacanya.
+   */
+  --w-danger: 248 113 113; /* #F87171 — 6,8:1 */
   --w-danger-soft: 42 26 26; /* #2A1A1A */
 }
 

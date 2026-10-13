@@ -129,7 +129,7 @@ export const viewport: Viewport = {
      * berbeda, akan terlihat pita warna lain di atas halaman.
      */
     { media: "(prefers-color-scheme: light)", color: "#FAF8F5" },
-    { media: "(prefers-color-scheme: dark)", color: "#221A0E" },
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
   ],
   maximumScale: 5,
   viewportFit: "cover",

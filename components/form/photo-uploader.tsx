@@ -402,7 +402,7 @@ export function PhotoUploader({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="flex w-full flex-col items-center justify-center gap-2.5 rounded-md border-2 border-dashed border-line px-4 py-7 text-center"
+            className="flex w-full flex-col items-center justify-center gap-2.5 rounded-md border-2 border-dashed border-line-kuat px-4 py-7 text-center"
           >
             <span className="baris-muncul flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft">
               <IconUpload size={20} className="text-primary" />

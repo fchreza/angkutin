@@ -205,7 +205,7 @@ export function FormListingFields({
             placeholder="Contoh: Kasur spring bed 120x200"
             className={cn(
               "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
-              galat.judul ? "border-danger" : "border-line focus:border-primary",
+              galat.judul ? "border-danger" : "border-line-kuat focus:border-primary",
             )}
           />
           <div className="mt-1 flex justify-between">
@@ -256,7 +256,7 @@ export function FormListingFields({
             placeholder="Sebutkan minusnya apa adanya, mis. ada noda kecil di sudut, rangka masih kokoh."
             className={cn(
               "w-full resize-y rounded-md border px-3 py-2.5 text-[16px] leading-relaxed focus:outline-none",
-              galat.deskripsi ? "border-danger" : "border-line focus:border-primary",
+              galat.deskripsi ? "border-danger" : "border-line-kuat focus:border-primary",
             )}
           />
           <div className="mt-1 flex justify-between">
@@ -300,7 +300,7 @@ export function FormListingFields({
             placeholder="Contoh: Dekat Indomaret Point, gang sebelah warung Bu Ida"
             className={cn(
               "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
-              galat.patokan ? "border-danger" : "border-line focus:border-primary",
+              galat.patokan ? "border-danger" : "border-line-kuat focus:border-primary",
             )}
           />
           {galat.patokan ? (
@@ -346,8 +346,8 @@ export function FormListingFields({
             placeholder="Contoh: Tangga sempit, butuh 2 orang, ambil pagi"
             aria-describedby="catatan-bantuan"
             className={cn(
-              "h-11 w-full rounded-md border border-line px-3 text-[16px] focus:border-primary focus:outline-none",
-              galat.catatan ? "border-danger" : "border-line",
+              "h-11 w-full rounded-md border border-line-kuat px-3 text-[16px] focus:border-primary focus:outline-none",
+              galat.catatan ? "border-danger" : "border-line-kuat",
             )}
           />
           {/*
@@ -392,7 +392,7 @@ export function FormListingFields({
               placeholder="Contoh: Rina"
               className={cn(
                 "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
-                galat.nama ? "border-danger" : "border-line focus:border-primary",
+                galat.nama ? "border-danger" : "border-line-kuat focus:border-primary",
               )}
             />
             {galat.nama && <p className="mt-1.5 text-[14px] text-danger">{galat.nama}</p>}
@@ -410,7 +410,7 @@ export function FormListingFields({
               placeholder="0812 3456 7890"
               className={cn(
                 "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
-                galat.wa ? "border-danger" : "border-line focus:border-primary",
+                galat.wa ? "border-danger" : "border-line-kuat focus:border-primary",
               )}
             />
             {galat.wa ? (

@@ -79,7 +79,7 @@ export function ConditionSegmented({
         role="radiogroup"
         aria-label="Kondisi barang"
         onKeyDown={onKeyDown}
-        className="relative grid grid-cols-3 gap-1 rounded-md border border-line bg-appbg p-1"
+        className="relative grid grid-cols-3 gap-1 rounded-md border border-line-kuat bg-appbg p-1"
       >
         {/* Indikator geser.
             PENTING: yang dianimasikan adalah `transform: translateX`, BUKAN

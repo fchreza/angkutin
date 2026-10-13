@@ -122,7 +122,7 @@ export function Select({
             "focus:outline-none focus:ring-2 focus:ring-primary/20",
             salah
               ? "border-danger focus:border-danger"
-              : "border-line hover:border-line-kuat focus:border-primary",
+              : "border-line-kuat hover:border-primary focus:border-primary",
             "data-[state=open]:border-primary",
             disabled &&
               "cursor-not-allowed border-line bg-appbg text-ink-secondary",
