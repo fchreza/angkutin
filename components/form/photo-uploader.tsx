@@ -50,6 +50,25 @@ const MAKS_FOTO = 3;
 const MAKS_BYTE = 500 * 1024;
 const SISI_MAKS = 1080;
 
+/**
+ * Lama MINIMUM cincin progres ditampilkan, dalam milidetik.
+ *
+ * KENAPA INI ADA:
+ * Kompresi gambar kecil bisa selesai dalam ~100ms — cincinnya berkedip sekejap
+ * lalu hilang. Indikator yang muncul sekejap terbaca sebagai KERUSAKAN
+ * (layar berkedip), bukan sebagai proses yang sedang berjalan. Jadi lebih
+ * buruk daripada tidak ada indikator sama sekali.
+ *
+ * INI BUKAN PROGRES PALSU:
+ * Angka yang ditampilkan tetap kemajuan sebenarnya (berapa file sudah selesai
+ * diproses). Yang dijamin hanyalah WAKTUNYA cukup untuk terbaca. Ini pola
+ * umum untuk indikator progres; alternatifnya — kedipan 100ms — lebih buruk.
+ *
+ * Ongkosnya: unggahan yang sebenarnya selesai dalam 100ms terasa 700ms.
+ * Itu pertukaran yang layak untuk indikator yang benar-benar terbaca.
+ */
+const DURASI_MIN_PROGRES = 700;
+
 export type FotoSiap = {
   file: File;
   preview: string;
@@ -171,13 +190,15 @@ export function PhotoUploader({
       setSedangKompres(true);
       setKemajuan(0);
 
+      const mulai = performance.now();
+
       const hasil: FotoSiap[] = [];
       for (let i = 0; i < dipilih.length; i++) {
         const f = dipilih[i];
         if (!f.type.startsWith("image/")) {
           setPesan(`${f.name} bukan file gambar.`);
           // Tetap hitung sebagai selesai supaya cincinnya tidak menggantung.
-          setKemajuan(Math.round(((i + 1) / dipilih.length) * 100));
+          setKemajuan(Math.min(99, Math.round(((i + 1) / dipilih.length) * 100)));
           continue;
         }
         try {
@@ -191,8 +212,23 @@ export function PhotoUploader({
           setPesan(`Gagal memproses ${f.name}.`);
         }
         // Kemajuan NYATA: berapa file yang sudah selesai diproses.
-        setKemajuan(Math.round(((i + 1) / dipilih.length) * 100));
+        //
+        // Ditahan di 99% — angka 100 baru dipasang setelah durasi minimum
+        // lewat, supaya cincinnya sempat menutup penuh dan terbaca.
+        setKemajuan(Math.min(99, Math.round(((i + 1) / dipilih.length) * 100)));
       }
+
+      // Beri waktu supaya cincinnya benar-benar terlihat (lihat
+      // DURASI_MIN_PROGRES untuk alasannya).
+      const terpakai = performance.now() - mulai;
+      if (terpakai < DURASI_MIN_PROGRES) {
+        await new Promise((r) => setTimeout(r, DURASI_MIN_PROGRES - terpakai));
+      }
+
+      // Cincin menutup penuh, lalu ditahan sebentar supaya penutupannya
+      // terbaca sebagai "selesai", bukan terpotong.
+      setKemajuan(100);
+      await new Promise((r) => setTimeout(r, 300));
 
       setFoto([...foto, ...hasil]);
       setSedangKompres(false);
@@ -285,7 +321,10 @@ export function PhotoUploader({
                 strokeLinecap="round"
                 pathLength={100}
                 strokeDasharray={`${kemajuan} 200`}
-                className="transition-[stroke-dasharray] duration-200 ease-linear"
+                /* 420ms, bukan 200ms: pada 200ms satu langkah kemajuan
+                   (mis. 0 -> 50) tersapu terlalu cepat untuk diikuti mata.
+                   Dengan 420ms sapuannya terbaca sebagai gerakan. */
+                className="transition-[stroke-dasharray] duration-[420ms] ease-out"
               />
             </>
           )}
@@ -389,8 +428,15 @@ export function PhotoUploader({
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft">
               <IconUpload size={20} className="text-primary" />
             </span>
+            {/*
+              * Saat cincin sudah menutup penuh (100%), teksnya HARUS ikut
+              * berubah. Kalau tidak, badge berkata "100%" sementara teksnya
+              * masih "Memproses foto…" — dua pernyataan yang bertentangan di
+              * layar yang sama. Jendelanya hanya 300ms, tapi itu justru saat
+              * mata paling fokus (prosesnya baru saja selesai).
+              */}
             <span className="text-[13px] font-medium text-ink-secondary">
-              Memproses foto…
+              {kemajuan >= 100 ? "Selesai" : "Memproses foto…"}
             </span>
           </div>
         )}
