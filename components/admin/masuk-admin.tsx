@@ -10,6 +10,10 @@ import { Button } from "@/components/shared/button";
  * saya", tidak ada "lupa sandi", tidak ada pendaftaran. Hanya ada satu orang
  * yang perlu masuk, dan alur pemulihan sandi yang rumit untuk satu pengguna
  * justru menambah permukaan serangan tanpa menambah manfaat.
+ *
+ * Lebarnya dibatasi dan diletakkan di tengah: kolom isian selebar layar
+ * membuatnya terbaca sebagai paragraf, bukan sebagai satu bidang yang harus
+ * diisi.
  */
 export function MasukAdmin() {
   const [sandi, setSandi] = useState("");
@@ -46,18 +50,20 @@ export function MasukAdmin() {
   }
 
   return (
-    <form onSubmit={kirim} className="mx-auto max-w-sm space-y-5 py-16">
-      <div>
-        <h1 className="judul-sedang">Masuk admin</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-secondary">
+    <div className="mx-auto max-w-[26rem]">
+      <header>
+        <h1 className="font-display text-judul-besar font-bold text-ink">
+          Masuk admin
+        </h1>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
           Halaman ini hanya untuk pemilik situs.
         </p>
-      </div>
+      </header>
 
-      <div>
+      <form onSubmit={kirim} className="mt-8">
         <label
           htmlFor="sandi-admin"
-          className="block text-sm font-medium text-ink"
+          className="block text-[14px] font-medium text-ink"
         >
           Sandi
         </label>
@@ -67,20 +73,23 @@ export function MasukAdmin() {
           value={sandi}
           onChange={(e) => setSandi(e.target.value)}
           autoComplete="current-password"
-          className="mt-2 w-full rounded-md border border-line bg-surface px-4 py-3 text-base text-ink outline-none focus:border-primary"
+          className="mt-2 w-full rounded-md border border-line-kuat bg-surface px-4 py-3 text-base text-ink outline-none transition-colors focus:border-primary"
           required
         />
-      </div>
 
-      {galat && (
-        <p role="alert" className="text-sm font-medium text-danger">
-          {galat}
-        </p>
-      )}
+        {galat && (
+          <p
+            role="alert"
+            className="mt-3 rounded-md bg-danger-soft px-4 py-3 text-[14px] leading-relaxed text-danger"
+          >
+            {galat}
+          </p>
+        )}
 
-      <Button type="submit" disabled={memuat} className="w-full">
-        {memuat ? "Memeriksa..." : "Masuk"}
-      </Button>
-    </form>
+        <Button type="submit" disabled={memuat} className="mt-6 w-full">
+          {memuat ? "Memeriksa..." : "Masuk"}
+        </Button>
+      </form>
+    </div>
   );
 }
