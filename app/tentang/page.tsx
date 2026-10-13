@@ -88,7 +88,17 @@ export default function TentangPage() {
           Judul: besar tapi RINGAN. Ini yang membedakan editorial modern dari
           tampilan kuno — bukan ukurannya, melainkan beratnya.
         */}
-        <h1 className="mt-4 font-display text-[34px] font-normal leading-[1.12] tracking-[-0.02em] text-ink sm:text-[42px] md:text-[50px]">
+        {/*
+          Memakai token judul-hero supaya ukurannya sejalan dengan halaman lain.
+          Sebelumnya 34/42/50px, satu-satunya h1 yang melewati rentang skala
+          (maksimum 40px) sehingga hierarkinya berbeda tanpa alasan.
+
+          `font-normal` DIPERTAHANKAN. Bobot ringan pada judul besar adalah
+          ciri editorial halaman ini, dan yang membuatnya terasa berbeda dari
+          judul tebal di halaman lain. Yang disamakan ukurannya, bukan
+          karakternya.
+        */}
+        <h1 className="mt-4 font-display text-judul-hero font-normal text-ink">
           Barang yang masih layak tidak perlu berakhir jadi sampah.
         </h1>
 

@@ -41,7 +41,7 @@ export function LivePreview({
   return (
     <div className="sticky top-20">
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
+        <span className="text-[12.5px] font-bold uppercase tracking-wider text-ink-secondary">
           Pratinjau
         </span>
         <span className="h-px flex-1 bg-line" />
@@ -57,7 +57,7 @@ export function LivePreview({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-secondary">
+            <div className="flex h-full w-full items-center justify-center text-[14px] text-ink-secondary">
               Foto belum dipilih
             </div>
           )}
@@ -68,7 +68,7 @@ export function LivePreview({
                 GRATIS
               </Badge>
             ) : (
-              <span className="inline-block rounded-pill bg-white px-2.5 py-1 text-[13px] font-bold text-scrim shadow-card">
+              <span className="inline-block rounded-pill bg-white px-2.5 py-1 text-[14px] font-bold text-scrim shadow-card">
                 {angkaHarga > 0 ? formatRupiah(angkaHarga) : "Rp 0"}
               </span>
             )}
@@ -86,7 +86,7 @@ export function LivePreview({
             {judul || "Judul barang belum diisi"}
           </h3>
 
-          <div className="flex items-center gap-1 text-[11.5px] text-ink-secondary">
+          <div className="flex items-center gap-1 text-[14px] text-ink-secondary">
             <IconPin size={12} />
             <span className="truncate">
               {patokan || wilayahNama || "Patokan lokasi belum diisi"}
@@ -111,7 +111,7 @@ export function LivePreview({
         </div>
       </div>
 
-      <p className="mt-3 text-[11.5px] leading-relaxed text-ink-secondary">
+      <p className="mt-3 text-[14px] leading-relaxed text-ink-secondary">
         Beginilah barangmu akan tampil di katalog.
       </p>
     </div>

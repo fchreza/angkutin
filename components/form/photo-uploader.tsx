@@ -257,10 +257,10 @@ export function PhotoUploader({
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between">
-        <label className="text-[13px] font-semibold text-ink">
+        <label className="text-[14px] font-semibold text-ink">
           Foto barang <span className="text-danger">*</span>
         </label>
-        <span className="text-[11.5px] text-ink-secondary">
+        <span className="text-[14px] text-ink-secondary">
           {foto.length}/{MAKS_FOTO} foto
           {foto.length > 0 && ` · ${totalKB} KB`}
         </span>
@@ -408,13 +408,19 @@ export function PhotoUploader({
               <IconUpload size={20} className="text-primary" />
             </span>
             <span
-              className="baris-muncul text-[13px] font-medium text-ink-secondary"
+              className="baris-muncul text-[14px] font-medium text-ink-secondary"
               style={{ "--d": "60ms" } as React.CSSProperties}
             >
               Seret foto ke sini, atau <span className="text-primary">pilih file</span>
             </span>
             <span
-              className="baris-muncul text-[11.5px] text-ink-mono"
+              /*
+               * ink-secondary, bukan ink-mono. Terukur: ink-mono memberi
+               * 4,55:1 di atas permukaan putih, margin paling tipis dari semua
+               * teks di halaman ini, dan teksnya kecil serta berada di dalam
+               * area unggah yang ramai. ink-secondary memberi 5,77:1.
+               */
+              className="baris-muncul text-[14px] text-ink-secondary"
               style={{ "--d": "120ms" } as React.CSSProperties}
             >
               JPG atau PNG · maks {MAKS_FOTO} foto · dikompresi otomatis
@@ -435,7 +441,7 @@ export function PhotoUploader({
               * layar yang sama. Jendelanya hanya 300ms, tapi itu justru saat
               * mata paling fokus (prosesnya baru saja selesai).
               */}
-            <span className="text-[13px] font-medium text-ink-secondary">
+            <span className="text-[14px] font-medium text-ink-secondary">
               {kemajuan >= 100 ? "Selesai" : "Memproses foto…"}
             </span>
           </div>
@@ -444,7 +450,7 @@ export function PhotoUploader({
         {/* Lapisan saat file diseret di atas area ini */}
         {seretDiAtas && !sedangKompres && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary-soft/90">
-            <span className="text-[13px] font-semibold text-primary-dark">
+            <span className="text-[14px] font-semibold text-primary-dark">
               Lepas untuk menambahkan
             </span>
           </div>
@@ -460,13 +466,13 @@ export function PhotoUploader({
         onChange={(e) => void pilih(e.target.files)}
       />
 
-      <p className="mt-2 text-[11.5px] leading-relaxed text-ink-secondary">
+      <p className="mt-2 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
         Foto dikompresi otomatis di perangkatmu (maks 500 KB). Foto pertama
         jadi foto utama.
       </p>
 
       {(pesan || galat) && (
-        <p className="mt-1.5 text-[12px] text-danger">{pesan || galat}</p>
+        <p className="mt-1.5 text-[14px] text-danger">{pesan || galat}</p>
       )}
     </div>
   );

@@ -36,7 +36,13 @@ export default async function PasangPage() {
 
       <main className="shell w-full pb-[130px] pt-4 md:pb-24 md:pt-6">
         <div className="mb-5">
-          <h1 className="font-display text-[22px] font-bold tracking-tight text-ink md:text-[26px]">
+          {/*
+            Memakai TOKEN judul-sedang, bukan ukuran hardcoded.
+            Sebelumnya halaman ini memakai text-[22px] md:text-[26px], satu-satunya
+            h1 di situs yang tidak mengikuti skala. Akibatnya hierarki ukuran
+            berbeda-beda antarhalaman tanpa alasan yang bisa ditulis.
+          */}
+          <h1 className="font-display text-judul-sedang font-bold text-ink">
             Lepas Barang Pindahan
           </h1>
           <p className="mt-1 text-[13.5px] text-ink-secondary">

@@ -70,7 +70,7 @@ export function ConditionSegmented({
 
   return (
     <div>
-      <label className="mb-2 block text-[13px] font-semibold text-ink">
+      <label className="mb-2 block text-[14px] font-semibold text-ink">
         Kondisi barang <span className="text-danger">*</span>
       </label>
 
@@ -110,7 +110,7 @@ export function ConditionSegmented({
             tabIndex={nilai === k || (indeksTerpilih < 0 && i === 0) ? 0 : -1}
             onClick={() => onUbah(k)}
             className={cn(
-              "press relative z-10 rounded-sm px-2 py-2.5 text-[12px] font-medium leading-tight",
+              "press relative z-10 rounded-sm px-2 py-2.5 text-[14px] font-medium leading-tight",
               nilai === k ? "text-primary-dark" : "text-ink-secondary hover:text-ink",
             )}
           >
@@ -119,7 +119,7 @@ export function ConditionSegmented({
         ))}
       </div>
 
-      {galat && <p className="mt-1.5 text-[12px] text-danger">{galat}</p>}
+      {galat && <p className="mt-1.5 text-[14px] text-danger">{galat}</p>}
     </div>
   );
 }

@@ -11,7 +11,7 @@ export default function NotFound() {
         <div className="font-display text-[56px] font-black leading-none text-line">
           404
         </div>
-        <h1 className="mt-4 font-display text-[20px] font-bold text-ink">
+        <h1 className="mt-4 font-display text-judul-sedang font-bold text-ink">
           Barang ini sudah tidak ada
         </h1>
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">

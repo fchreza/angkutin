@@ -32,7 +32,7 @@ export function PriceWithGiveaway({
       <div>
         <label
           htmlFor="harga"
-          className="mb-2 block text-[13px] font-semibold text-ink"
+          className="mb-2 block text-[14px] font-semibold text-ink"
         >
           Harga <span className="text-danger">*</span>
         </label>
@@ -54,7 +54,12 @@ export function PriceWithGiveaway({
             onChange={(e) => onHarga(ribuan(e.target.value))}
             placeholder="150.000"
             className={cn(
-              "h-11 w-full rounded-md border border-line pl-10 pr-3 text-[14px]",
+              /*
+               * 16px, bukan 14px: di iOS, input di bawah 16px membuat Safari
+               * memperbesar halaman otomatis saat kolomnya disentuh, dan itu
+               * menggeser seluruh tata letak form.
+               */
+              "h-11 w-full rounded-md border border-line pl-10 pr-3 text-[16px]",
               "focus:border-primary focus:outline-none",
               gratis && "cursor-not-allowed bg-appbg text-ink-secondary",
             )}
@@ -62,7 +67,7 @@ export function PriceWithGiveaway({
         </div>
 
         {galat && !gratis && (
-          <p className="mt-1.5 text-[12px] text-danger">{galat}</p>
+          <p className="mt-1.5 text-[14px] text-danger">{galat}</p>
         )}
       </div>
 
@@ -95,10 +100,10 @@ export function PriceWithGiveaway({
           )}
         </span>
         <span>
-          <span className="block text-[13.5px] font-semibold text-ink">
+          <span className="block text-[14px] font-semibold text-ink">
             Berikan Gratis (Hibah)
           </span>
-          <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-secondary">
+          <span className="mt-0.5 block text-[14px] leading-relaxed text-ink-secondary">
             Harga jadi Rp 0. Bagus untuk barang yang ingin cepat diambil.
           </span>
         </span>

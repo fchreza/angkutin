@@ -190,12 +190,12 @@ export function FormListingFields({
         id="bagian-barang"
         className="scroll-mt-[116px] space-y-4 rounded-md border border-line bg-surface p-4"
       >
-        <h2 className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
+        <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-ink-secondary">
           Detail barang
         </h2>
 
         <div>
-          <label htmlFor="judul" className="mb-2 block text-[13px] font-semibold text-ink">
+          <label htmlFor="judul" className="mb-2 block text-[14px] font-semibold text-ink">
             Judul barang <span className="text-danger">*</span>
           </label>
           <input
@@ -204,22 +204,22 @@ export function FormListingFields({
             onChange={(e) => onUbah("judul", e.target.value.slice(0, 50))}
             placeholder="Contoh: Kasur spring bed 120x200"
             className={cn(
-              "h-11 w-full rounded-md border px-3 text-[14px] focus:outline-none",
+              "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
               galat.judul ? "border-danger" : "border-line focus:border-primary",
             )}
           />
           <div className="mt-1 flex justify-between">
             {galat.judul ? (
-              <p className="text-[12px] text-danger">{galat.judul}</p>
+              <p className="text-[14px] text-danger">{galat.judul}</p>
             ) : (
               <span />
             )}
-            <span className="text-[11.5px] text-ink-secondary">{nilai.judul.length}/50</span>
+            <span className="text-[14px] text-ink-secondary">{nilai.judul.length}/50</span>
           </div>
         </div>
 
         <div>
-          <label htmlFor="kategori" className="mb-2 block text-[13px] font-semibold text-ink">
+          <label htmlFor="kategori" className="mb-2 block text-[14px] font-semibold text-ink">
             Kategori <span className="text-danger">*</span>
           </label>
           <Select
@@ -245,7 +245,7 @@ export function FormListingFields({
         />
 
         <div>
-          <label htmlFor="deskripsi" className="mb-2 block text-[13px] font-semibold text-ink">
+          <label htmlFor="deskripsi" className="mb-2 block text-[14px] font-semibold text-ink">
             Deskripsi &amp; kondisi jujur <span className="text-danger">*</span>
           </label>
           <textarea
@@ -255,17 +255,17 @@ export function FormListingFields({
             onChange={(e) => onUbah("deskripsi", e.target.value.slice(0, 500))}
             placeholder="Sebutkan minusnya apa adanya, mis. ada noda kecil di sudut, rangka masih kokoh."
             className={cn(
-              "w-full resize-y rounded-md border px-3 py-2.5 text-[14px] leading-relaxed focus:outline-none",
+              "w-full resize-y rounded-md border px-3 py-2.5 text-[16px] leading-relaxed focus:outline-none",
               galat.deskripsi ? "border-danger" : "border-line focus:border-primary",
             )}
           />
           <div className="mt-1 flex justify-between">
             {galat.deskripsi ? (
-              <p className="text-[12px] text-danger">{galat.deskripsi}</p>
+              <p className="text-[14px] text-danger">{galat.deskripsi}</p>
             ) : (
               <span />
             )}
-            <span className="text-[11.5px] text-ink-secondary">
+            <span className="text-[14px] text-ink-secondary">
               {nilai.deskripsi.length}/500
             </span>
           </div>
@@ -277,7 +277,7 @@ export function FormListingFields({
         id="bagian-penjemputan"
         className="scroll-mt-[116px] space-y-4 rounded-md border border-line bg-surface p-4"
       >
-        <h2 className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
+        <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-ink-secondary">
           Penjemputan
         </h2>
 
@@ -290,7 +290,7 @@ export function FormListingFields({
         </div>
 
         <div>
-          <label htmlFor="patokan" className="mb-2 block text-[13px] font-semibold text-ink">
+          <label htmlFor="patokan" className="mb-2 block text-[14px] font-semibold text-ink">
             Patokan lokasi penjemputan <span className="text-danger">*</span>
           </label>
           <input
@@ -299,21 +299,21 @@ export function FormListingFields({
             onChange={(e) => onUbah("patokan", e.target.value.slice(0, 150))}
             placeholder="Contoh: Dekat Indomaret Point, gang sebelah warung Bu Ida"
             className={cn(
-              "h-11 w-full rounded-md border px-3 text-[14px] focus:outline-none",
+              "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
               galat.patokan ? "border-danger" : "border-line focus:border-primary",
             )}
           />
           {galat.patokan ? (
-            <p className="mt-1.5 text-[12px] text-danger">{galat.patokan}</p>
+            <p className="mt-1.5 text-[14px] text-danger">{galat.patokan}</p>
           ) : (
-            <p className="mt-1.5 text-[11.5px] text-ink-secondary">
+            <p className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
               Cukup patokan umum, jangan tulis nomor kamar atau alamat lengkap.
             </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="tenggat" className="mb-2 block text-[13px] font-semibold text-ink">
+          <label htmlFor="tenggat" className="mb-2 block text-[14px] font-semibold text-ink">
             Batas pengambilan <span className="text-danger">*</span>
           </label>
           <KalenderTenggat
@@ -325,9 +325,9 @@ export function FormListingFields({
             maksHari={MAKS_HARI}
           />
           {galat.tenggat ? (
-            <p className="mt-1.5 text-[12px] text-danger">{galat.tenggat}</p>
+            <p className="mt-1.5 text-[14px] text-danger">{galat.tenggat}</p>
           ) : (
-            <p className="mt-1.5 text-[11.5px] text-ink-secondary">
+            <p className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
               Maksimal {MAKS_HARI} hari. Listing otomatis kedaluwarsa pada 00:01 WIB
               setelah tanggal ini.
             </p>
@@ -335,7 +335,7 @@ export function FormListingFields({
         </div>
 
         <div>
-          <label htmlFor="catatan" className="mb-2 block text-[13px] font-semibold text-ink">
+          <label htmlFor="catatan" className="mb-2 block text-[14px] font-semibold text-ink">
             Catatan akses logistik{" "}
             <span className="text-ink-secondary">(opsional)</span>
           </label>
@@ -344,7 +344,10 @@ export function FormListingFields({
             value={nilai.catatan}
             onChange={(e) => onUbah("catatan", e.target.value.slice(0, 200))}
             placeholder="Contoh: Kamar lantai 3, tangga sempit, butuh 2 orang"
-            className="h-11 w-full rounded-md border border-line px-3 text-[14px] focus:border-primary focus:outline-none"
+            className={cn(
+              "h-11 w-full rounded-md border border-line px-3 text-[16px] focus:border-primary focus:outline-none",
+              galat.catatan ? "border-danger" : "border-line",
+            )}
           />
         </div>
       </section>
@@ -355,12 +358,12 @@ export function FormListingFields({
           id="bagian-kontak"
           className="scroll-mt-[116px] space-y-4 rounded-md border border-line bg-surface p-4"
         >
-          <h2 className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
+          <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-ink-secondary">
             Kontak penjual
           </h2>
 
           <div>
-            <label htmlFor="nama" className="mb-2 block text-[13px] font-semibold text-ink">
+            <label htmlFor="nama" className="mb-2 block text-[14px] font-semibold text-ink">
               Nama panggilan <span className="text-danger">*</span>
             </label>
             <input
@@ -369,15 +372,15 @@ export function FormListingFields({
               onChange={(e) => onUbah("nama", e.target.value.slice(0, 50))}
               placeholder="Contoh: Rina"
               className={cn(
-                "h-11 w-full rounded-md border px-3 text-[14px] focus:outline-none",
+                "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
                 galat.nama ? "border-danger" : "border-line focus:border-primary",
               )}
             />
-            {galat.nama && <p className="mt-1.5 text-[12px] text-danger">{galat.nama}</p>}
+            {galat.nama && <p className="mt-1.5 text-[14px] text-danger">{galat.nama}</p>}
           </div>
 
           <div>
-            <label htmlFor="wa" className="mb-2 block text-[13px] font-semibold text-ink">
+            <label htmlFor="wa" className="mb-2 block text-[14px] font-semibold text-ink">
               Nomor WhatsApp <span className="text-danger">*</span>
             </label>
             <input
@@ -387,14 +390,14 @@ export function FormListingFields({
               onChange={(e) => onUbah("wa", e.target.value.slice(0, 20))}
               placeholder="0812 3456 7890"
               className={cn(
-                "h-11 w-full rounded-md border px-3 text-[14px] focus:outline-none",
+                "h-11 w-full rounded-md border px-3 text-[16px] focus:outline-none",
                 galat.wa ? "border-danger" : "border-line focus:border-primary",
               )}
             />
             {galat.wa ? (
-              <p className="mt-1.5 text-[12px] text-danger">{galat.wa}</p>
+              <p className="mt-1.5 text-[14px] text-danger">{galat.wa}</p>
             ) : (
-              <p className="mt-1.5 text-[11.5px] text-ink-secondary">
+              <p className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
                 Nomor ini tidak ditampilkan di halaman publik, hanya dipakai
                 saat pembeli menekan tombol WhatsApp.
               </p>
@@ -409,7 +412,7 @@ export function FormListingFields({
 /** Kotak peringatan umum di atas form (dipakai create & edit). */
 export function GalatUmum({ pesan }: { pesan: string }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-md border border-danger/30 bg-danger-soft px-3.5 py-3 text-[13px] text-danger">
+    <div className="flex items-start gap-2.5 rounded-md border border-danger/30 bg-danger-soft px-3.5 py-3 text-[14px] text-danger">
       <IconAlert size={16} className="mt-[1px] shrink-0" />
       <span>{pesan}</span>
     </div>

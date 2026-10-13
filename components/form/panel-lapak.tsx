@@ -82,7 +82,7 @@ export function PanelLapak() {
         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface text-ink-secondary">
           <IconPlus size={14} />
         </span>
-        <p className="text-[12.5px] leading-relaxed text-ink-secondary">
+        <p className="max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
           Barang ini akan membuat <strong className="text-ink">lapak baru</strong>.
           Kalau kamu mau menambahkannya ke lapak yang sudah ada, buka dulu
           tautan rahasia lapakmu, lalu tekan &ldquo;Tambah Barang&rdquo; dari sana.
@@ -98,7 +98,7 @@ export function PanelLapak() {
           <IconPlus size={14} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[12.5px] leading-relaxed text-ink-secondary">
+          <p className="max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
             Barang ini akan masuk ke lapak{" "}
             <strong className="text-primary-dark">
               {nama?.trim() || "yang kamu buka tadi"}
@@ -107,7 +107,7 @@ export function PanelLapak() {
           </p>
           <Link
             href="/pasang"
-            className="mt-1 inline-block text-[12px] font-semibold text-primary-dark underline underline-offset-2 hover:no-underline"
+            className="mt-1 inline-block text-[13px] font-semibold text-primary-dark underline underline-offset-2 hover:no-underline"
           >
             Buat lapak baru saja
           </Link>

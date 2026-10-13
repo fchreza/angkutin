@@ -124,7 +124,7 @@ export function WilayahPicker({
     <div className="space-y-4">
       {/* Provinsi */}
       <div>
-        <label htmlFor="provinsi" className="mb-2 block text-[13px] font-semibold text-ink">
+        <label htmlFor="provinsi" className="mb-2 block text-[14px] font-semibold text-ink">
           Provinsi <span className="text-danger">*</span>
         </label>
         <Select
@@ -138,7 +138,7 @@ export function WilayahPicker({
 
       {/* Kabupaten/Kota — muncul setelah provinsi dipilih */}
       <div>
-        <label htmlFor="kabupaten" className="mb-2 block text-[13px] font-semibold text-ink">
+        <label htmlFor="kabupaten" className="mb-2 block text-[14px] font-semibold text-ink">
           Kabupaten/Kota <span className="text-danger">*</span>
         </label>
         <Select
@@ -155,7 +155,7 @@ export function WilayahPicker({
 
       {/* Kecamatan — daftar diambil dari server setelah kabupaten dipilih */}
       <div>
-        <label htmlFor="kecamatan" className="mb-2 block text-[13px] font-semibold text-ink">
+        <label htmlFor="kecamatan" className="mb-2 block text-[14px] font-semibold text-ink">
           Kecamatan <span className="text-danger">*</span>
         </label>
         <Select
@@ -175,17 +175,17 @@ export function WilayahPicker({
         />
 
         {galat ? (
-          <p className="mt-1.5 flex items-start gap-1.5 text-[12px] text-danger">
+          <p className="mt-1.5 flex items-start gap-1.5 text-[14px] text-danger">
             <IconAlert size={13} className="mt-[2px] shrink-0" />
             {galat}
           </p>
         ) : galatMuat ? (
-          <p className="mt-1.5 flex items-start gap-1.5 text-[12px] text-danger">
+          <p className="mt-1.5 flex items-start gap-1.5 text-[14px] text-danger">
             <IconAlert size={13} className="mt-[2px] shrink-0" />
             {galatMuat}
           </p>
         ) : (
-          <p className="mt-1.5 text-[11.5px] text-ink-secondary">
+          <p className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
             {kecamatan.length > 0
               ? `${kecamatan.length} kecamatan di ${nilai.regency_name}.`
               : "Kecamatan dipakai pembeli untuk tahu jarak barang."}

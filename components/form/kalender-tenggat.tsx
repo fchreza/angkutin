@@ -148,7 +148,12 @@ export function KalenderTenggat({
         aria-haspopup="dialog"
         aria-expanded={buka}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-md border px-3 text-left text-[14px]",
+          /*
+           * 16px supaya sejajar dengan kolom isian lain: kontrol ini MENYERUPAI
+           * input, jadi ukuran teksnya tidak boleh berbeda dari input yang
+           * sesungguhnya, atau barisnya terlihat tidak sejajar.
+           */
+          "flex h-11 w-full items-center justify-between rounded-md border px-3 text-left text-[16px]",
           "transition-colors hover:border-line-kuat focus:outline-none",
           adaGalat ? "border-danger" : buka ? "border-primary" : "border-line",
         )}
@@ -267,7 +272,7 @@ export function KalenderTenggat({
 
           {/* Keterangan batas — supaya penjual tahu kenapa sebagian tanggal mati. */}
           <div className="mt-3 border-t border-line pt-3">
-            <p className="text-[11.5px] leading-relaxed text-ink-secondary">
+            <p className="max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
               Bisa dipilih: hari ini sampai{" "}
               <span className="font-medium text-ink">
                 {formatTanggalPendek(maksTenggat)}

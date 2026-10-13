@@ -318,7 +318,13 @@ export function FeedClient({
                 aria-label="Cari barang"
                 className={cn(
                   "h-11 w-full rounded-md border border-line bg-surface pl-10 pr-9",
-                  "text-[14px] text-ink placeholder:text-ink-secondary/70",
+                  /*
+                   * 16px, bukan 14px. Dua alasan: pada iOS, input di bawah
+                   * 16px membuat Safari memperbesar halaman otomatis saat
+                   * kolomnya disentuh, dan itu menggeser seluruh tata letak.
+                   * Kedua, ini kolom yang paling sering dipakai di katalog.
+                   */
+                  "text-[16px] text-ink placeholder:text-ink-secondary/70",
                   /*
                    * SENGAJA TIDAK memakai `focus:border-primary`.
                    *

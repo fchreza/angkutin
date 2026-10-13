@@ -289,7 +289,7 @@ export function LocationPicker({
           value={cari}
           onChange={(e) => setCari(e.target.value)}
           placeholder="Contoh: Sleman, Bandung, Jakarta Utara…"
-          className="mb-3 h-10 w-full rounded-md border border-line px-3 text-[13.5px] focus:border-primary focus:outline-none"
+          className="mb-3 h-11 w-full rounded-md border border-line px-3 text-[16px] focus:border-primary focus:outline-none"
         />
 
         {hasilCari.length > 0 && (

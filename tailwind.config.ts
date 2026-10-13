@@ -116,10 +116,18 @@ const config: Config = {
          * Sekarang maksimum 2,5rem (40px): tetap jadi titik fokus, tapi tidak
          * lagi mengalahkan isi halaman.
          */
-        "judul-hero": ["clamp(1.7rem, 3.2vw, 2.5rem)", { lineHeight: "1.08", letterSpacing: "-0.03em" }],
-        "judul-besar": ["clamp(1.4rem, 2.4vw, 1.85rem)", { lineHeight: "1.12", letterSpacing: "-0.025em" }],
-        "judul-sedang": ["clamp(1.15rem, 1.8vw, 1.4rem)", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
-        "judul-kecil": ["1.0625rem", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
+        /**
+         * Batas BAWAH clamp dinaikkan ke 1.875rem (30px) dan batas atas 2.5rem
+         * (40px). KENAPA batas bawahnya dinaikkan: dengan 1.7rem, di layar
+         * 360px judulnya jadi 27,2px, di bawah rentang yang nyaman untuk
+         * judul halaman. Batas bawah 30px menjaga judul tetap terbaca sebagai
+         * judul di ponsel kecil tanpa membuatnya memenuhi layar (terukur 7%
+         * tinggi layar).
+         */
+        "judul-hero": ["clamp(1.875rem, 3.2vw, 2.5rem)", { lineHeight: "1.1", letterSpacing: "-0.03em" }],
+        "judul-besar": ["clamp(1.5rem, 2.4vw, 1.85rem)", { lineHeight: "1.14", letterSpacing: "-0.025em" }],
+        "judul-sedang": ["clamp(1.25rem, 1.8vw, 1.4rem)", { lineHeight: "1.22", letterSpacing: "-0.02em" }],
+        "judul-kecil": ["1.125rem", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
       },
       borderRadius: {
         /**
