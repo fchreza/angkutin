@@ -181,9 +181,24 @@ export const ambilDetail = cache(async (id: string) => {
       status: listings.status,
       deadline_date: listings.deadlineDate,
       pickup_landmark: listings.pickupLandmark,
-      access_notes: listings.accessNotes,
+      /*
+       * `access_notes` SENGAJA TIDAK DIAMBIL DI SINI.
+       *
+       * KENAPA: kolom ini berisi catatan logistik yang diminta dari penjual
+       * dengan contoh "Kamar lantai 3, tangga sempit", jadi isinya bisa
+       * menunjuk lokasi kamar. PRD §11 no.2 melarang alamat spesifik
+       * disimpan ATAU ditampilkan di antarmuka publik, dan halaman ini
+       * publik serta terindeks mesin pencari.
+       *
+       * Catatan itu tetap berguna, jadi ia tidak dihapus: sekarang dikirim
+       * lewat pesan WhatsApp saat pembeli menekan tombol hubungi, sehingga
+       * hanya orang yang benar-benar akan menjemput yang melihatnya.
+       * Lihat lib/whatsapp.ts.
+       *
+       * Menghapusnya dari query adalah pertahanan lapis kedua: walaupun ada
+       * komponen yang keliru mencoba menampilkannya, datanya tidak ada.
+       */
       seller_name: listings.sellerName,
-      seller_whatsapp: listings.sellerWhatsapp,
       province_code: listings.provinceCode,
       province_name: listings.provinceName,
       regency_code: listings.regencyCode,

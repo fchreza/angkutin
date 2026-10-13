@@ -336,19 +336,38 @@ export function FormListingFields({
 
         <div>
           <label htmlFor="catatan" className="mb-2 block text-[14px] font-semibold text-ink">
-            Catatan akses logistik{" "}
+            Catatan akses untuk pengambil barang{" "}
             <span className="text-ink-secondary">(opsional)</span>
           </label>
           <input
             id="catatan"
             value={nilai.catatan}
             onChange={(e) => onUbah("catatan", e.target.value.slice(0, 200))}
-            placeholder="Contoh: Kamar lantai 3, tangga sempit, butuh 2 orang"
+            placeholder="Contoh: Tangga sempit, butuh 2 orang, ambil pagi"
+            aria-describedby="catatan-bantuan"
             className={cn(
               "h-11 w-full rounded-md border border-line px-3 text-[16px] focus:border-primary focus:outline-none",
               galat.catatan ? "border-danger" : "border-line",
             )}
           />
+          {/*
+            Keterangan ini WAJIB ada, bukan hiasan.
+
+            KENAPA: penjual perlu tahu bahwa catatan ini TIDAK tampil di
+            halaman publik, supaya dia tidak ragu mengisi informasi yang
+            memang dibutuhkan pengambil barang, dan supaya dia tidak
+            mengira informasi itu bisa dibaca semua orang. Tanpa keterangan
+            ini, penjual menghadapi pilihan yang tidak jelas: mengisi
+            (takut bocor) atau mengosongkan (pengambil barang jadi tidak
+            siap).
+
+            Kata-katanya juga memberi tahu KAPAN catatan ini terlihat, bukan
+            hanya bahwa ia disembunyikan.
+          */}
+          <p id="catatan-bantuan" className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
+            Tidak tampil di halaman publik. Catatan ini hanya ikut terkirim
+            saat pembeli menghubungimu lewat WhatsApp.
+          </p>
         </div>
       </section>
 

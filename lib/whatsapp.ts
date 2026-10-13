@@ -37,18 +37,43 @@ export type OpsiLinkWA = {
   sellerWhatsapp: string;
   planDay?: string;
   planTime?: string;
+  /**
+   * Catatan akses logistik dari penjual.
+   *
+   * KENAPA DI SINI, BUKAN DI HALAMAN PUBLIK:
+   * Isinya bisa menunjuk lokasi kamar ("Kamar lantai 3, tangga sempit"), dan
+   * PRD §11 no.2 melarang alamat spesifik tampil di antarmuka publik. Tapi
+   * catatan ini justru paling dibutuhkan oleh orang yang akan mengangkat
+   * barangnya, jadi ia dikirim lewat pesan yang hanya dibaca orang yang
+   * sudah menekan tombol hubungi.
+   *
+   * Batasnya jelas: yang membaca pesan ini sudah punya niat menghubungi
+   * penjual, sedangkan halaman publik bisa dibaca siapa pun termasuk
+   * pengindeks mesin pencari.
+   */
+  catatanAkses?: string | null;
 };
 
 /**
- * Template pesan PERSIS dari PRD §FR-5 — jangan diubah tanpa alasan,
- * karena microcopy sudah disepakati dengan desain.
+ * Template pesan dari PRD §FR-5, dengan satu tambahan di akhir: catatan
+ * akses logistik bila penjual mengisinya.
+ *
+ * Kalimat pembukanya tidak diubah karena microcopy-nya sudah disepakati
+ * dengan desain. Tambahannya diletakkan di akhir supaya tidak memotong
+ * kalimat yang sudah disetujui itu.
  */
 export function buildWhatsAppLink(opts: OpsiLinkWA): string {
-  const msg =
+  let msg =
     `Halo kak ${opts.sellerName}, saya lihat postingan ${opts.itemTitle} ` +
     `di Angkutin area ${opts.wilayahNama}. Apakah barangnya masih bisa ` +
     `diambil? Saya berencana ambil hari ${opts.planDay ?? "[Hari]"} jam ` +
     `${opts.planTime ?? "[Jam]"}. Terima kasih.`;
+
+  const catatan = opts.catatanAkses?.trim();
+  if (catatan) {
+    msg += `\n\nCatatan dari penjual soal akses: ${catatan}`;
+  }
+
   const digits = normalizeWhatsApp(opts.sellerWhatsapp);
   return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
 }

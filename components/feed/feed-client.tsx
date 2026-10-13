@@ -36,6 +36,15 @@ const OPSI_SORT: { id: Sort; label: string }[] = [
 const KUNCI_TERAKHIR = "angkutin:lokasi-terakhir";
 
 /**
+ * Jumlah barang per pemuatan.
+ *
+ * Harus SAMA dengan `limit` di app/page.tsx dan di lib/listing-query.ts
+ * (batas maksimum 60). Kalau berbeda, penambahan berikutnya akan melewatkan
+ * atau mengulang barang.
+ */
+const UKURAN_HALAMAN = 24;
+
+/**
  * Feed Katalog (Layar 1).
  *
  * Aturan lokasi (disepakati dengan pemilik produk):
@@ -90,6 +99,18 @@ export function FeedClient({
   const [total, setTotal] = useState(totalAwal);
   const [memuat, setMemuat] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
+  /*
+   * `memuatLagi` dipisah dari `memuat`.
+   *
+   * KENAPA: keduanya menandai hal yang berbeda. `memuat` berarti hasilnya
+   * diganti (filter berubah), jadi gridnya boleh hilang dan loader besar
+   * muncul. `memuatLagi` berarti hasilnya DITAMBAH, jadi grid yang sudah ada
+   * harus tetap terlihat dan hanya tombolnya yang berubah. Memakai satu state
+   * untuk keduanya akan membuat grid berkedip hilang setiap kali menekan
+   * "muat lebih banyak".
+   */
+  const [memuatLagi, setMemuatLagi] = useState(false);
+  const [galatLagi, setGalatLagi] = useState<string | null>(null);
 
   const pertama = useRef(true);
 
@@ -206,6 +227,55 @@ export function FeedClient({
       setMemuat(false);
     }
   }, [kunciFilter]);
+
+  /**
+   * Muat halaman BERIKUTNYA dan tambahkan ke daftar yang sudah ada.
+   *
+   * KENAPA DITAMBAH, BUKAN DIGANTI: pengguna sudah menggulir dan sudah
+   * menemukan barang yang dia minati. Kalau daftarnya diganti, posisi
+   * gulirnya melompat dan barang yang tadi dia lihat hilang dari layar.
+   *
+   * KENAPA TIDAK MEMAKAI CACHE: cache di atas menyimpan hasil PER FILTER,
+   * bukan per halaman. Menambahkan halaman ke cache akan membuat pemuatan
+   * berikutnya menampilkan sebagian saja tanpa penanda, jadi hasil
+   * gabungannya sengaja tidak dimasukkan ke cache. Yang di-cache tetap
+   * halaman pertama, dan itu yang paling sering dipakai ulang.
+   */
+  const muatLagi = useCallback(async () => {
+    if (memuatLagi || data.length >= total) return;
+    setMemuatLagi(true);
+    setGalatLagi(null);
+
+    const p = new URLSearchParams(kunciFilter);
+    p.set("offset", String(data.length));
+    p.set("limit", String(UKURAN_HALAMAN));
+
+    try {
+      const r = await fetch(`/api/v1/listings?${p.toString()}`, {
+        next: { revalidate: 15 },
+      });
+      if (!r.ok) throw new Error("gagal");
+      const j = (await r.json()) as { data: KartuListing[]; total: number };
+
+      /*
+       * Saring barang yang sudah ada berdasarkan id.
+       *
+       * KENAPA PERLU: barang bisa ditambahkan orang lain di antara dua
+       * pemuatan. Kalau itu terjadi, pergeseran hasil membuat satu barang
+       * yang sama muncul di dua halaman berturut-turut, dan React akan
+       * mengeluh karena ada dua elemen dengan key yang sama.
+       */
+      setData((lama) => {
+        const sudahAda = new Set(lama.map((x) => x.id));
+        return [...lama, ...j.data.filter((x) => !sudahAda.has(x.id))];
+      });
+      setTotal(j.total);
+    } catch {
+      setGalatLagi("Gagal memuat barang berikutnya.");
+    } finally {
+      setMemuatLagi(false);
+    }
+  }, [kunciFilter, data.length, total, memuatLagi]);
 
   // Lewati fetch pertama (data awal sudah dari server)
   useEffect(() => {
@@ -521,6 +591,42 @@ export function FeedClient({
               </div>
             ))}
           </div>
+
+          {/*
+            Tombol muat berikutnya.
+
+            KENAPA TOMBOL, BUKAN GULIR TAK TERBATAS:
+            Gulir tak terbatas menghilangkan kemampuan melihat akhir daftar,
+            dan itu merugikan di katalog barang pindahan yang justru penting
+            untuk ditelusuri sampai habis. Tombol memberi tahu dengan jujur
+            bahwa masih ada sisa, dan berapa banyak.
+
+            Tombol ini juga satu-satunya jalan melihat barang ke-25 dan
+            seterusnya: sebelumnya katalog dipotong di 24 tanpa cara apa pun
+            untuk melanjutkan.
+          */}
+          {data.length < total && (
+            <div className="mt-8 flex flex-col items-center gap-3">
+              {galatLagi && (
+                <p className="text-[14px] text-danger" role="alert">
+                  {galatLagi}
+                </p>
+              )}
+              <Button
+                varian="outline"
+                ukuran="lg"
+                memuat={memuatLagi}
+                onClick={() => void muatLagi()}
+              >
+                {memuatLagi
+                  ? "Memuat…"
+                  : `Tampilkan ${Math.min(UKURAN_HALAMAN, total - data.length)} barang lagi`}
+              </Button>
+              <p className="text-[14px] text-ink-secondary" aria-live="polite">
+                Menampilkan {data.length} dari {total} barang
+              </p>
+            </div>
+          )}
         </Reveal>
       )}
       </div>

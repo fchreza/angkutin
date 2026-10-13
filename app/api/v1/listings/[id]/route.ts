@@ -35,11 +35,20 @@ export async function GET(
       .set({ viewCount: sql`${listings.viewCount} + 1` })
       .where(eq(listings.id, id));
 
-    // Buang nomor WA dari respons publik
-    const { seller_whatsapp: _nomor, ...publik } = detail;
-    void _nomor;
-
-    return ok(publik);
+    /*
+     * Tidak ada lagi yang perlu dibuang di sini.
+     *
+     * KENAPA: `ambilDetail` sekarang hanya mengambil kolom yang boleh publik.
+     * Nomor WhatsApp dan catatan akses tidak pernah masuk ke hasilnya, jadi
+     * penyaringan di lapisan ini tidak lagi diperlukan.
+     *
+     * Mempertahankan penyaringan di sini justru berbahaya: ia menyiratkan
+     * bahwa query-nya masih mengambil kolom sensitif, dan orang berikutnya
+     * yang membaca akan mengira lapisan inilah yang melindunginya. Satu
+     * lapisan yang benar lebih baik daripada dua lapisan yang saling
+     * menyalahkan.
+     */
+    return ok(detail);
   } catch (e) {
     console.error("[listing detail] gagal:", e);
     return gagal("Gagal memuat detail barang.", 500);

@@ -269,16 +269,6 @@ export default async function DetailPage({
                   </div>
                 </div>
 
-                {d.access_notes && (
-                  <div className="rounded-sm bg-surface2 px-3 py-2.5">
-                    <div className="text-[12px] text-ink-secondary">
-                      Catatan akses logistik
-                    </div>
-                    <div className="mt-0.5 text-[13px] leading-relaxed text-ink">
-                      {d.access_notes}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 

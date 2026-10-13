@@ -34,6 +34,9 @@ export async function POST(
         status: listings.status,
         regencyName: listings.regencyName,
         districtName: listings.districtName,
+        // Catatan akses dibaca di sini supaya bisa ikut ke pesan WhatsApp.
+        // Ia tidak pernah dikirim ke browser sebagai data mentah.
+        accessNotes: listings.accessNotes,
       })
       .from(listings)
       .where(eq(listings.id, id))
@@ -53,6 +56,7 @@ export async function POST(
       wilayahNama:
         [row.districtName, row.regencyName].filter(Boolean).join(", ") || "sekitar",
       sellerWhatsapp: row.sellerWhatsapp,
+      catatanAkses: row.accessNotes,
     });
 
     return ok({ url });
