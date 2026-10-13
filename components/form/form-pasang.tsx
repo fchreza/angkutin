@@ -15,7 +15,7 @@ import {
 } from "./form-fields";
 import { Button } from "@/components/shared/button";
 import { SuksesPasang, type RingkasanListing } from "@/components/manage/sukses-pasang";
-import { bacaLapakAktif, simpanLapakAktif } from "@/lib/lapak-aktif";
+import { bacaKonteksLapak } from "@/lib/konteks-lapak";
 import type { Kategori } from "@/components/feed/filter-pills";
 
 /**
@@ -55,6 +55,29 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
   } | null>(null);
   const [sedangUlang, setSedangUlang] = useState(false);
 
+  /**
+   * Siapkan form untuk barang berikutnya.
+   *
+   * KENAPA INI PERLU — ini bug yang sempat lolos:
+   * Tombol "Tambah Barang Lagi" di halaman sukses mengarah ke `/pasang` juga,
+   * hanya fragmentnya yang berbeda. Karena pathnamenya sama, Next.js TIDAK
+   * memasang ulang komponennya — jadi state `hasil` masih terisi dan layar
+   * sukses terus yang tampil. Akibatnya tombolnya seperti tidak bekerja:
+   * ditekan, tidak terjadi apa-apa.
+   *
+   * Jadi state harus direset sendiri oleh kita, bukan diharapkan dari
+   * navigasi. Yang dibuang hanya `hasil` (supaya form muncul lagi) dan
+   * `galat`; foto sengaja ikut dibuang karena berkas lama sudah terunggah dan
+   * tidak boleh ikut ke barang baru.
+   */
+  const siapkanBarangBaru = () => {
+    setHasil(null);
+    setGalat({});
+    setGalatUmum(null);
+    setFoto([]);
+    setNilai(nilaiAwal(kategori[0]?.id ?? ""));
+  };
+
   const ubah = <K extends keyof NilaiForm>(k: K, v: NilaiForm[K]) =>
     setNilai((s) => ({ ...s, [k]: v }));
 
@@ -90,19 +113,22 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
 
     setMengirim(true);
     try {
-      // Lapak aktif dibaca dari perangkat ini. Kalau ada, barang baru masuk
-      // ke lapak itu; kalau tidak ada (atau tokennya sudah tidak sah), server
-      // membuat lapak BARU. Verifikasinya di server — browser tidak boleh
-      // menentukan sendiri lapak mana yang boleh dipakai.
-      const lapakAktif = bacaLapakAktif();
+      // Konteks lapak datang dari FRAGMENT URL — hanya ada kalau penjual
+      // sampai ke sini lewat tombol "Tambah Barang" di dalam sebuah dashboard
+      // lapak. Kalau dia datang dari navbar/katalog, konteksnya kosong dan
+      // server membuat lapak BARU.
+      //
+      // Verifikasinya tetap di server: browser tidak boleh menentukan sendiri
+      // lapak mana yang boleh dipakai.
+      const konteksLapak = bacaKonteksLapak();
 
       const r1 = await fetch("/api/v1/listings", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...payloadDari(nilai),
-          ...(lapakAktif
-            ? { stall_id: lapakAktif.stallId, stall_token: lapakAktif.token }
+          ...(konteksLapak
+            ? { stall_id: konteksLapak.stallId, stall_token: konteksLapak.token }
             : {}),
         }),
       });
@@ -129,15 +155,9 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
       };
       const { id, secret_token } = j1;
 
-      // Simpan lapak aktif supaya barang BERIKUTNYA dari perangkat ini
-      // otomatis masuk ke lapak yang sama. Dilakukan di sini, bukan sebelum
-      // request: kalau penyimpanan gagal, penjual tidak punya lapak aktif
-      // yang menunjuk ke lapak yang tidak pernah dibuat.
-      simpanLapakAktif({
-        stallId: j1.stall_id,
-        token: j1.stall_token,
-        nama: null,
-      });
+      // Catatan: tidak ada lagi yang disimpan di perangkat. Konteks lapak
+      // untuk barang berikutnya dibawa oleh TAUTAN (fragment URL) yang
+      // diberikan di layar sukses, jadi tidak ada state tersembunyi.
 
       // Langkah 2: unggah foto. Kegagalan di sini TIDAK membatalkan listing.
       const { gagal: gagalFoto, pesan: pesanFoto } = await unggahFoto(
@@ -220,10 +240,13 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
         manageUrl={`${window.location.origin}/manage/${hasil.id}?token=${encodeURIComponent(hasil.token)}`}
         publicUrl={hasil.publicUrl}
         stallUrl={hasil.stallUrl}
+        stallId={hasil.stallId}
+        stallToken={hasil.stallToken}
         fotoGagal={hasil.fotoGagal}
         pesanFoto={hasil.pesanFoto}
         onCobaUlang={() => void cobaUlangFoto()}
         sedangUlang={sedangUlang}
+        onTambahLagi={siapkanBarangBaru}
       />
     );
   }

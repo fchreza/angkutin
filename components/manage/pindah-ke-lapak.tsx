@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/shared/button";
 import { TombolSalin } from "@/components/shared/tombol-salin";
 import { useToast } from "@/components/shared/toast";
-import { IconAlert, IconCheck } from "@/components/shared/icons";
-import { simpanLapakAktif } from "@/lib/lapak-aktif";
+import { IconAlert, IconCheck, IconPlus } from "@/components/shared/icons";
+import { urlPasangKeLapak } from "@/lib/konteks-lapak";
 
 /**
  * Tombol pemindahan barang LAMA ke lapak baru.
@@ -34,7 +34,11 @@ export function PindahKeLapak({
 }) {
   const { tampilkan } = useToast();
   const [memuat, setMemuat] = useState(false);
-  const [hasil, setHasil] = useState<{ stallUrl: string; stallId: string } | null>(null);
+  const [hasil, setHasil] = useState<{
+    stallUrl: string;
+    stallId: string;
+    stallToken: string;
+  } | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
 
   async function pindahkan() {
@@ -60,9 +64,7 @@ export function PindahKeLapak({
         return;
       }
 
-      // Simpan sebagai lapak aktif supaya barang berikutnya ikut ke sini.
-      simpanLapakAktif({ stallId: j.stall_id, token: j.stall_token, nama: null });
-      setHasil({ stallUrl: j.stall_url, stallId: j.stall_id });
+      setHasil({ stallUrl: j.stall_url, stallId: j.stall_id, stallToken: j.stall_token });
       tampilkan("Barang dipindahkan ke lapak baru.");
     } catch {
       setGalat("Gagal menghubungi server. Periksa koneksi lalu coba lagi.");
@@ -100,6 +102,18 @@ export function PindahKeLapak({
                 onTersalin={() => tampilkan("Tautan lapak disalin.")}
               />
             </div>
+
+            {/*
+              Tombol ini membawa konteks lapak di fragment URL, jadi barang
+              berikutnya masuk ke lapak yang baru dibuat ini — bukan membuat
+              lapak baru lagi.
+            */}
+            <a href={urlPasangKeLapak(hasil.stallId, hasil.stallToken)} className="mt-3 block">
+              <Button penuh>
+                <IconPlus size={15} />
+                Tambah Barang Lagi
+              </Button>
+            </a>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/shared/badge";
 import { Button } from "@/components/shared/button";
@@ -9,7 +9,7 @@ import { useToast } from "@/components/shared/toast";
 import { IconPlus, IconEye, IconChat, IconClock, IconAlert } from "@/components/shared/icons";
 import { formatRupiah, formatTanggalID } from "@/lib/format";
 import { LABEL_STATUS_PENJUAL, keteranganSisaWaktu } from "@/lib/urgency";
-import { hapusLapakAktif, simpanLapakAktif } from "@/lib/lapak-aktif";
+import { urlPasangKeLapak } from "@/lib/konteks-lapak";
 
 export type BarisBarang = {
   id: string;
@@ -58,27 +58,20 @@ export function DaftarLapak({
 }) {
   const { tampilkan } = useToast();
   const [salinTerbuka, setSalinTerbuka] = useState(false);
-  const [konfirmasiGanti, setKonfirmasiGanti] = useState(false);
 
   /**
-   * Membuka dashboard lapak MENJADIKANNYA lapak aktif.
+   * Tautan "Tambah Barang" membawa konteks lapak di FRAGMENT URL.
    *
-   * KENAPA INI PERLU:
-   * Tanpa langkah ini, tombol "Tambah Barang" akan membuat lapak BARU —
-   * karena halaman /pasang tidak tahu lapak mana yang sedang dipakai. Itu
-   * justru melanggar kebutuhan "barang baru otomatis masuk ke lapak aktif".
+   * KENAPA DI FRAGMENT, BUKAN DI localStorage:
+   * Versi sebelumnya menyimpan "lapak aktif" di perangkat, dan itu membuat
+   * penjual bisa memasang barang ke lapak yang salah tanpa sadar — halaman
+   * Pasang tidak memberi tahu lapak mana yang akan dipakai. Dengan konteks di
+   * tautan, apa yang kamu klik itulah lapak tujuannya, dan tidak ada state
+   * tersembunyi.
    *
-   * Kenapa aman: untuk sampai ke halaman ini penjual harus sudah membawa
-   * token lapaknya. Jadi menyimpan lapak ini sebagai aktif tidak membuka
-   * akses apa pun yang belum dia punya.
-   *
-   * Kalau penjual membuka dashboard lapak LAIN, lapak aktif berpindah ke
-   * sana — itu memang yang diharapkan: yang sedang dibuka = yang sedang
-   * dikerjakan.
+   * Bonus: tautan ini bisa dikirim ke perangkat lain dan tetap benar.
    */
-  useEffect(() => {
-    simpanLapakAktif({ stallId, token, nama: namaLapak });
-  }, [stallId, token, namaLapak]);
+  const pasangKeLapakIni = urlPasangKeLapak(stallId, token);
 
   const aktif = barang.filter((b) => b.status === "AVAILABLE");
   const totalDilihat = barang.reduce((a, b) => a + b.view, 0);
@@ -100,7 +93,7 @@ export function DaftarLapak({
             </p>
           </div>
 
-          <Link href="/pasang" className="shrink-0">
+          <Link href={pasangKeLapakIni} className="shrink-0">
             <Button>
               <IconPlus size={16} />
               Tambah Barang
@@ -166,32 +159,22 @@ export function DaftarLapak({
         </div>
       </div>
 
-      {/* Ganti lapak */}
-      <div className="animate-slide-up flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-surface px-4 py-3" style={{ "--d": "120ms" } as React.CSSProperties}>
-        <p className="text-[12.5px] text-ink-secondary">
-          Barang baru otomatis masuk ke lapak ini di perangkat ini.
+      {/*
+        Penjelasan konteks. Tidak ada lagi "lapak aktif" yang disimpan di
+        perangkat — lapak tujuan ditentukan oleh TOMBOL yang diklik, jadi
+        tidak ada state tersembunyi yang perlu dijelaskan atau dilepas.
+      */}
+      <div
+        className="animate-slide-up rounded-md border border-line bg-surface px-4 py-3"
+        style={{ "--d": "120ms" } as React.CSSProperties}
+      >
+        <p className="text-[12.5px] leading-relaxed text-ink-secondary">
+          Tombol <strong className="text-ink">Tambah Barang</strong> di halaman
+          ini memasukkan barang baru ke lapak ini. Kalau kamu memakai tombol{" "}
+          <strong className="text-ink">Pasang Barang</strong> di menu atas atau
+          di katalog, lapak <strong className="text-ink">baru</strong> yang
+          akan dibuat.
         </p>
-        {konfirmasiGanti ? (
-          <div className="flex gap-2">
-            <Button
-              varian="outline"
-              onClick={() => {
-                hapusLapakAktif();
-                tampilkan("Lapak aktif dilepas. Barang berikutnya membuat lapak baru.");
-                setKonfirmasiGanti(false);
-              }}
-            >
-              Ya, lepas lapak ini
-            </Button>
-            <Button varian="ghost" onClick={() => setKonfirmasiGanti(false)}>
-              Batal
-            </Button>
-          </div>
-        ) : (
-          <Button varian="ghost" onClick={() => setKonfirmasiGanti(true)}>
-            Ganti lapak aktif
-          </Button>
-        )}
       </div>
 
       {/* Daftar barang */}
@@ -201,7 +184,7 @@ export function DaftarLapak({
           <p className="mt-1 text-[12.5px] text-ink-secondary">
             Tambah barang pertamamu — barang itu otomatis masuk ke lapak ini.
           </p>
-          <Link href="/pasang" className="mt-4 inline-block">
+          <Link href={pasangKeLapakIni} className="mt-4 inline-block">
             <Button>
               <IconPlus size={16} />
               Tambah Barang

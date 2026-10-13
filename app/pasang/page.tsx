@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { categories } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import { FormPasang } from "@/components/form/form-pasang";
+import { PanelLapak } from "@/components/form/panel-lapak";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,13 @@ export default async function PasangPage() {
             Tanpa daftar akun — barang siap diambil sendiri.
           </p>
         </div>
+
+        {/*
+          Panel lapak tujuan. Konteksnya datang dari tombol yang diklik:
+          tombol "Tambah Barang" di dashboard lapak membawa konteks lapak di
+          fragment URL, tombol "Pasang Barang" di navbar tidak membawa apa pun.
+        */}
+        <PanelLapak />
 
         <FormPasang kategori={kategori} />
       </main>

@@ -5,10 +5,11 @@ import { Button } from "@/components/shared/button";
 import { Badge } from "@/components/shared/badge";
 import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { TombolSalin } from "@/components/shared/tombol-salin";
-import { IconCheck, IconAlert, IconEye } from "@/components/shared/icons";
+import { IconCheck, IconAlert, IconEye, IconPlus } from "@/components/shared/icons";
 import { formatRupiah, formatTanggalID } from "@/lib/format";
 import { LABEL_KONDISI } from "@/lib/urgency";
 import { useToast } from "@/components/shared/toast";
+import { urlPasangKeLapak } from "@/lib/konteks-lapak";
 import { cn } from "@/lib/cn";
 
 export type RingkasanListing = {
@@ -63,10 +64,13 @@ export function SuksesPasang({
   manageUrl,
   publicUrl,
   stallUrl,
+  stallId,
+  stallToken,
   fotoGagal,
   pesanFoto,
   onCobaUlang,
   sedangUlang,
+  onTambahLagi,
 }: {
   data: RingkasanListing;
   manageUrl: string;
@@ -74,10 +78,24 @@ export function SuksesPasang({
   publicUrl: string;
   /** Tautan RAHASIA lapak — mengelola semua barang. */
   stallUrl: string;
+  /** Id + token lapak, untuk menyusun tautan "tambah barang lagi". */
+  stallId: string;
+  stallToken: string;
   fotoGagal: boolean;
   pesanFoto?: string;
   onCobaUlang: () => void;
   sedangUlang: boolean;
+  /**
+   * Dipanggil saat penjual memilih memasang barang berikutnya.
+   *
+   * KENAPA LEWAT CALLBACK, BUKAN `<Link>` BIASA:
+   * Tautan "Tambah Barang Lagi" menuju `/pasang` — halaman yang SAMA dengan
+   * layar sukses ini. Karena pathnamenya tidak berubah, Next.js tidak
+   * memasang ulang komponennya, sehingga state `hasil` tetap terisi dan layar
+   * sukses terus yang tampil. Penjual menekan tombolnya dan tidak terjadi
+   * apa-apa. Jadi selain berpindah, form-nya juga harus diminta mereset diri.
+   */
+  onTambahLagi: () => void;
 }) {
   const { tampilkan } = useToast();
 
@@ -243,13 +261,34 @@ export function SuksesPasang({
           />
         </div>
 
+        {/*
+          Tombol utama di sini adalah "Tambah Barang Lagi", bukan "Buka
+          Dashboard".
+
+          KENAPA: setelah memasang satu barang, keinginan berikutnya yang
+          paling wajar adalah memasang barang KEDUA. Dulu tombol yang tersedia
+          hanya "Buka Dashboard" — dan itu mengarah ke dashboard SATU BARANG
+          yang tidak punya tombol tambah apa pun, jadi penjual buntu.
+
+          Sekarang: tombol pertama langsung membawa konteks lapak, jadi barang
+          berikutnya otomatis masuk ke lapak yang sama.
+        */}
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <Link
-            href={`/manage/${data.id}?token=${encodeURIComponent(data.token)}`}
+            href={urlPasangKeLapak(stallId, stallToken)}
             className="sm:flex-1"
+            onClick={onTambahLagi}
           >
             <Button penuh>
-              <IsiTautan label="Dashboard">
+              <IsiTautan label="form pasang">
+                <IconPlus size={15} />
+                Tambah Barang Lagi
+              </IsiTautan>
+            </Button>
+          </Link>
+          <Link href={stallUrl} className="sm:flex-1">
+            <Button varian="outline" penuh>
+              <IsiTautan label="Dashboard lapak">
                 <IconEye size={15} />
                 Buka Dashboard
               </IsiTautan>
@@ -258,7 +297,9 @@ export function SuksesPasang({
         </div>
 
         <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-mono">
-          Barang berikutnya dari perangkat ini otomatis masuk ke lapak yang sama.
+          &ldquo;Tambah Barang Lagi&rdquo; memasukkan barang baru ke lapak yang
+          sama. Tombol &ldquo;Pasang Barang&rdquo; di menu atas membuat lapak
+          baru.
         </p>
       </div>
 
