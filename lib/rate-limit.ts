@@ -53,6 +53,19 @@ const BATAS_AKSI: Record<string, KonfigurasiBatas> = {
    * sempit untuk menebak sandi.
    */
   admin_login: { batas: 10, jendelaJam: 1 },
+  /**
+   * `admin_tautan`: 300 pengambilan tautan per jam.
+   *
+   * Sangat longgar, dan itu disengaja. Ini bukan endpoint publik: hanya sesi
+   * admin yang bisa memakainya, dan satu sesi dukungan wajar membuka beberapa
+   * tautan berturut-turut. Batas ketat di sini hanya akan menghalangi pemilik
+   * situs mengerjakan pekerjaannya.
+   *
+   * Tujuannya bukan membatasi pemakaian normal, melainkan menahan pengambilan
+   * otomatis kalau sesi admin sampai bocor — 300/jam cukup untuk bekerja,
+   * terlalu lambat untuk memanen seluruh isi database.
+   */
+  admin_tautan: { batas: 300, jendelaJam: 1 },
 };
 
 const BAWAAN: KonfigurasiBatas = { batas: 5, jendelaJam: 1 };

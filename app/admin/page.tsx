@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { sudahMasuk, adminSiap, MIN_SANDI } from "@/lib/admin";
 import { ringkasanKunjungan } from "@/lib/analytics";
+import { daftarBarangAdmin } from "@/lib/admin-barang";
 import { MasukAdmin } from "@/components/admin/masuk-admin";
+import { CariBarang } from "@/components/admin/cari-barang";
+import { TautanBarang } from "@/components/admin/tautan-barang";
 
 /**
  * Halaman admin — ringkasan kunjungan.
@@ -120,7 +123,61 @@ function Kartu({
   );
 }
 
-export default async function HalamanAdmin() {
+/**
+ * Label status barang.
+ *
+ * Kode mentahnya dipakai di database supaya stabil, tapi tidak ada gunanya
+ * ditampilkan apa adanya ke manusia.
+ */
+const LABEL_STATUS: Record<string, string> = {
+  AVAILABLE: "Tayang",
+  TAKEN: "Sudah diambil",
+  EXPIRED: "Kedaluwarsa",
+  DELETED: "Dihapus penjual",
+};
+
+/** Warna titik status. Hijau = masih hidup, abu = sudah tidak tayang. */
+const WARNA_STATUS: Record<string, string> = {
+  AVAILABLE: "bg-primary",
+  TAKEN: "bg-accent",
+  EXPIRED: "bg-ink-mono",
+  DELETED: "bg-ink-mono",
+};
+
+/**
+ * Tanggal dalam format Indonesia, diikat ke tengah malam UTC.
+ *
+ * KENAPA UTC: kolom tanggal di database bertipe `date` dan dibaca sebagai
+ * string 'YYYY-MM-DD'. Kalau diubah jadi Date lokal lalu diformat, hasilnya
+ * bergeser sehari di WIB. Pola ini sama dengan yang dipakai lib/urgency.ts.
+ */
+function tanggalID(ymd: string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${ymd.slice(0, 10)}T00:00:00Z`));
+}
+
+/** Berapa hari lagi tenggatnya, dihitung terhadap tanggal hari ini di WIB. */
+function sisaHari(ymd: string): number {
+  const hariIni = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const a = new Date(`${hariIni}T00:00:00Z`).getTime();
+  const b = new Date(`${ymd.slice(0, 10)}T00:00:00Z`).getTime();
+  return Math.round((b - a) / 86400000);
+}
+
+export default async function HalamanAdmin({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   // Belum dikonfigurasi: jelaskan apa yang harus dilakukan, jangan tampilkan
   // form yang tidak akan pernah berhasil.
   if (!adminSiap()) {
@@ -155,7 +212,15 @@ export default async function HalamanAdmin() {
     );
   }
 
-  const ringkas = await ringkasanKunjungan(30);
+  const { q } = await searchParams;
+  const kueri = (q ?? "").trim();
+
+  // Dijalankan bersamaan, bukan berurutan: keduanya tidak saling bergantung,
+  // jadi menunggunya satu per satu hanya menambah waktu muat halaman.
+  const [ringkas, barang] = await Promise.all([
+    ringkasanKunjungan(30),
+    daftarBarangAdmin(kueri),
+  ]);
 
   // Nama ramah untuk tiap jenis rujukan. Kode mentahnya dipakai di database
   // supaya stabil, tapi tidak ada gunanya ditampilkan apa adanya.
@@ -174,9 +239,127 @@ export default async function HalamanAdmin() {
     <main className="shell w-full pb-24 pt-10 md:pt-16">
       <header className="max-w-baca">
         <h1 className="font-display text-judul-besar font-bold text-ink">
-          Kunjungan 30 hari terakhir
+          Barang
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
+          Semua barang yang pernah dipasang, terbaru dulu. Dipakai kalau ada
+          penjual yang menghubungi karena kehilangan tautannya.
+        </p>
+      </header>
+
+      <CariBarang nilaiAwal={kueri} />
+
+      {barang.length === 0 ? (
+        <section className="mt-6 rounded-lg border border-line bg-surface px-6 py-10 text-center">
+          <p className="font-display text-[1.25rem] font-bold text-ink">
+            {kueri ? "Tidak ada yang cocok" : "Belum ada barang"}
+          </p>
+          <p className="mx-auto mt-2 max-w-baca text-[14px] leading-relaxed text-ink-secondary">
+            {kueri
+              ? `Tidak ada barang yang cocok dengan "${kueri}". Coba kata kunci lain, atau kosongkan pencarian untuk melihat semuanya.`
+              : "Barang akan muncul di sini setelah ada penjual yang memasangnya."}
+          </p>
+        </section>
+      ) : (
+        <section className="mt-6">
+          <p className="text-[13px] text-ink-secondary">
+            {kueri
+              ? `${barang.length} barang cocok dengan "${kueri}"`
+              : `${barang.length} barang`}
+          </p>
+          <ul className="mt-3 space-y-3">
+            {barang.map((b) => {
+              const sisa = sisaHari(b.deadlineDate);
+              const tayang = b.status === "AVAILABLE";
+              return (
+                <li
+                  key={b.id}
+                  className="rounded-lg border border-line bg-surface px-5 py-4 sm:px-6"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`h-2 w-2 shrink-0 rounded-full ${WARNA_STATUS[b.status] ?? "bg-ink-mono"}`}
+                          aria-hidden="true"
+                        />
+                        <h3 className="truncate text-[15px] font-semibold text-ink">
+                          {b.title}
+                        </h3>
+                      </div>
+                      <p className="mt-1 text-[13px] text-ink-secondary">
+                        {b.sellerName} · {b.waTopeng}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-pill border border-line px-2.5 py-1 text-[12px] font-medium text-ink-secondary">
+                      {LABEL_STATUS[b.status] ?? b.status}
+                    </span>
+                  </div>
+
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[13px] sm:grid-cols-4">
+                    <div>
+                      <dt className="text-ink-secondary">Diupload</dt>
+                      <dd className="mt-0.5 font-medium text-ink">
+                        {tanggalID(b.createdAt)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-ink-secondary">Tersedia sampai</dt>
+                      <dd className="mt-0.5 font-medium text-ink">
+                        {tanggalID(b.deadlineDate)}
+                        {tayang && sisa >= 0 && (
+                          <span className="font-normal text-ink-secondary">
+                            {" "}
+                            ({sisa === 0 ? "hari ini" : `${sisa} hari lagi`})
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-ink-secondary">Dilihat</dt>
+                      <dd className="mt-0.5 font-medium tabular-nums text-ink">
+                        {b.viewCount.toLocaleString("id-ID")} kali
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-ink-secondary">Klik WhatsApp</dt>
+                      <dd className="mt-0.5 font-medium tabular-nums text-ink">
+                        {b.whatsappClicks.toLocaleString("id-ID")} kali
+                      </dd>
+                    </div>
+                  </dl>
+
+                  {b.stallId && (
+                    <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
+                      Bagian dari lapak
+                      {b.stallNama ? ` "${b.stallNama}"` : ""}
+                      {b.barangLapakLain > 0
+                        ? ` yang berisi ${b.barangLapakLain} barang lain.`
+                        : " yang hanya berisi barang ini."}
+                    </p>
+                  )}
+
+                  <div className="mt-3.5">
+                    <TautanBarang listingId={b.id} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {barang.length >= 500 && (
+            <p className="mt-4 text-[13px] leading-relaxed text-ink-secondary">
+              Hanya 500 barang terbaru yang ditampilkan. Pakai pencarian untuk
+              menemukan barang yang lebih lama.
+            </p>
+          )}
+        </section>
+      )}
+
+      <header className="mt-12 max-w-baca">
+        <h2 className="font-display text-judul-kecil font-bold text-ink">
+          Kunjungan 30 hari terakhir
+        </h2>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-secondary">
           Angka ini menghitung kunjungan halaman, bukan orang. Tidak ada cara
           mengetahui berapa banyak orang berbeda, karena halaman ini memang
           tidak menyimpan apa pun yang bisa dipakai untuk membedakan orang.
