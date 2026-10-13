@@ -275,7 +275,7 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
             {mengirim ? "Menayangkan…" : "Tayangkan Sekarang"}
           </Button>
           <p className="mt-2.5 text-center text-[11.5px] text-ink-secondary">
-            Tanpa daftar akun — barang siap diambil sendiri.
+            Tanpa daftar akun, barang siap diambil sendiri.
           </p>
         </div>
       </div>

@@ -52,14 +52,27 @@ export function DetailActions({
 
   return (
     <div className="space-y-3">
-      {/* Deadline callout — latar #FEF3C7, border #F59E0B (checklist desain) */}
+      {/*
+        Kartu tenggat.
+
+        KENAPA gaya normalnya disamakan dengan kartu lain di kolom ini:
+        versi sebelumnya memakai latar `appbg` (kanvas) dengan batas `line`,
+        sementara dua kartu di atasnya memakai latar `surface` (putih). Jadi
+        kartu ini terbaca sebagai kotak yang beda jenis, padahal isinya sama
+        pentingnya. Sekarang ketiganya memakai latar dan batas yang sama, dan
+        yang membedakan hanya WARNA saat tenggatnya benar-benar mendesak.
+
+        Saat mendesak, barulah aksen terracotta muncul. Itu satu-satunya
+        tempat aksen muncul di halaman ini, dan memang di situ aksen dipakai:
+        untuk menandai satu hal yang butuh perhatian.
+      */}
       {!ringkas && (
       <div
         className={cn(
           "flex items-start gap-2.5 rounded-md border px-3.5 py-3",
           mendesak
             ? "border-accent-bright bg-accent-soft"
-            : "border-line bg-appbg",
+            : "border-line bg-surface",
         )}
       >
         <IconClock
@@ -71,7 +84,7 @@ export function DetailActions({
             {sudahDiambil
               ? "Barang ini sudah diambil"
               : mendesak
-                ? "Segera — batas pengambilan dekat"
+                ? "Segera, batas pengambilan dekat"
                 : "Batas pengambilan"}
           </div>
           <div className={cn(mendesak ? "text-accent-text" : "text-ink-secondary")}>

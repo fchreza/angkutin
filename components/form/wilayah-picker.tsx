@@ -131,7 +131,7 @@ export function WilayahPicker({
           id="provinsi"
           nilai={nilai.province_code}
           onUbah={pilihProvinsi}
-          placeholder="— Pilih provinsi —"
+          placeholder="Pilih provinsi"
           opsi={PROVINSI.map((p) => ({ value: p.kode, label: p.nama }))}
         />
       </div>
@@ -147,7 +147,7 @@ export function WilayahPicker({
           onUbah={pilihKabupaten}
           disabled={!nilai.province_code}
           placeholder={
-            nilai.province_code ? "— Pilih kabupaten/kota —" : "Pilih provinsi dulu"
+            nilai.province_code ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"
           }
           opsi={kabupaten.map((k) => ({ value: k.kode, label: k.nama }))}
         />
@@ -168,7 +168,7 @@ export function WilayahPicker({
             memuat
               ? "Memuat kecamatan…"
               : nilai.regency_code
-                ? "— Pilih kecamatan —"
+                ? "Pilih kecamatan"
                 : "Pilih kabupaten/kota dulu"
           }
           opsi={kecamatan.map((d) => ({ value: d.kode, label: d.nama }))}

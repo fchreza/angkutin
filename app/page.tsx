@@ -113,13 +113,35 @@ export default async function BerandaPage({
         Di layar 1920px, 1200px menyisakan 360px kosong di kiri DAN kanan
         sekaligus — konten terlihat mengambang, bukan edge to edge.
       */}
-      <main className="shell w-full pb-24 pt-5 md:pt-7">
-        <div className="mb-5 hidden md:block">
-          <h1 className="font-display text-[26px] font-bold tracking-tight text-ink">
+      <main className="shell w-full pb-24 pt-6 md:pt-10">
+        {/*
+          Kepala katalog.
+
+          KENAPA judulnya diperbesar dari 26px jadi clamp(2.1rem, 5vw, 3.6rem):
+          judul kecil di halaman yang lapang membuat halamannya terbaca KOSONG,
+          bukan lapang. Selain itu judul kecil tidak memberi titik fokus, jadi
+          mata tidak tahu harus mulai dari mana.
+
+          KENAPA Fraunces (font-display) dan bukan Plus Jakarta Sans: Fraunces
+          adalah serif dengan optical sizing, jadi pada ukuran besar bentuk
+          hurufnya benar-benar berubah dan terasa ditulis, bukan diperbesar.
+          Ini yang memberi karakter editorial, bukan korporat.
+
+          KENAPA sekarang tampil juga di mobile: sebelumnya `hidden md:block`,
+          jadi pengguna ponsel tidak melihat judul sama sekali dan langsung
+          mendarat di kotak pencarian tanpa tahu halaman apa ini.
+        */}
+        <div className="mb-5 md:mb-6">
+          <h1 className="font-display text-judul-hero font-bold text-ink">
             Barang pindahan di sekitarmu
           </h1>
-          <p className="mt-1 text-[13.5px] text-ink-secondary">
-            Tanpa daftar akun — ambil sendiri, bisa gratis.
+          {/*
+            leading-relaxed (1,625) bukan leading-normal: pada teks 14px dengan
+            dua baris, jarak baris rapat membuat barisnya saling menempel dan
+            blok teksnya terbaca padat.
+          */}
+          <p className="mt-2.5 max-w-baca text-[14px] leading-relaxed text-ink-secondary md:text-[15px]">
+            Tanpa daftar akun, ambil sendiri, bisa gratis.
           </p>
         </div>
 

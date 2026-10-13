@@ -25,7 +25,7 @@ export async function generateMetadata({
   const d = await ambilDetail(id);
   if (!d) return { title: "Barang tidak ditemukan" };
 
-  const judul = `${d.title} — Angkutin`;
+  const judul = `${d.title} | Angkutin`;
   const deskripsi = d.description.slice(0, 150);
 
   /**
@@ -177,16 +177,16 @@ export default async function DetailPage({
             </div>
 
             <div>
-              <h1 className="font-display text-[22px] font-bold leading-tight tracking-tight text-ink md:text-[26px]">
+              <h1 className="font-display text-judul-besar font-bold text-ink">
                 {d.title}
               </h1>
               <div className="mt-3">
                 {d.is_free ? (
-                  <span className="inline-block rounded-md bg-primary px-3 py-1.5 text-[18px] font-bold text-primary-teks">
+                  <span className="inline-block rounded-sm bg-primary px-3 py-1.5 font-display text-[20px] font-bold text-primary-teks">
                     GRATIS
                   </span>
                 ) : (
-                  <span className="font-display text-[24px] font-bold text-ink">
+                  <span className="font-display text-[30px] font-bold leading-none tracking-tight text-ink">
                     {formatRupiah(d.price)}
                   </span>
                 )}
@@ -195,7 +195,14 @@ export default async function DetailPage({
 
             {/* Deskripsi */}
             <div className="rounded-md border border-line bg-surface p-4">
-              <h2 className="mb-2 text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
+              {/*
+                Motif identitas situs: label kecil kapital dengan tracking
+                lebar. Dipakai sama persis di seluruh situs, jadi halaman
+                terasa satu keluarga. Sebelumnya memakai `font-bold`, dan
+                tebal + kapital + tracking lebar sekaligus membuat labelnya
+                berteriak, bukan menandai.
+              */}
+              <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-mono">
                 Deskripsi &amp; kondisi
               </h2>
               <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-ink">
@@ -205,7 +212,7 @@ export default async function DetailPage({
 
             {/* Info penjemputan */}
             <div className="rounded-md border border-line bg-surface p-4">
-              <h2 className="mb-3 text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-mono">
                 Penjemputan &amp; akses
               </h2>
 
@@ -235,7 +242,7 @@ export default async function DetailPage({
                 </div>
 
                 {d.access_notes && (
-                  <div className="rounded-sm bg-appbg px-3 py-2.5">
+                  <div className="rounded-sm bg-surface2 px-3 py-2.5">
                     <div className="text-[12px] text-ink-secondary">
                       Catatan akses logistik
                     </div>

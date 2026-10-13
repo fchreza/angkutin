@@ -401,6 +401,21 @@ export function TombolTema({ kelas }: { kelas?: string }) {
             aria-label={p.label}
             className={cn(
               "relative z-10 flex h-9 w-9 items-center justify-center rounded-full",
+              /*
+               * AREA TEKAN DIPERLUAS tanpa mengubah tampilan.
+               *
+               * KENAPA bukan h-11 w-11 (44px) langsung: pil ini tingginya
+               * 36px + padding 3px = 42px, dan navbar desktop hanya 56px.
+               * Kalau tombolnya dinaikkan ke 44px, pilnya jadi 50px dan
+               * navbar terasa penuh. Jadi ukuran visualnya tetap 36px,
+               * sementara area yang bisa ditekan diperluas jadi 44px lewat
+               * lapisan ::after yang meluber keluar.
+               *
+               * `::after` tetap bagian dari tombolnya, jadi klik dan sentuhan
+               * di area meluber itu tetap dihitung sebagai menekan tombol ini.
+               * Ini syarat WCAG 2.5.5 (sasaran sentuh 44px).
+               */
+              "after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']",
               "transition-colors duration-200",
               aktifPilihan ? "text-ink" : "text-ink-mono hover:text-ink-secondary",
             )}

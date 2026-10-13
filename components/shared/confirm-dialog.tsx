@@ -170,7 +170,7 @@ export function ConfirmDialog({
               "press inline-flex h-11 items-center justify-center gap-2 rounded-md px-4",
               "text-[14px] font-semibold text-surface",
               "disabled:cursor-not-allowed disabled:opacity-60",
-              merusak ? "bg-danger hover:bg-[#b91c1c]" : "bg-primary hover:bg-primary-dark",
+              merusak ? "bg-danger hover:brightness-110" : "bg-primary hover:bg-primary-hover",
             )}
           >
             {sedangProses && <Spinner ukuran={14} />}

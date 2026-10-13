@@ -1,30 +1,47 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Instrument_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import { ToastProvider } from "@/components/shared/toast";
 import { ThemeProvider, SKRIP_TEMA } from "@/components/shared/theme";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
-const inter = Inter({
+/**
+ * Plus Jakarta Sans — badan dan antarmuka.
+ *
+ * Dipilih menggantikan Inter karena Inter adalah pilihan netral yang tidak
+ * membawa karakter apa pun: huruf ini bisa jadi milik produk mana saja.
+ * Plus Jakarta Sans dipesan untuk identitas kota Jakarta (Tokotype, 2020),
+ * jadi secara harfiah membawa karakter "Indonesia, urban, muda" yang jadi
+ * tempat produk ini hidup. Bentuknya geometris tapi hangat.
+ *
+ * Ini alasan yang bisa ditulis satu baris. Kalau alasan sebuah keputusan
+ * tipografi hanya "kelihatan bagus", keputusan itu belum dipikirkan.
+ */
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-jakarta",
   display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 /**
- * Instrument Sans untuk judul.
+ * Fraunces — judul besar saja (di atas 32px).
  *
- * Dipilih menggantikan Plus Jakarta Sans: bentuknya lebih netral dan rapat,
- * sehingga judul terasa tegas dan modern — sejalan dengan bahasa desain
- * referensi. Plus Jakarta Sans punya sudut membulat yang membuat tampilan
- * cenderung "ramah anak", yang tidak cocok untuk katalog barang.
+ * Serif editorial hangat dengan OPTICAL SIZING: bentuk hurufnya benar-benar
+ * berubah sesuai ukuran, jadi judul besar tidak terlihat seperti teks badan
+ * yang hanya diperbesar. Sumbu `SOFT` dinaikkan dan `WONK` dinyalakan supaya
+ * terasa ditulis tangan, bukan dicetak.
+ *
+ * `axes` wajib disebut eksplisit: tanpa itu next/font hanya mengirim sumbu
+ * berat, dan sumbu SOFT/WONK diam-diam tidak ikut sehingga bentuk khasnya
+ * hilang.
  */
-const instrument = Instrument_Sans({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-instrument",
+  variable: "--font-fraunces",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  axes: ["SOFT", "WONK", "opsz"],
 });
 
 /**
@@ -57,7 +74,7 @@ const alamatSitus = (() => {
 
 export const metadata: Metadata = {
   metadataBase: new URL(alamatSitus),
-  title: "Angkutin — Barang pindahan, diambil sendiri",
+  title: "Angkutin: barang pindahan, diambil sendiri",
   description:
     "Marketplace barang bekas hyper-local untuk yang sedang pindahan. Tanpa daftar akun, diambil sendiri, bisa gratis.",
   applicationName: "Angkutin",
@@ -83,7 +100,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Angkutin",
     description:
-      "Barang pindahan di sekitarmu. Tanpa daftar akun — ambil sendiri, bisa gratis.",
+      "Barang pindahan di sekitarmu. Tanpa daftar akun, ambil sendiri, bisa gratis.",
     type: "website",
     locale: "id_ID",
     images: [
@@ -91,7 +108,7 @@ export const metadata: Metadata = {
         url: "/brand/og.png",
         width: 1200,
         height: 630,
-        alt: "angkutin — Lepas barang pindahan, ambil sendiri.",
+        alt: "angkutin: lepas barang pindahan, ambil sendiri.",
       },
     ],
   },
@@ -106,8 +123,12 @@ export const viewport: Viewport = {
   // Nilai terang HARUS sama dengan theme_color di manifest.json, kalau tidak
   // warna akan berkedip saat aplikasi diluncurkan dari layar utama.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F7F7F6" },
-    { media: "(prefers-color-scheme: dark)", color: "#181817" },
+    /*
+     * Warna bar browser. HARUS sama dengan --w-bg di globals.css: kalau
+     * berbeda, akan terlihat pita warna lain di atas halaman.
+     */
+    { media: "(prefers-color-scheme: light)", color: "#FAF8F5" },
+    { media: "(prefers-color-scheme: dark)", color: "#221A0E" },
   ],
   maximumScale: 5,
   viewportFit: "cover",
@@ -119,7 +140,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${inter.variable} ${instrument.variable}`}>
+    <html lang="id" className={`${jakarta.variable} ${fraunces.variable}`}>
       <head>
         {/*
           Anti-kedip mode gelap.

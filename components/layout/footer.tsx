@@ -14,36 +14,50 @@ export function Footer() {
   const tahun = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-line bg-surface pb-[76px] md:pb-0">
-      <div className="shell flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+    <footer className="mt-auto border-t border-line pb-[76px] md:pb-0">
+      <div className="shell flex flex-col gap-5 py-8 sm:flex-row sm:items-center sm:justify-between">
         {/* Identitas */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/mark.png" alt="" width={20} height={20} className="shrink-0" />
-          <span className="font-display text-[13.5px] font-bold tracking-tight text-ink">
+          <img src="/brand/mark.png" alt="" width={22} height={22} className="shrink-0" />
+          {/*
+            Nama brand memakai font-display (Fraunces). KENAPA: ini satu-satunya
+            tempat nama merek muncul dalam ukuran kecil, dan serif di sini
+            mengikat footer ke judul-judul halaman sehingga situsnya terbaca
+            sebagai satu keluarga, bukan kumpulan halaman terpisah.
+          */}
+          <span className="font-display text-[15px] font-bold text-ink">
             angkut<span className="text-primary">in</span>
-          </span>
-          <span className="text-[12.5px] text-ink-secondary">
-            · barang pindahan, diambil sendiri
           </span>
         </div>
 
         {/* Navigasi */}
-        <nav className="flex items-center gap-4 text-[12.5px]">
-          <Link href="/" className="text-ink-secondary transition-colors hover:text-primary">
+        {/*
+          Tautan footer memakai `inline-flex h-11 items-center` (44px) supaya
+          area tekannya memenuhi WCAG 2.5.5. Diukur sebelumnya: hanya 20px
+          tinggi, artinya kurang dari setengah ambang, dan di ponsel itu
+          termasuk tautan yang paling sering salah tekan.
+        */}
+        <nav className="flex flex-wrap items-center gap-x-5 text-[13px]">
+          <Link href="/" className="inline-flex h-11 items-center text-ink-secondary transition-colors hover:text-primary-dark">
             Katalog
           </Link>
-          <Link href="/pasang" className="text-ink-secondary transition-colors hover:text-primary">
+          <Link href="/pasang" className="inline-flex h-11 items-center text-ink-secondary transition-colors hover:text-primary-dark">
             Pasang Barang
           </Link>
-          <Link href="/tentang" className="text-ink-secondary transition-colors hover:text-primary">
+          <Link href="/tentang" className="inline-flex h-11 items-center text-ink-secondary transition-colors hover:text-primary-dark">
             Tentang
           </Link>
         </nav>
 
-        {/* Catatan kecil */}
-        <p className="text-[11.5px] leading-relaxed text-ink-secondary">
-          Tanpa akun · Gratis · {tahun}
+        {/*
+          Catatan kecil.
+          Ditulis sebagai satu kalimat, bukan tiga frasa yang dipisah titik
+          tengah. Titik tengah sebagai pemisah adalah gaya label sistem; satu
+          kalimat terbaca seperti tulisan manusia.
+        */}
+        <p className="text-[12px] leading-relaxed text-ink-mono">
+          Tanpa akun, gratis, {tahun}.
         </p>
       </div>
     </footer>

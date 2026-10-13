@@ -120,7 +120,7 @@ export function keteranganSisaWaktu(deadline: Date | string, now = new Date()): 
     const lewat = Math.abs(h);
     return lewat === 1 ? "Tenggat lewat kemarin" : `Tenggat lewat ${lewat} hari lalu`;
   }
-  if (h === 0) return "Tenggat hari ini — ini hari terakhir";
+  if (h === 0) return "Tenggat hari ini, ini hari terakhir";
   if (h === 1) return "Tersisa 1 hari lagi";
   return `Tersisa ${h} hari lagi`;
 }

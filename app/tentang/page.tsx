@@ -3,9 +3,9 @@ import { Button } from "@/components/shared/button";
 import { IconWhatsApp, IconArrowRight } from "@/components/shared/icons";
 
 export const metadata = {
-  title: "Tentang — Angkutin",
+  title: "Tentang, Angkutin",
   description:
-    "Angkutin membantu memasarkan barang yang ingin cepat dilepas karena pindahan kos. Kami hanya perantara — transaksi tetap antara penjual dan pembeli.",
+    "Angkutin membantu memasarkan barang yang ingin cepat dilepas karena pindahan kos. Kami hanya perantara. Transaksi tetap antara penjual dan pembeli.",
 };
 
 /**
@@ -68,7 +68,7 @@ export default function TentangPage() {
         <p className="mt-6 text-[17px] leading-[1.65] text-ink-secondary md:text-[18px]">
           Setiap tahun, ribuan barang masih bagus dibuang begitu saja saat
           penghuni kos pindahan. Angkutin mempertemukan barang itu dengan orang
-          yang membutuhkannya — tanpa daftar akun, tanpa biaya.
+          yang membutuhkannya, tanpa daftar akun dan tanpa biaya.
         </p>
 
         <hr className="my-10 border-0 border-t border-line md:my-14" />
@@ -107,7 +107,7 @@ export default function TentangPage() {
             </p>
             <p>
               Karena itu, seluruh proses transaksi terjadi langsung antara
-              penjual dan pembeli — mulai dari tawar-menawar, pembayaran,
+              penjual dan pembeli, mulai dari tawar-menawar, pembayaran,
               sampai pengambilan barang. Angkutin tidak menerima uang, tidak
               menahan barang, dan tidak menjamin kualitas apa pun yang
               dipasang di sini.
@@ -136,8 +136,8 @@ export default function TentangPage() {
               yang terang serta ramai.
             </p>
             <p>
-              Kalau ada yang mencurigakan — harga terlalu bagus untuk benar,
-              penjual menolak ditemui, atau meminta transfer lebih dulu —
+              Kalau ada yang mencurigakan, misalnya harga terlalu bagus untuk benar,
+              penjual menolak ditemui, atau meminta transfer lebih dulu,
               sebaiknya tinggalkan saja. Keamananmu lebih penting daripada
               barang murah.
             </p>
@@ -206,7 +206,7 @@ export default function TentangPage() {
             orang yang memang membutuhkannya.
           </p>
           <p className="mt-5 font-display text-[15px] font-medium text-ink">
-            — Tim Angkutin
+            Tim Angkutin
           </p>
         </div>
 

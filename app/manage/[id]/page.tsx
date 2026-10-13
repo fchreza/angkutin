@@ -14,7 +14,7 @@ import { DaftarLapak, type BarisBarang } from "@/components/manage/daftar-lapak"
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Kelola Listing — Angkutin",
+  title: "Kelola listing, Angkutin",
   robots: { index: false, follow: false },
 };
 

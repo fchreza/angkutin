@@ -129,7 +129,7 @@ export function SuksesPasang({
           </h1>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
             {fotoGagal
-              ? "Barangnya sudah bisa dilihat orang. Fotonya gagal terunggah — coba sekali lagi di bawah."
+              ? "Barangnya sudah bisa dilihat orang. Fotonya gagal terunggah. Coba sekali lagi di bawah."
               : `Sudah bisa dilihat orang di ${data.wilayahNama}.`}
           </p>
         </div>
@@ -200,11 +200,11 @@ export function SuksesPasang({
         style={{ "--d": "140ms" } as React.CSSProperties}
       >
         <h2 className="text-[13.5px] font-bold text-ink">
-          1. Tautan publik — bagikan barang ini
+          1. Tautan publik, bagikan barang ini
         </h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
           Aman disebar ke grup WhatsApp mana pun. Tautan ini hanya menampilkan
-          iklan — tidak bisa mengubah atau menghapus apa pun.
+          iklan, tidak bisa mengubah atau menghapus apa pun.
         </p>
 
         <div className="mt-3 flex gap-2">
@@ -238,11 +238,11 @@ export function SuksesPasang({
         style={{ "--d": "200ms" } as React.CSSProperties}
       >
         <h2 className="text-[13.5px] font-bold text-primary-dark">
-          2. Tautan rahasia lapak — jangan dibagikan
+          2. Tautan rahasia lapak, jangan dibagikan
         </h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
           Tautan ini mengelola <strong>semua</strong> barangmu, sekarang dan
-          yang kamu tambah nanti. Simpan di catatan — kalau hilang, barang-barang
+          yang kamu tambah nanti. Simpan di catatan, kalau hilang, barang-barang
           ini tidak bisa dikelola lagi.
         </p>
 

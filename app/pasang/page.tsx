@@ -7,7 +7,7 @@ import { PanelLapak } from "@/components/form/panel-lapak";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Lepas Barang Pindahan — Angkutin",
+  title: "Lepas barang pindahan, Angkutin",
   description:
     "Pasang listing tanpa daftar akun. Unggah foto, isi data, tayangkan.",
 };
@@ -40,7 +40,7 @@ export default async function PasangPage() {
             Lepas Barang Pindahan
           </h1>
           <p className="mt-1 text-[13.5px] text-ink-secondary">
-            Tanpa daftar akun — barang siap diambil sendiri.
+            Tanpa daftar akun, barang siap diambil sendiri.
           </p>
         </div>
 

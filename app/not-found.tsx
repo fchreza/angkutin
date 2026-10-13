@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/shared/button";
 
-export const metadata = { title: "Halaman tidak ditemukan — Angkutin" };
+export const metadata = { title: "Halaman tidak ditemukan, Angkutin" };
 
 export default function NotFound() {
   return (

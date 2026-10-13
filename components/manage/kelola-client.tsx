@@ -169,7 +169,7 @@ export function KelolaClient({
               Listing tayang di katalog
             </h1>
             <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
-              Barangmu sudah bisa dilihat orang di {data.wilayahNama ?? "—"}.
+              Barangmu sudah bisa dilihat orang di {data.wilayahNama ?? "belum diisi"}.
             </p>
           </div>
         </div>
@@ -201,7 +201,7 @@ export function KelolaClient({
           <div className="text-[12.5px] leading-relaxed text-ink-secondary">
             {sudahDiambil ? (
               <>
-                Tekan <b>Tandai Tersedia Lagi</b> kalau barangnya batal terjual —
+                Tekan <b>Tandai Tersedia Lagi</b> kalau barangnya batal terjual,
                 setelah itu listing bisa diubah kembali.
               </>
             ) : (
@@ -294,8 +294,8 @@ export function KelolaClient({
 
           <dl className="space-y-2.5 text-[13px]">
             <Baris label="Kondisi" nilai={LABEL_KONDISI[data.condition] ?? data.condition} />
-            <Baris label="Kategori" nilai={data.categoryName ?? "—"} />
-            <Baris label="Lokasi" nilai={data.wilayahNama ?? "—"} />
+            <Baris label="Kategori" nilai={data.categoryName ?? "belum diisi"} />
+            <Baris label="Lokasi" nilai={data.wilayahNama ?? "belum diisi"} />
             <Baris label="Patokan" nilai={data.pickup_landmark} />
             {data.access_notes && <Baris label="Catatan akses" nilai={data.access_notes} />}
             <Baris label="Batas ambil" nilai={formatTanggalID(data.deadline_date)} />

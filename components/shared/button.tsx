@@ -34,15 +34,22 @@ export function Button({
   disabled,
   ...props
 }: Props) {
+  /*
+   * KENAPA hanya varian `primary` yang punya bayangan:
+   * bayangan menandai ketinggian. Tombol aksi utama memang berdiri di atas
+   * halaman; tombol outline dan ghost menyatu dengan permukaan tempat ia
+   * berada. Memberi bayangan ke semuanya membuat tidak ada yang benar-benar
+   * terangkat, dan halaman terasa melayang seluruhnya.
+   */
   const gaya = {
     primary:
-      "bg-primary text-primary-teks hover:bg-primary-dark active:bg-primary-dark shadow-fab",
-    wa: "bg-primary text-primary-teks hover:bg-primary-dark active:bg-primary-dark shadow-fab",
+      "bg-primary text-primary-teks hover:bg-primary-hover active:bg-primary-hover shadow-fab",
+    wa: "bg-primary text-primary-teks hover:bg-primary-hover active:bg-primary-hover shadow-fab",
     outline:
-      "bg-surface text-ink border border-line hover:bg-appbg active:bg-appbg",
+      "bg-surface text-ink border border-line-kuat/60 hover:bg-surface2 active:bg-surface2",
     danger:
       "bg-surface text-danger border border-danger/30 hover:bg-danger-soft active:bg-danger-soft",
-    ghost: "bg-transparent text-ink-secondary hover:bg-appbg",
+    ghost: "bg-transparent text-ink-secondary hover:bg-surface2",
   }[varian];
 
   const tinggi = {
@@ -59,7 +66,7 @@ export function Button({
       disabled={terkunci}
       aria-busy={memuat || undefined}
       className={cn(
-        "press inline-flex items-center justify-center gap-2 rounded-md font-semibold",
+        "press inline-flex items-center justify-center gap-2 rounded-sm font-semibold",
         "disabled:cursor-not-allowed disabled:opacity-50",
         tinggi,
         gaya,

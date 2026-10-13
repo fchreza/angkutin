@@ -115,10 +115,21 @@ export function TopNav() {
                 href={t.href}
                 aria-current={aktif ? "page" : undefined}
                 className={cn(
-                  "press rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors",
+                  /*
+                   * KENAPA tautan aktif punya garis bawah, bukan hanya warna
+                   * teks yang lebih gelap: perbedaan "abu tua" dan "hampir
+                   * hitam" terlalu halus untuk dibaca sekilas, jadi pengguna
+                   * harus membaca untuk tahu sedang di halaman mana. Garis
+                   * bawah memberi penanda yang terbaca tanpa membaca.
+                   *
+                   * Garisnya diletakkan sebagai ::after absolut supaya tidak
+                   * mengubah tinggi baris saat berpindah halaman.
+                   */
+                  "press relative rounded-sm px-3 py-2 text-[13.5px] font-medium transition-colors",
+                  "after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-pill after:transition-opacity",
                   aktif
-                    ? "text-ink"
-                    : "text-ink-secondary hover:text-ink",
+                    ? "text-ink after:bg-primary after:opacity-100"
+                    : "text-ink-secondary after:bg-transparent after:opacity-0 hover:text-ink",
                 )}
               >
                 <IsiTautan label={t.label} teks />
@@ -129,6 +140,32 @@ export function TopNav() {
           {/* Pemisah tipis antara navigasi dan kontrol tema */}
           <span className="mx-1.5 h-5 w-px bg-line" aria-hidden />
           <TombolTema />
+
+          {/*
+            Aksi utama DIPINDAH ke navbar di desktop.
+            Sebelumnya satu-satunya aksi utama adalah tombol mengambang di
+            kanan bawah, dan di desktop tombol mengambang itu terbaca sebagai
+            pola aplikasi ponsel yang dipaksakan ke layar lebar. Airbnb dan
+            Apple menaruh aksi utamanya di dalam bar atas.
+            Tombol mengambangnya sendiri tetap ada di mobile (lihat FabPasang),
+            karena di sana jempol yang jadi acuan.
+          */}
+          {path !== "/pasang" && (
+            <Link
+              href="/pasang"
+              className="press ml-2 inline-flex h-9 items-center gap-1.5 rounded-sm bg-primary px-3.5 text-[13.5px] font-semibold text-primary-teks hover:bg-primary-hover"
+            >
+              <IsiTautan
+                label="Pasang Barang"
+                ikon={
+                  <>
+                    <IconPlus size={15} />
+                    <span>Pasang Barang</span>
+                  </>
+                }
+              />
+            </Link>
+          )}
         </nav>
       </div>
     </header>
@@ -141,7 +178,7 @@ export function MobileAppBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-md md:hidden">
       <div className="flex h-14 items-center justify-between px-4">
-        <Link href="/" className="press flex items-center gap-2 rounded-md">
+        <Link href="/" className="press flex h-11 items-center gap-2 rounded-sm">
           <Logo ukuran={26} />
           <NamaBrand kelas="font-display text-[15.5px] font-bold tracking-tight text-ink" />
         </Link>
@@ -154,7 +191,7 @@ export function MobileAppBar() {
           <Link
             href="/tentang"
             aria-current={path === "/tentang" ? "page" : undefined}
-            className="press rounded-md px-2.5 py-2 text-[13px] font-medium text-ink-secondary hover:text-ink"
+            className="press inline-flex h-11 items-center rounded-sm px-2.5 text-[13px] font-medium text-ink-secondary hover:text-ink"
           >
             <IsiTautan label="Tentang" teks />
           </Link>
@@ -206,7 +243,13 @@ export function MobileTabBar() {
   );
 }
 
-/** Tombol aksi mengambang "+ Pasang Barang" (FAB) — emerald, kanan bawah. */
+/**
+ * Tombol aksi mengambang "+ Pasang Barang" (FAB).
+ *
+ * KHUSUS MOBILE (md:hidden). Di desktop aksi yang sama sudah ada di navbar
+ * sebagai tombol, jadi tombol mengambang di sana hanya mengulang aksi yang
+ * sudah terlihat dan menutupi sudut kanan bawah katalog.
+ */
 export function FabPasang() {
   const path = usePathname();
 
@@ -218,9 +261,9 @@ export function FabPasang() {
     <Link
       href="/pasang"
       className={cn(
-        "press fixed z-30 inline-flex items-center gap-2 rounded-pill px-4 py-3.5",
+        "press fixed z-30 inline-flex items-center gap-2 rounded-pill px-4 py-3.5 md:hidden",
         "bg-primary font-semibold text-primary-teks shadow-fab hover:bg-primary-hover",
-        "bottom-[76px] right-4 md:bottom-8 md:right-8",
+        "bottom-[76px] right-4",
         sembunyi && "hidden",
       )}
     >

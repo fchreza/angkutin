@@ -68,8 +68,8 @@ export function LivePreview({
                 GRATIS
               </Badge>
             ) : (
-              <span className="inline-block rounded-pill bg-white px-2.5 py-1 text-[13px] font-bold text-[#17181A] shadow-card">
-                {angkaHarga > 0 ? formatRupiah(angkaHarga) : "Rp —"}
+              <span className="inline-block rounded-pill bg-white px-2.5 py-1 text-[13px] font-bold text-scrim shadow-card">
+                {angkaHarga > 0 ? formatRupiah(angkaHarga) : "Rp 0"}
               </span>
             )}
           </div>

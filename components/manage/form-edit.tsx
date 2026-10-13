@@ -181,7 +181,7 @@ export function FormEdit({
           </h2>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
             {tenggatLewat
-              ? "Waktu tayang listing ini sudah habis. Ubah batas pengambilannya, lalu simpan — listing langsung tayang lagi di katalog."
+              ? "Waktu tayang listing ini sudah habis. Ubah batas pengambilannya, lalu simpan, listing langsung tayang lagi di katalog."
               : "Perubahan langsung terlihat di katalog setelah disimpan. Perubahan foto tersimpan otomatis saat kamu menekan tombol di bagian foto."}
           </p>
         </div>

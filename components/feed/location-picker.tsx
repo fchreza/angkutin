@@ -337,7 +337,7 @@ export function LocationPicker({
             <b className="text-ink">Belum ada barang di mana pun.</b>
             <br />
             Filter lokasi akan muncul di sini begitu ada yang memasang barang. Kamu
-            bisa jadi yang pertama — pilih &quot;Pasang Barang&quot;.
+            bisa jadi yang pertama, pilih &quot;Pasang Barang&quot;.
           </div>
         )}
 

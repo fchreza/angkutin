@@ -114,7 +114,7 @@ export function DaftarLapak({
             </h2>
             <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
               Jangan dibagikan. Tautan ini bisa mengelola <strong>semua</strong>{" "}
-              barang di lapak ini. Simpan di catatan — kalau hilang, barang-barang
+              barang di lapak ini. Simpan di catatan, kalau hilang, barang-barang
               ini tidak bisa dikelola lagi.
             </p>
 
@@ -182,7 +182,7 @@ export function DaftarLapak({
         <div className="rounded-md border border-line bg-surface p-8 text-center">
           <p className="text-[13.5px] font-semibold text-ink">Lapak ini masih kosong</p>
           <p className="mt-1 text-[12.5px] text-ink-secondary">
-            Tambah barang pertamamu — barang itu otomatis masuk ke lapak ini.
+            Tambah barang pertamamu, barang itu otomatis masuk ke lapak ini.
           </p>
           <Link href={pasangKeLapakIni} className="mt-4 inline-block">
             <Button>

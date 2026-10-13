@@ -49,7 +49,7 @@ export function SecretLinkBox({
       <div className="rounded-md border border-line bg-surface p-4">
         <h2 className="text-[13.5px] font-bold text-ink">Bagikan barang ini</h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
-          Tautan publik — aman disebar ke grup WhatsApp mana pun. Tautan ini
+          Tautan publik, aman disebar ke grup WhatsApp mana pun. Tautan ini
           hanya menampilkan iklan, tidak bisa mengubah apa pun.
         </p>
 

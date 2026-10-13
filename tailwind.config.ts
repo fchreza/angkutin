@@ -78,22 +78,80 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // Instrument Sans untuk judul: lebih netral dan modern daripada
-        // Plus Jakarta Sans, dan sejalan dengan referensi desain.
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        display: ["var(--font-instrument)", "system-ui", "sans-serif"],
+        /**
+         * Plus Jakarta Sans untuk badan: huruf yang dipesan untuk identitas
+         * kota Jakarta, jadi membawa karakter "Indonesia, urban, muda".
+         * Inter diganti karena netral tanpa karakter.
+         */
+        sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
+        /**
+         * Fraunces untuk JUDUL BESAR saja. Serif editorial dengan optical
+         * sizing: bentuknya berubah sesuai ukuran, jadi judul tidak terlihat
+         * seperti teks badan yang diperbesar.
+         */
+        display: ["var(--font-fraunces)", "Georgia", "serif"],
+      },
+      /**
+       * Skala judul dengan TRACKING PER-UKURAN.
+       *
+       * KENAPA per-ukuran, bukan satu nilai: huruf besar butuh tracking rapat
+       * karena jarak antarhurufnya sudah terlihat melebar saat diperbesar,
+       * sementara huruf kecil butuh sedikit longgar supaya tidak menempel.
+       * Satu nilai untuk semua ukuran adalah tanda tipografi yang belum
+       * dipikirkan.
+       *
+       * `lineHeight` dirapatkan di ukuran besar: huruf besar dengan jarak
+       * baris normal terlihat mengambang, bukan lapang.
+       */
+      fontSize: {
+        /**
+         * Ukuran hero DIUKUR, bukan dikira-kira.
+         *
+         * Percobaan pertama memakai clamp(2.1rem, 5vw, 3.6rem) dan hasilnya
+         * 57,6px di layar 1280px. Terlalu besar untuk halaman katalog: judulnya
+         * memakan seperlima tinggi layar dan mendorong barang pertama ke bawah
+         * lipatan. Di halaman katalog, yang harus terlihat lebih dulu adalah
+         * BARANGNYA, bukan judulnya.
+         *
+         * Sekarang maksimum 2,5rem (40px): tetap jadi titik fokus, tapi tidak
+         * lagi mengalahkan isi halaman.
+         */
+        "judul-hero": ["clamp(1.7rem, 3.2vw, 2.5rem)", { lineHeight: "1.08", letterSpacing: "-0.03em" }],
+        "judul-besar": ["clamp(1.4rem, 2.4vw, 1.85rem)", { lineHeight: "1.12", letterSpacing: "-0.025em" }],
+        "judul-sedang": ["clamp(1.15rem, 1.8vw, 1.4rem)", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+        "judul-kecil": ["1.0625rem", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
       },
       borderRadius: {
-        // Radius lebih rapat daripada sebelumnya (8/12/16) supaya terlihat
-        // lebih tegas dan profesional, bukan seperti kartu mainan.
-        sm: "6px",
-        md: "10px",
-        lg: "14px",
-        pill: "999px",
+        /**
+         * Radius BERTINGKAT, bukan seragam.
+         *
+         * KENAPA: kalau semua elemen memakai radius yang sama, radius berhenti
+         * jadi alat hierarki dan berubah jadi hiasan. Dengan tiga tingkat,
+         * ukuran sudut ikut memberi tahu "ini input", "ini kartu", "ini modal".
+         */
+        sm: "8px", // input, tombol kecil
+        md: "14px", // kartu, panel
+        lg: "22px", // modal, lembar besar
+        pill: "999px", // chip filter, badge, FAB
       },
+      /**
+       * Bayangan hanya untuk menandai KETINGGIAN, dan alasannya harus bisa
+       * ditulis satu baris.
+       *
+       * KENAPA kartu saat diam tidak punya bayangan: katalog berisi banyak
+       * kartu. Kalau semuanya melayang, tidak ada yang benar-benar melayang,
+       * dan halaman kehilangan bidang dasarnya. Kartu diam cukup dibatasi
+       * garis 1px; bayangan baru muncul saat kursor mendekat, sebagai tanda
+       * "ini bisa ditekan".
+       *
+       * Setiap bayangan berlapis dua: satu lembut dan lebar (ambient) untuk
+       * ketinggian, satu rapat dan gelap (direct) untuk ketajaman. Satu
+       * bayangan saja selalu terlihat seperti tempelan.
+       */
       boxShadow: {
-        fab: "0 8px 22px rgb(var(--w-primary) / 0.35)",
-        modal: "0 20px 48px rgb(var(--w-ink) / 0.18)",
+        hover: "0 2px 4px rgb(var(--w-ink) / 0.04), 0 8px 20px rgb(var(--w-ink) / 0.07)",
+        fab: "0 2px 6px rgb(var(--w-ink) / 0.10), 0 10px 26px rgb(var(--w-primary) / 0.30)",
+        modal: "0 4px 12px rgb(var(--w-ink) / 0.08), 0 24px 56px rgb(var(--w-ink) / 0.20)",
         card: "0 1px 2px rgb(var(--w-ink) / 0.04), 0 1px 4px rgb(var(--w-ink) / 0.04)",
       },
       maxWidth: {

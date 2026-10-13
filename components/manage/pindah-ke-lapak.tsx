@@ -85,7 +85,7 @@ export function PindahKeLapak({
             </h2>
             <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-secondary">
               Sekarang kamu bisa mengelola semua barangmu dari satu tautan.
-              Simpan tautan lapak ini — ini satu-satunya kali ia ditampilkan.
+              Simpan tautan lapak ini, ini satu-satunya kali ia ditampilkan.
             </p>
 
             <div className="mt-2.5 flex gap-2">
@@ -105,7 +105,7 @@ export function PindahKeLapak({
 
             {/*
               Tombol ini membawa konteks lapak di fragment URL, jadi barang
-              berikutnya masuk ke lapak yang baru dibuat ini — bukan membuat
+              berikutnya masuk ke lapak yang baru dibuat ini, bukan membuat
               lapak baru lagi.
             */}
             <a href={urlPasangKeLapak(hasil.stallId, hasil.stallToken)} className="mt-3 block">

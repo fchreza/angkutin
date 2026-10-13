@@ -122,7 +122,7 @@ export async function POST(
       if (f.size > MAKS_BYTE_MENTAH) {
         const mb = (f.size / 1024 / 1024).toFixed(1);
         return gagal(
-          `Foto ${i + 1} berukuran ${mb} MB — maksimal 4 MB. ` +
+          `Foto ${i + 1} berukuran ${mb} MB, maksimal 4 MB. ` +
             `Kompresi otomatis di perangkat gagal; coba pilih ulang fotonya.`,
           400,
         );

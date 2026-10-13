@@ -250,7 +250,7 @@ export function FormListingFields({
             rows={4}
             value={nilai.deskripsi}
             onChange={(e) => onUbah("deskripsi", e.target.value.slice(0, 500))}
-            placeholder="Sebutkan minusnya apa adanya — mis. ada noda kecil di sudut, rangka masih kokoh."
+            placeholder="Sebutkan minusnya apa adanya, mis. ada noda kecil di sudut, rangka masih kokoh."
             className={cn(
               "w-full resize-y rounded-md border px-3 py-2.5 text-[14px] leading-relaxed focus:outline-none",
               galat.deskripsi ? "border-danger" : "border-line focus:border-primary",
@@ -301,7 +301,7 @@ export function FormListingFields({
             <p className="mt-1.5 text-[12px] text-danger">{galat.patokan}</p>
           ) : (
             <p className="mt-1.5 text-[11.5px] text-ink-secondary">
-              Cukup patokan umum — jangan tulis nomor kamar atau alamat lengkap.
+              Cukup patokan umum, jangan tulis nomor kamar atau alamat lengkap.
             </p>
           )}
         </div>
@@ -386,7 +386,7 @@ export function FormListingFields({
               <p className="mt-1.5 text-[12px] text-danger">{galat.wa}</p>
             ) : (
               <p className="mt-1.5 text-[11.5px] text-ink-secondary">
-                Nomor ini tidak ditampilkan di halaman publik — hanya dipakai
+                Nomor ini tidak ditampilkan di halaman publik, hanya dipakai
                 saat pembeli menekan tombol WhatsApp.
               </p>
             )}
