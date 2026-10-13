@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { SecretLinkBox, StatusControls } from "./manage-controls";
 import { FormEdit } from "./form-edit";
+import { PindahKeLapak } from "./pindah-ke-lapak";
 import { Badge } from "@/components/shared/badge";
 import { Button } from "@/components/shared/button";
 import { MediaCarousel } from "@/components/detail/media-carousel";
@@ -75,12 +76,18 @@ export function KelolaClient({
   data: dataAwal,
   token,
   manageUrl,
+  publicUrl,
+  punyaLapak,
   kategori,
   fotoGagal,
 }: {
   data: DataKelola;
   token: string;
   manageUrl: string;
+  /** Tautan PUBLIK barang ini — untuk dibagikan, tanpa akses kelola. */
+  publicUrl: string;
+  /** Sudah punya lapak? Kalau belum, tawarkan membuatnya. */
+  punyaLapak: boolean;
   kategori: Kategori[];
   fotoGagal: boolean;
 }) {
@@ -220,7 +227,18 @@ export function KelolaClient({
       )}
 
       {/* Tautan rahasia */}
-      <SecretLinkBox manageUrl={manageUrl} sellerWhatsapp={data.sellerWhatsapp} />
+      <SecretLinkBox
+        manageUrl={manageUrl}
+        publicUrl={publicUrl}
+        sellerWhatsapp={data.sellerWhatsapp}
+      />
+
+      {/*
+        Barang yang belum punya lapak ditawari membuatnya. Ini satu-satunya
+        jalan penjual barang lama bisa memakai dashboard lapak — tanpa ini,
+        barang lamanya selamanya hanya bisa dikelola lewat tautan sendiri.
+      */}
+      {!punyaLapak && <PindahKeLapak listingId={data.id} token={token} />}
 
       {/* Statistik KPI (wajib tampil menurut PRD §3.2 ENHANCED) */}
       <div className="grid grid-cols-3 gap-3">

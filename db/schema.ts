@@ -18,10 +18,31 @@ import {
  *
  * Catatan desain penting:
  * - TIDAK ada tabel `users`. Produk ini sengaja tanpa akun (zero-friction).
- *   Akses kelola listing memakai `secret_token` per listing.
+ *   Akses kelola memakai token rahasia, bukan identitas pengguna.
+ * - Ada DUA tingkat akses kelola:
+ *     1. `stalls.secret_token`  -> satu lapak, bisa mengelola SEMUA barangnya
+ *     2. `listings.secret_token` -> satu barang (tautan lama, DIPERTAHANKAN
+ *        supaya tautan yang sudah beredar tidak mati)
+ *   Halaman kelola memeriksa lapak lebih dulu, lalu jatuh ke token listing.
  * - Nomor WhatsApp penjual disimpan di tabel `listings` dan TIDAK pernah
  *   dikirim ke halaman publik (hanya dipakai untuk membangun link wa.me).
  */
+
+/**
+ * Lapak: kumpulan barang milik satu penjual anonim.
+ *
+ * KENAPA ANONIM: produk ini tanpa pendaftaran. Yang menjadi kunci akses adalah
+ * `secret_token` itu sendiri — tidak ada email, kata sandi, atau verifikasi.
+ * Lapak hanya punya nama tampilan OPSIONAL, untuk membedakan beberapa lapak di
+ * perangkat yang sama.
+ */
+export const stalls = pgTable("stalls", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  secretToken: varchar("secret_token", { length: 64 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 60 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const categories = pgTable("categories", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -32,7 +53,22 @@ export const categories = pgTable("categories", {
 
 export const listings = pgTable("listings", {
   id: uuid("id").primaryKey().defaultRandom(),
+  /**
+   * Token kelola PER BARANG — tautan lama yang sudah beredar.
+   *
+   * SENGAJA DIPERTAHANKAN meski sudah ada token lapak: penjual mungkin sudah
+   * menyimpan tautan ini di catatan atau mengirimnya ke WhatsApp sendiri.
+   * Menghapusnya akan mematikan tautan itu seketika. Halaman kelola menerima
+   * KEDUANYA.
+   */
   secretToken: varchar("secret_token", { length: 64 }).notNull().unique(),
+  /**
+   * Lapak pemilik barang ini. NULLABLE karena barang yang dibuat sebelum
+   * migrasi 004 belum punya lapak — dan tidak boleh hilang hanya karena kita
+   * menambah kolom. Diisi lewat alur "pindahkan ke lapak" yang dijalankan
+   * penjual sendiri.
+   */
+  stallId: uuid("stall_id").references(() => stalls.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 50 }).notNull(),
   description: text("description").notNull(),
   categoryId: varchar("category_id", { length: 36 }).references(() => categories.id),
@@ -88,5 +124,6 @@ export type Condition = (typeof CONDITION_VALUES)[number];
 export type ListingStatus = (typeof STATUS_VALUES)[number];
 export type Listing = typeof listings.$inferSelect;
 export type Category = typeof categories.$inferSelect;
+export type Stall = typeof stalls.$inferSelect;
 
 export { sql };

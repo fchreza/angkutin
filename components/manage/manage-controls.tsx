@@ -8,15 +8,28 @@ import { useToast } from "@/components/shared/toast";
 import { IconWhatsApp, IconTrash } from "@/components/shared/icons";
 import { cn } from "@/lib/cn";
 
-/** Kotak tautan rahasia + tombol salin & kirim ke WA sendiri (Layar 4). */
+/**
+ * Kotak tautan di dashboard BARANG (tautan lama).
+ *
+ * DUA TAUTAN YANG DIBEDAKAN DENGAN JELAS:
+ *   1. Tautan PUBLIK  -> untuk membagikan iklan barang ini. Tidak memberi
+ *      akses kelola apa pun, jadi aman disebar ke grup WA mana pun.
+ *   2. Tautan RAHASIA -> untuk mengelola barang ini. Jangan dibagikan.
+ *
+ * Sebelumnya hanya ada satu tautan dan tidak jelas mana yang boleh
+ * dibagikan — penjual bisa keliru menyebarkan tautan kelola ke grup.
+ */
 export function SecretLinkBox({
   manageUrl,
+  publicUrl,
   sellerWhatsapp,
 }: {
   manageUrl: string;
+  publicUrl: string;
   sellerWhatsapp: string;
 }) {
   const { tampilkan } = useToast();
+  const [tautanKelolaTerbuka, setTautanKelolaTerbuka] = useState(false);
 
   const kirimWA = () => {
     const pesan =
@@ -31,45 +44,80 @@ export function SecretLinkBox({
   };
 
   return (
-    <div className="rounded-md border border-primary/25 bg-primary-soft p-4">
-      <h2 className="text-[13.5px] font-bold text-primary-dark">
-        Simpan tautan ini
-      </h2>
-      <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
-        Simpan tautan ini untuk menandai barang jika sudah laku atau untuk
-        menghapusnya nanti.
-      </p>
+    <div className="space-y-3">
+      {/* === TAUTAN PUBLIK === */}
+      <div className="rounded-md border border-line bg-surface p-4">
+        <h2 className="text-[13.5px] font-bold text-ink">Bagikan barang ini</h2>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
+          Tautan publik — aman disebar ke grup WhatsApp mana pun. Tautan ini
+          hanya menampilkan iklan, tidak bisa mengubah apa pun.
+        </p>
 
-      <div className="mt-3 flex gap-2">
-        <input
-          readOnly
-          value={manageUrl}
-          onFocus={(e) => e.currentTarget.select()}
-          aria-label="Tautan pengelolaan"
-          className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-[11.5px] text-ink-secondary focus:border-primary focus:outline-none"
-        />
-        {/*
-          Tombol salin: lebar tetap, hurufnya berganti satu per satu, dan
-          centangnya menggambar sendiri. Lihat components/shared/tombol-salin.
-        */}
-        <TombolSalin
-          nilai={manageUrl}
-          varian="primary"
-          onTersalin={() => tampilkan("Tautan pengelolaan disalin.")}
-        />
+        <div className="mt-3 flex gap-2">
+          <input
+            readOnly
+            value={publicUrl}
+            onFocus={(e) => e.currentTarget.select()}
+            aria-label="Tautan publik barang"
+            className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-[11.5px] text-ink-secondary focus:border-primary focus:outline-none"
+          />
+          <TombolSalin
+            nilai={publicUrl}
+            varian="primary"
+            onTersalin={() => tampilkan("Tautan publik disalin.")}
+          />
+        </div>
       </div>
 
-      <button
-        type="button"
-        onClick={kirimWA}
-        className={cn(
-          "press mt-2.5 inline-flex items-center gap-2 rounded-md px-3 py-2",
-          "text-[13px] font-semibold text-primary-dark hover:bg-primary/10",
+      {/* === TAUTAN RAHASIA === */}
+      <div className="rounded-md border border-primary/25 bg-primary-soft p-4">
+        <h2 className="text-[13.5px] font-bold text-primary-dark">
+          Tautan rahasia barang ini
+        </h2>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
+          Jangan dibagikan. Tautan ini untuk menandai barang sudah laku atau
+          menghapusnya.
+        </p>
+
+        {tautanKelolaTerbuka ? (
+          <>
+            <div className="mt-3 flex gap-2">
+              <input
+                readOnly
+                value={manageUrl}
+                onFocus={(e) => e.currentTarget.select()}
+                aria-label="Tautan pengelolaan"
+                className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-[11.5px] text-ink-secondary focus:border-primary focus:outline-none"
+              />
+              <TombolSalin
+                nilai={manageUrl}
+                varian="primary"
+                onTersalin={() => tampilkan("Tautan pengelolaan disalin.")}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={kirimWA}
+              className={cn(
+                "press mt-2.5 inline-flex items-center gap-2 rounded-md px-3 py-2",
+                "text-[13px] font-semibold text-primary-dark hover:bg-primary/10",
+              )}
+            >
+              <IconWhatsApp size={16} />
+              Kirim Tautan ke WhatsApp Sendiri
+            </button>
+          </>
+        ) : (
+          <Button
+            varian="outline"
+            className="mt-3"
+            onClick={() => setTautanKelolaTerbuka(true)}
+          >
+            Tampilkan Tautan Rahasia
+          </Button>
         )}
-      >
-        <IconWhatsApp size={16} />
-        Kirim Tautan ke WhatsApp Sendiri
-      </button>
+      </div>
     </div>
   );
 }

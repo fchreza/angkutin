@@ -61,6 +61,8 @@ function IsiTautan({
 export function SuksesPasang({
   data,
   manageUrl,
+  publicUrl,
+  stallUrl,
   fotoGagal,
   pesanFoto,
   onCobaUlang,
@@ -68,6 +70,10 @@ export function SuksesPasang({
 }: {
   data: RingkasanListing;
   manageUrl: string;
+  /** Tautan PUBLIK — untuk dibagikan, tanpa akses kelola. */
+  publicUrl: string;
+  /** Tautan RAHASIA lapak — mengelola semua barang. */
+  stallUrl: string;
   fotoGagal: boolean;
   pesanFoto?: string;
   onCobaUlang: () => void;
@@ -170,31 +176,70 @@ export function SuksesPasang({
         </div>
       </div>
 
-      {/* Tautan rahasia */}
+      {/* === TAUTAN PUBLIK — untuk dibagikan === */}
       <div
-        className="animate-slide-up rounded-md border border-primary/25 bg-primary-soft p-4"
-        style={{ "--d": "160ms" } as React.CSSProperties}
+        className="animate-slide-up rounded-md border border-line bg-surface p-4"
+        style={{ "--d": "140ms" } as React.CSSProperties}
       >
-        <h2 className="text-[13.5px] font-bold text-primary-dark">Simpan tautan ini</h2>
+        <h2 className="text-[13.5px] font-bold text-ink">
+          1. Tautan publik — bagikan barang ini
+        </h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
-          Tautan ini satu-satunya cara kamu menandai barang sudah diambil atau
-          menghapusnya. Simpan di catatan, atau salin dan kirim ke WhatsApp sendiri.
+          Aman disebar ke grup WhatsApp mana pun. Tautan ini hanya menampilkan
+          iklan — tidak bisa mengubah atau menghapus apa pun.
         </p>
 
         <div className="mt-3 flex gap-2">
           <input
             readOnly
-            value={manageUrl}
+            value={publicUrl}
             onFocus={(e) => e.currentTarget.select()}
-            aria-label="Tautan pengelolaan"
+            aria-label="Tautan publik barang"
             className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-[11.5px] text-ink-secondary focus:border-primary focus:outline-none"
           />
-          {/* Lebar tetap + huruf berganti + centang menggambar sendiri.
-              Lihat components/shared/tombol-salin. */}
           <TombolSalin
-            nilai={manageUrl}
+            nilai={publicUrl}
             varian="primary"
-            onTersalin={() => tampilkan("Tautan pengelolaan disalin.")}
+            onTersalin={() => tampilkan("Tautan publik disalin.")}
+          />
+        </div>
+
+        <Link href={`/listing/${data.id}`} className="mt-3 block">
+          <Button varian="outline" penuh>
+            <IsiTautan label="halaman publik">
+              <IconEye size={15} />
+              Lihat Halaman Publik
+            </IsiTautan>
+          </Button>
+        </Link>
+      </div>
+
+      {/* === TAUTAN RAHASIA LAPAK — untuk mengelola === */}
+      <div
+        className="animate-slide-up rounded-md border border-primary/25 bg-primary-soft p-4"
+        style={{ "--d": "200ms" } as React.CSSProperties}
+      >
+        <h2 className="text-[13.5px] font-bold text-primary-dark">
+          2. Tautan rahasia lapak — jangan dibagikan
+        </h2>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
+          Tautan ini mengelola <strong>semua</strong> barangmu, sekarang dan
+          yang kamu tambah nanti. Simpan di catatan — kalau hilang, barang-barang
+          ini tidak bisa dikelola lagi.
+        </p>
+
+        <div className="mt-3 flex gap-2">
+          <input
+            readOnly
+            value={stallUrl}
+            onFocus={(e) => e.currentTarget.select()}
+            aria-label="Tautan rahasia lapak"
+            className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-[11.5px] text-ink-secondary focus:border-primary focus:outline-none"
+          />
+          <TombolSalin
+            nilai={stallUrl}
+            varian="primary"
+            onTersalin={() => tampilkan("Tautan lapak disalin.")}
           />
         </div>
 
@@ -210,12 +255,11 @@ export function SuksesPasang({
               </IsiTautan>
             </Button>
           </Link>
-          <Link href={`/listing/${data.id}`} className="sm:flex-1">
-            <Button varian="outline" penuh>
-              <IsiTautan label="halaman publik">Lihat Halaman Publik</IsiTautan>
-            </Button>
-          </Link>
         </div>
+
+        <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-mono">
+          Barang berikutnya dari perangkat ini otomatis masuk ke lapak yang sama.
+        </p>
       </div>
 
       <p className="text-center text-[11.5px] leading-relaxed text-ink-secondary">

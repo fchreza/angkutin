@@ -15,6 +15,7 @@ import {
 } from "./form-fields";
 import { Button } from "@/components/shared/button";
 import { SuksesPasang, type RingkasanListing } from "@/components/manage/sukses-pasang";
+import { bacaLapakAktif, simpanLapakAktif } from "@/lib/lapak-aktif";
 import type { Kategori } from "@/components/feed/filter-pills";
 
 /**
@@ -42,6 +43,11 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
   // yang tampil — bukan dashboard — supaya berkas foto masih ada di memori
   // dan bisa diunggah ulang kalau gagal.
   const [hasil, setHasil] = useState<{
+    /** Tautan publik + rahasia yang dikembalikan server. */
+    publicUrl: string;
+    stallUrl: string;
+    stallId: string;
+    stallToken: string;
     id: string;
     token: string;
     fotoGagal: boolean;
@@ -84,10 +90,21 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
 
     setMengirim(true);
     try {
+      // Lapak aktif dibaca dari perangkat ini. Kalau ada, barang baru masuk
+      // ke lapak itu; kalau tidak ada (atau tokennya sudah tidak sah), server
+      // membuat lapak BARU. Verifikasinya di server — browser tidak boleh
+      // menentukan sendiri lapak mana yang boleh dipakai.
+      const lapakAktif = bacaLapakAktif();
+
       const r1 = await fetch("/api/v1/listings", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(payloadDari(nilai)),
+        body: JSON.stringify({
+          ...payloadDari(nilai),
+          ...(lapakAktif
+            ? { stall_id: lapakAktif.stallId, stall_token: lapakAktif.token }
+            : {}),
+        }),
       });
 
       if (!r1.ok) {
@@ -101,11 +118,26 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
         return;
       }
 
-      const { id, secret_token } = (await r1.json()) as {
+      const j1 = (await r1.json()) as {
         id: string;
         secret_token: string;
+        public_url: string;
         manage_url: string;
+        stall_url: string;
+        stall_id: string;
+        stall_token: string;
       };
+      const { id, secret_token } = j1;
+
+      // Simpan lapak aktif supaya barang BERIKUTNYA dari perangkat ini
+      // otomatis masuk ke lapak yang sama. Dilakukan di sini, bukan sebelum
+      // request: kalau penyimpanan gagal, penjual tidak punya lapak aktif
+      // yang menunjuk ke lapak yang tidak pernah dibuat.
+      simpanLapakAktif({
+        stallId: j1.stall_id,
+        token: j1.stall_token,
+        nama: null,
+      });
 
       // Langkah 2: unggah foto. Kegagalan di sini TIDAK membatalkan listing.
       const { gagal: gagalFoto, pesan: pesanFoto } = await unggahFoto(
@@ -113,7 +145,16 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
         secret_token,
       );
 
-      setHasil({ id, token: secret_token, fotoGagal: gagalFoto, pesanFoto });
+      setHasil({
+        id,
+        token: secret_token,
+        publicUrl: j1.public_url,
+        stallUrl: j1.stall_url,
+        stallId: j1.stall_id,
+        stallToken: j1.stall_token,
+        fotoGagal: gagalFoto,
+        pesanFoto,
+      });
       setMengirim(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -177,6 +218,8 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
       <SuksesPasang
         data={ringkasan}
         manageUrl={`${window.location.origin}/manage/${hasil.id}?token=${encodeURIComponent(hasil.token)}`}
+        publicUrl={hasil.publicUrl}
+        stallUrl={hasil.stallUrl}
         fotoGagal={hasil.fotoGagal}
         pesanFoto={hasil.pesanFoto}
         onCobaUlang={() => void cobaUlangFoto()}

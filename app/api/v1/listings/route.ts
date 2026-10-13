@@ -1,21 +1,37 @@
 import { db } from "@/db";
-import { categories, listings } from "@/db/schema";
+import { categories, listings, stalls } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { ambilFeed, type FilterFeed } from "@/lib/listing-query";
 import { ok, gagal, ipKlien } from "@/lib/api";
 import { listingSchema, validasiTenggat } from "@/lib/validators";
 import { validasiWilayah } from "@/lib/wilayah-server";
-import { generateSecretToken } from "@/lib/token";
+import { generateSecretToken, tokenCocok } from "@/lib/token";
 import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
+import { buatLapak, urlBarang, urlLapak } from "@/lib/lapak";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 /**
  * GET /api/v1/listings — feed katalog terfilter (FR-2).
- * POST /api/v1/listings — buat listing baru (FR-3), mengembalikan
- *   { id, secret_token, manage_url }.
+ * POST /api/v1/listings — buat listing baru (FR-3).
+ *
+ * MENGEMBALIKAN DUA TAUTAN YANG BERBEDA PERANNYA:
+ *
+ *   public_url   -> untuk DIBAGIKAN. Unik per barang. Tidak memberi akses
+ *                   kelola apa pun.
+ *   manage_url   -> untuk MENGELOLA SATU BARANG INI (tautan lama, tetap
+ *                   dipertahankan supaya tautan yang sudah beredar hidup).
+ *   stall_url    -> untuk MENGELOLA SELURUH BARANG di lapak.
+ *   stall_token  -> token lapak, dipakai browser menyimpan lapak aktif.
+ *
+ * CARA LAPAK DIPILIH:
+ *   - Body boleh membawa `stall_id` + `stall_token` dari lapak aktif di
+ *     perangkat penjual. Tokennya DIVERIFIKASI di sini — tanpa itu, siapa pun
+ *     bisa menaruh barangnya ke lapak orang lain hanya dengan menebak id.
+ *   - Kalau tidak ada / tidak cocok, dibuat lapak BARU. Inilah yang membuat
+ *     "barang pertama otomatis membuat lapak" bekerja tanpa pendaftaran.
  */
 
 export async function GET(req: Request) {
@@ -115,12 +131,50 @@ export async function POST(req: Request) {
       }
     }
 
-    // 5. Simpan listing
+    // 5. Tentukan lapak.
+    //
+    // Dua jalur:
+    //   a. Penjual mengirim lapak aktif dari perangkatnya -> pakai itu, TAPI
+    //      tokennya harus cocok. Tanpa verifikasi, siapa pun bisa menaruh
+    //      barangnya ke lapak orang lain hanya dengan menebak id.
+    //   b. Tidak ada / tidak cocok -> buat lapak baru. Ini yang membuat
+    //      "barang pertama otomatis punya lapak" tanpa pendaftaran.
+    const stallIdDikirim = typeof body === "object" && body !== null
+      ? (body as { stall_id?: unknown }).stall_id
+      : undefined;
+    const stallTokenDikirim = typeof body === "object" && body !== null
+      ? (body as { stall_token?: unknown }).stall_token
+      : undefined;
+
+    let lapakId: string | null = null;
+    let lapakToken: string | null = null;
+
+    if (typeof stallIdDikirim === "string" && typeof stallTokenDikirim === "string") {
+      const [lapakAda] = await db
+        .select({ id: stalls.id, secretToken: stalls.secretToken })
+        .from(stalls)
+        .where(eq(stalls.id, stallIdDikirim))
+        .limit(1);
+
+      if (lapakAda && tokenCocok(stallTokenDikirim, lapakAda.secretToken)) {
+        lapakId = lapakAda.id;
+        lapakToken = lapakAda.secretToken;
+      }
+    }
+
+    if (!lapakId) {
+      const lapakBaru = await buatLapak(generateSecretToken());
+      lapakId = lapakBaru.id;
+      lapakToken = lapakBaru.secretToken;
+    }
+
+    // 6. Simpan listing
     const secretToken = generateSecretToken();
     const [baru] = await db
       .insert(listings)
       .values({
         secretToken,
+        stallId: lapakId,
         title: d.title,
         description: d.description,
         categoryId: kategoriId,
@@ -142,19 +196,28 @@ export async function POST(req: Request) {
       })
       .returning({ id: listings.id, secretToken: listings.secretToken });
 
-    // 6. Baru sekarang kuota dipotong. Kalau penyimpanan gagal di atas,
+    // 7. Baru sekarang kuota dipotong. Kalau penyimpanan gagal di atas,
     // pengguna tidak kehilangan jatah hanya karena kesalahan sendiri.
     await catatRateLimit(ip);
 
-    // 7. Susun manage_url
+    // 8. Susun ketiga tautan.
+    // Origin diambil dari request yang sebenarnya, bukan env — kalau memakai
+    // env dan nilainya belum diisi, tautan yang ditampilkan ke penjual akan
+    // berbunyi "localhost" dan tidak bisa dibuka dari HP.
     const origin = new URL(req.url).origin;
-    const manageUrl = `${origin}/manage/${baru.id}?token=${baru.secretToken}`;
 
     return ok(
       {
         id: baru.id,
         secret_token: baru.secretToken,
-        manage_url: manageUrl,
+        /** Untuk DIBAGIKAN. Tidak memberi akses kelola apa pun. */
+        public_url: `${origin}/listing/${baru.id}`,
+        /** Mengelola barang ini saja (tautan lama, tetap sah). */
+        manage_url: urlBarang(origin, baru.id, baru.secretToken),
+        /** Mengelola seluruh barang di lapak. */
+        stall_url: urlLapak(origin, lapakId, lapakToken as string),
+        stall_id: lapakId,
+        stall_token: lapakToken,
       },
       201,
     );

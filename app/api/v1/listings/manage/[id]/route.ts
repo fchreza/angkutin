@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
 import { ok, gagal, bacaJson } from "@/lib/api";
-import { tokenCocok } from "@/lib/token";
+import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { editSchema, validasiTenggat } from "@/lib/validators";
 import { validasiWilayah } from "@/lib/wilayah-server";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
@@ -27,7 +27,9 @@ export async function GET(
 ) {
   try {
     const { id } = await ctx.params;
-    const token = new URL(req.url).searchParams.get("token");
+    // `?? ""` bukan sekadar kerapian: tanpa token, periksaAkses harus
+    // mengembalikan null (ditolak), bukan melempar karena tipe null.
+    const token = new URL(req.url).searchParams.get("token") ?? "";
 
     if (!/^[0-9a-f-]{36}$/i.test(id)) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
@@ -63,7 +65,11 @@ export async function GET(
       .where(eq(listings.id, id))
       .limit(1);
 
-    if (!row || !tokenCocok(token, row.secretToken)) {
+    // Otorisasi terpusat (lib/lapak.ts) — menerima token lapak maupun token
+    // barang. `bolehKelolaBarang` memastikan token lapak tidak bisa membaca
+    // barang milik lapak lain.
+    const akses = await periksaAkses(id, token);
+    if (!row || !akses || !(await bolehKelolaBarang(akses, id))) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }
 
@@ -145,17 +151,21 @@ export async function PATCH(
 
     // Otorisasi DULU, baru validasi isi. Tanpa token yang benar, pemanggil
     // tidak boleh tahu apa pun tentang aturan server.
+    // Otorisasi terpusat (lib/lapak.ts). Menerima DUA jenis token, dan
+    // `bolehKelolaBarang` memastikan token lapak tidak bisa menyentuh barang
+    // milik lapak lain.
+    const akses = await periksaAkses(id, d.token);
+    if (!akses || !(await bolehKelolaBarang(akses, id))) {
+      return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
+    }
+
     const [row] = await db
-      .select({
-        id: listings.id,
-        secretToken: listings.secretToken,
-        status: listings.status,
-      })
+      .select({ id: listings.id, status: listings.status })
       .from(listings)
       .where(eq(listings.id, id))
       .limit(1);
 
-    if (!row || !tokenCocok(d.token, row.secretToken)) {
+    if (!row) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }
 

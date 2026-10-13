@@ -3,7 +3,7 @@ import { listings, listingImages } from "@/db/schema";
 import { DeleteObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { eq } from "drizzle-orm";
 import { ok, gagal, bacaJson } from "@/lib/api";
-import { tokenCocok } from "@/lib/token";
+import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { statusSchema } from "@/lib/validators";
 import { BUCKET, s3, s3Siap } from "@/lib/s3";
 
@@ -37,13 +37,12 @@ export async function PATCH(
       return gagal("Permintaan tidak valid.", 400);
     }
 
-    const [row] = await db
-      .select({ id: listings.id, secretToken: listings.secretToken })
-      .from(listings)
-      .where(eq(listings.id, id))
-      .limit(1);
-
-    if (!row || !tokenCocok(parsed.data.token, row.secretToken)) {
+    // Otorisasi terpusat (lib/lapak.ts). Menerima DUA jenis token: token
+    // lapak (boleh mengubah barang apa pun di lapaknya) dan token barang itu
+    // sendiri (tautan lama). `bolehKelolaBarang` yang memastikan token lapak
+    // TIDAK bisa menyentuh barang milik lapak lain.
+    const akses = await periksaAkses(id, parsed.data.token);
+    if (!akses || !(await bolehKelolaBarang(akses, id))) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }
 

@@ -5,7 +5,7 @@ import { listings, listingImages } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
 import { BUCKET, keyFoto, s3, s3Siap, urlPublik } from "@/lib/s3";
-import { tokenCocok } from "@/lib/token";
+import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { kompresDiServer } from "@/lib/compress-image";
 
 export const dynamic = "force-dynamic";
@@ -53,14 +53,11 @@ export async function POST(
     const form = await req.formData();
     const token = String(form.get("token") ?? "");
 
-    const [row] = await db
-      .select({ id: listings.id, secretToken: listings.secretToken })
-      .from(listings)
-      .where(eq(listings.id, id))
-      .limit(1);
-
-    if (!row) return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
-    if (!tokenCocok(token, row.secretToken)) {
+    // Otorisasi terpusat (lib/lapak.ts) — menerima token lapak maupun token
+    // barang. `bolehKelolaBarang` memastikan token lapak tidak bisa menambah
+    // foto ke barang milik lapak lain.
+    const akses = await periksaAkses(id, token);
+    if (!akses || !(await bolehKelolaBarang(akses, id))) {
       // 404, bukan 403 — mencegah enumerasi (PRD §FR-4 ENHANCED)
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }
