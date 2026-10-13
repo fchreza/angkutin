@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PhotoUploader, type FotoSiap } from "./photo-uploader";
 import { LivePreview } from "./live-preview";
+import { NavigasiBagian } from "@/components/form/navigasi-bagian";
 import {
   FormListingFields,
   GalatUmum,
@@ -254,11 +255,27 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
   return (
     <form onSubmit={kirim} className="grid gap-6 md:grid-cols-[1fr_360px] md:gap-8">
       <div className="space-y-5">
+        {/*
+          Daftar isi form.
+          Diletakkan di atas galat umum supaya saat halaman menggulir ke atas
+          karena validasi gagal, yang terlihat lebih dulu adalah navigasi yang
+          menjelaskan ada bagian apa saja, bukan pesan galat yang menggantung.
+        */}
+        <NavigasiBagian
+          bagian={[
+            { id: "bagian-foto", label: "Foto" },
+            { id: "bagian-barang", label: "Barang" },
+            { id: "bagian-penjemputan", label: "Penjemputan" },
+            { id: "bagian-kontak", label: "Kontak" },
+          ]}
+        />
+
         {galatUmum && <GalatUmum pesan={galatUmum} />}
 
         <section
+          id="bagian-foto"
           data-galat={galat.foto ? "1" : "0"}
-          className="rounded-md border border-line bg-surface p-4"
+          className="scroll-mt-[116px] rounded-md border border-line bg-surface p-4"
         >
           <PhotoUploader foto={foto} setFoto={setFoto} galat={galat.foto} />
         </section>

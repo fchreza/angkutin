@@ -1,7 +1,8 @@
+import { useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { Badge } from "@/components/shared/badge";
 import { AppleBreathe } from "@/components/shared/apple-breathe";
-import { IconPin, IconClock } from "@/components/shared/icons";
+import { IconPin, IconClock, IconCamera } from "@/components/shared/icons";
 import { formatRupiah } from "@/lib/format";
 import { getUrgency, labelTenggat } from "@/lib/urgency";
 import { cn } from "@/lib/cn";
@@ -62,7 +63,24 @@ function SedangDibuka() {
   );
 }
 
+/**
+ * Placeholder saat foto tidak ada atau gagal dimuat.
+ *
+ * Memakai ikon kamera, bukan teks saja: pada kartu berukuran kecil, satu ikon
+ * dikenali lebih cepat daripada kalimat, dan bidang yang kosong dengan ikon di
+ * tengahnya terbaca sebagai "foto belum ada" alih-alih sebagai kartu rusak.
+ */
+function PlaceholderFoto({ pesan = "Foto gagal dimuat" }: { pesan?: string }) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface2 text-ink-mono">
+      <IconCamera size={22} />
+      <span className="text-[11.5px]">{pesan}</span>
+    </div>
+  );
+}
+
 export function ListingCard({ item }: { item: KartuListing }) {
+  const [gagal, setGagal] = useState(false);
   const urgency = getUrgency(item.deadline_date);
   const ambil = item.status === "TAKEN";
   const mendesak = urgency === "urgent" || urgency === "today";
@@ -92,20 +110,42 @@ export function ListingCard({ item }: { item: KartuListing }) {
     >
       <SedangDibuka />
 
-      {/* Foto — rasio 4:3, sudutnya mengikuti radius kartu lewat overflow-hidden */}
+      {/*
+        Foto — rasio 4:3, sudutnya mengikuti radius kartu lewat overflow-hidden.
+
+        KENAPA ADA LAPISAN SKELETON DI BELAKANG FOTO:
+        Foto diambil dari object storage, jadi selalu ada jeda antara kartu
+        tampil dan gambar selesai diunduh. Sebelum ini, jeda itu terlihat
+        sebagai KOTAK KOSONG berwarna rata: kartu tampak rusak, lalu gambarnya
+        muncul begitu saja. Skeleton shimmer yang sudah ada di proyek ini
+        dipakai apa adanya, jadi tidak ada animasi baru yang perlu ditulis.
+
+        Lapisannya ada DI BELAKANG foto, bukan menggantikannya, sehingga foto
+        muncul dengan sendirinya saat selesai diunduh tanpa perlu state
+        tambahan untuk kasus normal. State `gagal` hanya dipakai untuk kasus
+        gambar benar-benar tidak bisa dimuat.
+      */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface2">
         {item.cover_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.cover_url}
-            alt={item.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          />
+          <>
+            <span className="skeleton absolute inset-0" aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.cover_url}
+              alt={item.title}
+              loading="lazy"
+              onError={() => setGagal(true)}
+              className={cn(
+                "relative h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]",
+                // Foto disembunyikan sampai selesai diunduh supaya skeleton di
+                // belakangnya tetap terlihat, bukan foto setengah jadi.
+                gagal && "hidden",
+              )}
+            />
+            {gagal && <PlaceholderFoto />}
+          </>
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-mono">
-            Tanpa foto
-          </div>
+          <PlaceholderFoto pesan="Belum ada foto" />
         )}
 
         {/* Jumlah foto — scrim tetap gelap karena di bawahnya selalu foto */}

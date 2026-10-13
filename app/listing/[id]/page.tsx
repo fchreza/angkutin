@@ -193,6 +193,34 @@ export default async function DetailPage({
               </div>
             </div>
 
+            {/*
+              AKSI UTAMA DI SINI, tepat di bawah harga.
+
+              KENAPA DIPINDAH KE SINI:
+              Sebelumnya tombol WhatsApp berada di paling bawah kolom kanan,
+              setelah kartu Deskripsi dan kartu Penjemputan. Pada layar 1265x624
+              tombolnya mulai di 610px, artinya praktis tidak terlihat tanpa
+              menggulir. Padahal menghubungi penjual adalah SATU-SATUNYA aksi
+              yang bisa dilakukan di halaman ini: kalau tombolnya tidak
+              terlihat, halaman ini tidak punya jalan keluar.
+
+              Judul dan harga adalah dua hal yang membuat orang memutuskan.
+              Tombolnya harus berada tepat setelah keputusan itu terbentuk,
+              bukan setelah dua kartu informasi yang bisa dibaca belakangan.
+
+              Kartu tenggat tetap di dalam komponen ini dan tetap muncul
+              tepat di atas tombol, karena tenggat ikut menentukan keputusan.
+              Detail penjemputan tetap di bawah, karena itu dibaca SETELAH
+              orang tertarik.
+            */}
+            <div className="hidden md:block">
+              <DetailActions
+                listingId={d.id}
+                deadline={d.deadline_date}
+                status={d.status}
+              />
+            </div>
+
             {/* Deskripsi */}
             <div className="rounded-md border border-line bg-surface p-4">
               {/*
@@ -254,14 +282,6 @@ export default async function DetailPage({
               </div>
             </div>
 
-            {/* CTA di kolom kanan (desktop & tablet) */}
-            <div className="hidden md:block">
-              <DetailActions
-                listingId={d.id}
-                deadline={d.deadline_date}
-                status={d.status}
-              />
-            </div>
           </div>
         </div>
       </main>

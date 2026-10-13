@@ -186,7 +186,10 @@ export function FormListingFields({
   return (
     <>
       {/* Detail barang */}
-      <section className="space-y-4 rounded-md border border-line bg-surface p-4">
+      <section
+        id="bagian-barang"
+        className="scroll-mt-[116px] space-y-4 rounded-md border border-line bg-surface p-4"
+      >
         <h2 className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
           Detail barang
         </h2>
@@ -270,7 +273,10 @@ export function FormListingFields({
       </section>
 
       {/* Penjemputan */}
-      <section className="space-y-4 rounded-md border border-line bg-surface p-4">
+      <section
+        id="bagian-penjemputan"
+        className="scroll-mt-[116px] space-y-4 rounded-md border border-line bg-surface p-4"
+      >
         <h2 className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
           Penjemputan
         </h2>
@@ -345,7 +351,10 @@ export function FormListingFields({
 
       {/* Kontak */}
       {!sembunyikanKontak && (
-        <section className="space-y-4 rounded-md border border-line bg-surface p-4">
+        <section
+          id="bagian-kontak"
+          className="scroll-mt-[116px] space-y-4 rounded-md border border-line bg-surface p-4"
+        >
           <h2 className="text-[12px] font-bold uppercase tracking-wider text-ink-secondary">
             Kontak penjual
           </h2>

@@ -89,9 +89,23 @@ function IsiTautan({
   );
 }
 
+/**
+ * Tautan navigasi desktop.
+ *
+ * "/pasang" SENGAJA TIDAK ADA di sini.
+ *
+ * KENAPA: halaman Pasang sudah punya tombol aksinya sendiri di kanan bar
+ * (lihat di bawah). Waktu ia masih ada di daftar ini, "Pasang Barang" muncul
+ * DUA KALI berdampingan di bar yang sama — satu sebagai tautan teks, satu
+ * sebagai tombol. Dua kontrol dengan label identik dan tujuan identik bukan
+ * sekadar berulang: pengguna berhenti sejenak untuk memutuskan mana yang
+ * dimaksud, dan keputusan itu tidak ada gunanya karena keduanya sama.
+ *
+ * Satu aksi utama, satu tempat. Ini juga sebabnya tautan ini tidak perlu
+ * penanda "halaman aktif": tombolnya sudah terlihat sebagai tombol.
+ */
 const TAUTAN = [
   { href: "/", label: "Katalog" },
-  { href: "/pasang", label: "Pasang Barang" },
   { href: "/tentang", label: "Tentang" },
 ];
 
@@ -153,6 +167,7 @@ export function TopNav() {
           {path !== "/pasang" && (
             <Link
               href="/pasang"
+              aria-label="Pasang barang"
               className="press ml-2 inline-flex h-9 items-center gap-1.5 rounded-sm bg-primary px-3.5 text-[13.5px] font-semibold text-primary-teks hover:bg-primary-hover"
             >
               <IsiTautan

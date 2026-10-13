@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/shared/button";
-import { IconWhatsApp, IconArrowRight } from "@/components/shared/icons";
+import {
+  IconPlus,
+  IconArrowRight,
+  IconCheck,
+  IconX,
+} from "@/components/shared/icons";
 
 export const metadata = {
   title: "Tentang, Angkutin",
@@ -40,6 +45,28 @@ const LANGKAH_JUAL = [
   "Simpan tautan rahasia untuk menandai barang sudah diambil.",
 ];
 
+/**
+ * Isi bagian keamanan, dipisah menurut APA YANG HARUS DILAKUKAN.
+ *
+ * KENAPA dipisah dari kalimatnya: daftar "lakukan" dan "hindari" hanya
+ * berguna kalau bisa dipindai. Kalau isinya dicampur dalam paragraf, pembaca
+ * harus membaca semuanya untuk menemukan satu hal yang dia cari, dan pada
+ * topik uang serta keselamatan itu terlalu mahal.
+ */
+const LAKUKAN = [
+  "Periksa barangnya langsung sebelum membayar.",
+  "Pastikan kondisinya sesuai yang dijanjikan penjual.",
+  "Ajak teman kalau barangnya bernilai besar.",
+  "Pilih tempat pertemuan yang terang dan ramai.",
+];
+
+const HINDARI = [
+  "Jangan kirim uang muka sebelum barangnya kamu lihat.",
+  "Jangan transfer ke rekening yang tidak bisa kamu pastikan.",
+  "Jangan lanjutkan kalau penjual menolak ditemui.",
+  "Jangan tergiur harga yang terlalu bagus untuk jadi benar.",
+];
+
 const LANGKAH_CARI = [
   "Pilih kabupaten/kota, lalu telusuri katalognya.",
   "Tekan tombol WhatsApp untuk menghubungi pemilik.",
@@ -66,9 +93,16 @@ export default function TentangPage() {
         </h1>
 
         <p className="mt-6 text-[17px] leading-[1.65] text-ink-secondary md:text-[18px]">
-          Setiap tahun, ribuan barang masih bagus dibuang begitu saja saat
-          penghuni kos pindahan. Angkutin mempertemukan barang itu dengan orang
-          yang membutuhkannya, tanpa daftar akun dan tanpa biaya.
+          {/*
+            ANGKA SENGAJA TIDAK DISEBUT.
+            Sebelumnya tertulis "ribuan barang", dan itu klaim tanpa sumber:
+            kami tidak punya data jumlah barang yang dibuang, dan mengarang
+            angka merusak kepercayaan begitu ada yang memeriksanya. Kalimat
+            tanpa angka tetap menyampaikan hal yang sama dan tidak bisa salah.
+          */}
+          Barang yang masih bagus sering dibuang begitu saja saat penghuni kos
+          pindahan. Angkutin mempertemukan barang itu dengan orang yang
+          membutuhkannya, tanpa daftar akun dan tanpa biaya.
         </p>
 
         <hr className="my-10 border-0 border-t border-line md:my-14" />
@@ -123,25 +157,64 @@ export default function TentangPage() {
           <h2 className="font-display text-[18px] font-medium tracking-[-0.01em] text-accent-text md:text-[20px]">
             Bertransaksi dengan hati-hati
           </h2>
-          <div className="mt-3.5 space-y-3.5 text-[15px] leading-[1.7] text-accent-text">
-            <p>
-              Karena Angkutin tidak terlibat dalam transaksi, kamu perlu berhati-hati
-              dan teliti. Periksa barangnya langsung sebelum membayar, dan
-              pastikan kondisinya sesuai yang dijanjikan.
-            </p>
-            <p>
-              Jangan pernah mengirim uang muka sebelum barang dilihat, apalagi
-              ke rekening yang tidak bisa kamu pastikan. Untuk barang bernilai
-              besar, ajak teman saat mengambil, dan lakukan pertemuan di tempat
-              yang terang serta ramai.
-            </p>
-            <p>
-              Kalau ada yang mencurigakan, misalnya harga terlalu bagus untuk benar,
-              penjual menolak ditemui, atau meminta transfer lebih dulu,
-              sebaiknya tinggalkan saja. Keamananmu lebih penting daripada
-              barang murah.
-            </p>
+          <p className="mt-3 text-[15px] leading-[1.7] text-accent-text">
+            Karena Angkutin tidak terlibat dalam transaksi, kamu perlu berhati-hati
+            dan teliti. Periksa barangnya langsung sebelum membayar, dan pastikan
+            kondisinya sesuai yang dijanjikan.
+          </p>
+
+          {/*
+            DIPECAH JADI DUA KELOMPOK: yang perlu dilakukan, dan yang perlu
+            dihindari.
+
+            KENAPA: sebelumnya ini tiga paragraf mengalir yang isinya bercampur,
+            anjuran dan larangan bergantian di dalam paragraf yang sama. Untuk
+            isi yang menyangkut uang dan keselamatan, pembaca tidak sedang
+            membaca santai, dia sedang mencari "apa yang harus saya lakukan"
+            dan "apa yang tidak boleh saya lakukan". Dua daftar terpisah bisa
+            dipindai dalam satu pandangan mata, paragraf mengalir tidak.
+
+            KENAPA dua kolom, bukan dua daftar bertumpuk: ini tetap satu topik
+            yang sama, dan dua kolom menjaga jarak pandang tetap satu layar
+            di desktop, serta tidak menambah tinggi halaman di ponsel karena
+            otomatis menumpuk.
+          */}
+          <div className="mt-5 grid gap-5 border-t border-accent-bright/25 pt-5 sm:grid-cols-2 md:gap-8">
+            <div>
+              <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent-text">
+                <IconCheck size={14} />
+                Lakukan
+              </h3>
+              <ul className="mt-3 space-y-2.5 text-[14.5px] leading-[1.6] text-accent-text">
+                {LAKUKAN.map((l) => (
+                  <li key={l} className="flex gap-2.5">
+                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden />
+                    <span>{l}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent-text">
+                <IconX size={14} />
+                Hindari
+              </h3>
+              <ul className="mt-3 space-y-2.5 text-[14.5px] leading-[1.6] text-accent-text">
+                {HINDARI.map((l) => (
+                  <li key={l} className="flex gap-2.5">
+                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden />
+                    <span>{l}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+
+          <p className="mt-5 text-[14px] leading-[1.6] text-accent-text">
+            Kalau ada yang terasa mencurigakan, tinggalkan saja. Keamananmu
+            lebih penting daripada barang murah.
+          </p>
         </section>
 
         {/* ---------- Cara kerjanya ----------
@@ -218,9 +291,18 @@ export default function TentangPage() {
               <IconArrowRight size={16} />
             </Button>
           </Link>
+          {/*
+            Ikon di sini adalah PLUS, bukan WhatsApp.
+            KENAPA: ikon WhatsApp punya satu makna yang tegas, yaitu "aksi ini
+            membuka WhatsApp". Tombol ini menuju formulir pasang barang, jadi
+            memakai ikon WhatsApp membuat ikonnya berbohong tentang apa yang
+            akan terjadi. Ikon sekarang menandai jenis aksinya (menambah),
+            dan ikon WhatsApp tetap hanya muncul di tempat yang benar-benar
+            membuka WhatsApp, yaitu tombol hubungi penjual.
+          */}
           <Link href="/pasang" className="flex-1">
             <Button penuh ukuran="lg">
-              <IconWhatsApp size={18} />
+              <IconPlus size={17} />
               Pasang Barang
             </Button>
           </Link>
