@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Select } from "@/components/shared/select";
 import {
   IconChevronDown,
@@ -18,6 +19,7 @@ export function SearchControl({
   lokasi,
   panelBuka,
   onToggleLokasi,
+  panelLokasi,
   kategori,
   kategoriId,
   onKategoriChange,
@@ -28,6 +30,7 @@ export function SearchControl({
   lokasi: PilihanLokasi;
   panelBuka: boolean;
   onToggleLokasi: () => void;
+  panelLokasi?: ReactNode;
   kategori: Kategori[];
   kategoriId: string;
   onKategoriChange: (id: string) => void;
@@ -43,7 +46,7 @@ export function SearchControl({
       className={cn(
         "flex flex-col rounded-[26px] border border-line bg-surface p-1.5",
         "shadow-[0_2px_8px_rgb(var(--w-ink)/0.05),0_8px_24px_rgb(var(--w-ink)/0.04)]",
-        "transition-colors focus-within:border-line-kuat md:h-[68px] md:flex-row md:items-center md:rounded-full md:p-1",
+        "transition-colors focus-within:border-line-kuat md:h-[68px] md:flex-row md:items-center md:rounded-full md:p-2",
       )}
     >
       <div className="flex h-11 min-w-0 items-center gap-3 px-3 md:h-full md:flex-1 md:px-4">
@@ -59,7 +62,7 @@ export function SearchControl({
           aria-label="Cari barang atau patokan lokasi"
           className={cn(
             "h-full min-w-0 w-full bg-transparent text-[16px] text-ink",
-            "placeholder:text-ink-secondary/75 focus:outline-none",
+            "placeholder:text-ink-secondary/75 focus:outline-none focus-visible:outline-none",
             "[&::-webkit-search-cancel-button]:hidden",
           )}
         />
@@ -79,37 +82,40 @@ export function SearchControl({
       <span className="hidden h-8 w-px bg-line md:block" aria-hidden="true" />
 
       <div className="flex min-w-0 items-center gap-1 md:contents">
-        <button
-          type="button"
-          onClick={onToggleLokasi}
-          aria-expanded={panelBuka}
-          aria-label={`Pilih lokasi, saat ini ${lokasi.label}`}
-          className={cn(
-            "press flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full px-3 text-left transition-colors",
-            "hover:bg-appbg md:w-[205px] md:flex-none md:px-4",
-            lokasi.jenis !== "semua" && "bg-primary-soft hover:bg-primary-soft",
-          )}
-        >
-          <IconPin
-            size={16}
-            className={cn("shrink-0", lokasi.jenis === "semua" ? "text-ink-secondary" : "text-primary")}
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[10px] font-medium uppercase leading-tight tracking-wide text-ink-secondary">
-              Lokasi
-            </span>
-            <span className="block truncate text-[12.5px] font-semibold leading-tight text-ink">
-              {lokasi.label}
-            </span>
-          </span>
-          <IconChevronDown
-            size={14}
+        <div className={cn("relative min-w-0 flex-1 md:w-[205px] md:flex-none", panelBuka && "z-40")}>
+          <button
+            type="button"
+            onClick={onToggleLokasi}
+            aria-expanded={panelBuka}
+            aria-label={`Pilih lokasi, saat ini ${lokasi.label}`}
             className={cn(
-              "shrink-0 text-ink-secondary transition-transform duration-200",
-              panelBuka && "rotate-180",
+              "press flex h-11 w-full min-w-0 items-center gap-2 rounded-full px-3 text-left transition-colors",
+              "hover:bg-appbg md:px-4",
+              lokasi.jenis !== "semua" && "bg-primary-soft hover:bg-primary-soft",
             )}
-          />
-        </button>
+          >
+            <IconPin
+              size={16}
+              className={cn("shrink-0", lokasi.jenis === "semua" ? "text-ink-secondary" : "text-primary")}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] font-medium uppercase leading-tight tracking-wide text-ink-secondary">
+                Lokasi
+              </span>
+              <span className="block truncate text-[12.5px] font-semibold leading-tight text-ink">
+                {lokasi.label}
+              </span>
+            </span>
+            <IconChevronDown
+              size={14}
+              className={cn(
+                "shrink-0 text-ink-secondary transition-transform duration-200",
+                panelBuka && "rotate-180",
+              )}
+            />
+          </button>
+          {panelLokasi}
+        </div>
 
         <span className="hidden h-8 w-px bg-line md:block" aria-hidden="true" />
 

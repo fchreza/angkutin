@@ -288,6 +288,9 @@ export function LocationPicker({
         <input
           value={cari}
           onChange={(e) => setCari(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+          }}
           placeholder="Contoh: Sleman, Bandung, Jakarta Utara…"
           className="mb-3 h-11 w-full rounded-md border border-line px-3 text-[16px] focus:border-primary focus:outline-none"
         />
