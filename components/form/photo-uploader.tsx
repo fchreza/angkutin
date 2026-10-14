@@ -357,7 +357,7 @@ export function PhotoUploader({
                 <img
                   src={f.preview}
                   alt={`Foto ${i + 1}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
                 {i === 0 && (
                   <span className="absolute left-1.5 top-1.5 rounded-pill bg-scrim-kuat/90 px-2 py-[2px] text-[10px] font-bold text-white">

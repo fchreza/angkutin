@@ -138,7 +138,7 @@ export function ListingCard({ item }: { item: KartuListing }) {
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1600px) 25vw, 400px"
               onError={() => setGagal(true)}
               className={cn(
-                "relative h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]",
+                "relative h-full w-full object-contain",
                 // Foto disembunyikan sampai selesai diunduh supaya skeleton di
                 // belakangnya tetap terlihat, bukan foto setengah jadi.
                 gagal && "hidden",

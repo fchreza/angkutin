@@ -215,7 +215,7 @@ function KartuBarang({ b, urut }: { b: BarisBarang; urut: number }) {
       {/* Foto */}
       <div className="relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-md border border-line bg-appbg">
         {b.foto ? (
-          <img src={b.foto} alt="" className="h-full w-full object-cover" />
+          <img src={b.foto} alt="" className="h-full w-full object-contain" />
         ) : (
           <span className="flex h-full items-center justify-center text-[10px] text-ink-mono">
             tanpa foto

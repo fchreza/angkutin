@@ -54,11 +54,11 @@ Kontras teks, kontrol, dan state interaktif harus tetap mengikuti nilai terukur 
 
 Gunakan skala radius dari konfigurasi Tailwind aktif: radius kecil untuk kontrol, `rounded-md` untuk kartu/panel, `rounded-lg` untuk permukaan lebih besar, dan pill hanya untuk badge/chip. Pastikan radius kartu dan foto terasa menyatu melalui `overflow-hidden`.
 
-Katalog memakai grid responsif dua kolom pada ponsel dan menambah kolom seiring lebar layar. Kartu memakai rasio foto **4:3**; kondisi tampil sebagai label ringkas pada foto, lalu judul, harga menonjol, lokasi, dan tenggat. Hindari memperbesar satu kartu hingga memecah ritme grid.
+Katalog memakai grid responsif dua kolom pada ponsel dan menambah kolom seiring lebar layar. Kartu memakai bingkai foto tetap rasio **4:3**; seluruh foto ditampilkan utuh di dalam bingkai (`object-fit: contain`) dengan latar netral, bukan dipotong mengikuti rasio bingkai. Kondisi tampil sebagai label ringkas pada foto, lalu judul, harga menonjol, lokasi, dan tenggat. Hindari memperbesar satu kartu hingga memecah ritme grid.
 
 ### Halaman detail barang
 
-Detail memakai galeri foto 4:3 dengan thumbnail yang dapat dipilih, lalu informasi inti dalam kolom terpisah pada desktop dan urutan vertikal yang jelas pada ponsel. Harga dan tindakan menghubungi penjual tetap mudah ditemukan; deskripsi dan lokasi penjemputan dipisah menjadi panel ringkas. Rekomendasi menampilkan barang lain dari lapak yang sama, atau barang serupa di kategori/wilayah yang sama jika lapak belum memiliki barang lain.
+Detail memakai bingkai galeri foto tetap 4:3 dengan thumbnail yang dapat dipilih; foto utuh dipaskan ke dalam bingkai agar tidak terpotong. Informasi inti berada dalam kolom terpisah pada desktop dan urutan vertikal yang jelas pada ponsel. Harga dan tindakan menghubungi penjual tetap mudah ditemukan; deskripsi dan lokasi penjemputan dipisah menjadi panel ringkas. Rekomendasi menampilkan barang lain dari lapak yang sama, atau barang serupa di kategori/wilayah yang sama jika lapak belum memiliki barang lain.
 
 ## Elevasi dan interaksi
 

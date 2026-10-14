@@ -53,7 +53,7 @@ export function MediaCarousel({
               <img
                 src={f.image_url}
                 alt={`${judul} — foto ${i + 1}`}
-                className="aspect-[4/3] w-full object-cover"
+                className="aspect-[4/3] w-full object-contain"
                 loading={i === 0 ? "eager" : "lazy"}
               />
             </div>
@@ -99,7 +99,7 @@ export function MediaCarousel({
               aria-label={`Tampilkan foto ${i + 1}`}
               aria-pressed={aktif === i}
               className={cn(
-                "shrink-0 overflow-hidden rounded-md border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                "shrink-0 overflow-hidden rounded-md border-2 bg-surface2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                 aktif === i ? "border-primary" : "border-transparent hover:border-line-kuat",
               )}
             >
@@ -107,7 +107,7 @@ export function MediaCarousel({
                 src={f.image_url}
                 alt=""
                 aria-hidden="true"
-                className="h-14 w-14 object-cover sm:h-16 sm:w-16"
+                className="h-14 w-14 object-contain sm:h-16 sm:w-16"
                 loading="lazy"
               />
             </button>
