@@ -129,6 +129,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [tema]);
 
   const setTema = useCallback((t: Tema) => {
+    // Terapkan DOM secara sinkron agar View Transition mengambil snapshot
+    // tema tujuan; efek di atas tetap menjaga hidrasi dan perubahan sistem.
+    const mode = t === "sistem" ? (sistemGelap() ? "gelap" : "terang") : t;
+    terapkan(mode);
+    setAktif(mode);
     setTemaState(t);
     try {
       localStorage.setItem(KUNCI_SIMPAN, t);

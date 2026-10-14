@@ -1,115 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { IconSun, IconMoon, IconMonitor } from "@/components/shared/icons";
 import { useTema, type Tema } from "@/components/shared/theme";
 import { cn } from "@/lib/cn";
 
 /**
- * Tombol ganti tema — tiga posisi (Terang / Gelap / Ikut sistem), dengan
- * transisi halaman "eclipse".
- *
- * KONSEP DARI uiarc.dev/components/theme-switch, varian `eclipse`.
- *
- * CATATAN PENTING SOAL REFERENSI ITU:
- * Komponen rujukannya HANYA tombolnya. Dokumentasinya menyebut jelas: "The
- * page transition itself is yours to run" — sapuan halamannya bukan bagian
- * dari paket, harus ditulis sendiri. Jadi bagian tombol mengikuti referensi,
- * dan sapuannya ditulis di sini.
- *
- * APA YANG DIAMBIL DARI REFERENSI (varian eclipse):
- *
- *   - KEDUA IKON BERPUTAR SEARAH DALAM SATU TRANSISI. Ini inti efeknya, dan
- *     mudah terlewat. Tiap ikon punya sudut tetap: matahari +30 derajat,
- *     bulan -30 derajat. Saat ikon MASUK ia mulai dari sudut itu lalu berputar
- *     ke nol; saat ikon KELUAR ia berputar dari nol ke sudut itu.
- *
- *     Menuju gelap  : bulan masuk dari -30 (searah jarum jam), matahari
- *                     keluar menuju +30 (searah jarum jam juga).
- *     Menuju terang : keduanya berlawanan jarum jam.
- *
- *     Karena arahnya sama, mata membacanya sebagai SATU putaran. Kalau ikon
- *     yang keluar dibiarkan menghilang begitu saja (tanpa dianimasikan),
- *     yang terlihat adalah dua benda berbeda yang muncul bergantian.
- *
- *   - Sudut masuk 30 derajat, skala 0,7 -> 1, blur 2px -> 0.
- *   - Putaran dan skala memakai easing yang MELEWATI nilai akhir (overshoot)
- *     supaya terasa hidup; opacity dan blur TIDAK — kalau ikut melewati,
- *     `blur()` bisa jadi negatif, dan itu bukan nilai yang sah. Karena itu
- *     ada dua animasi terpisah, bukan satu.
- *   - Petunjuk arah: varian eclipse menggeser ikon terpilih 2px ke kiri,
- *     searah dengan sapuan halaman yang bergerak horizontal.
- *   - `useSettled`: pergantian tema saat hidrasi (dari localStorage) TIDAK
- *     dianimasikan. Tanpa ini, halaman yang dibuka dalam mode gelap akan
- *     terlihat ikonnya berputar sendiri tanpa ada yang menekan apa pun.
- *
- * DUA BUG YANG DIPERBAIKI DI VERSI INI:
- *
- *   1. SAPUAN MEMAKAI WARNA TEMA YANG DITINGGALKAN, BUKAN YANG DITUJU.
- *      Versi lama membaca `--w-bg` lewat getComputedStyle SEBELUM kelas tema
- *      ditukar. Karena `--w-bg` berbeda per mode (247 247 246 di terang,
- *      24 24 23 di gelap), yang terbaca selalu warna halaman LAMA. Jadi saat
- *      pindah ke gelap, lapisan yang menyapu justru putih — bukan hitam.
- *      Sekarang warna diambil dari `--kanvas-terang` / `--kanvas-gelap`, dua
- *      variabel yang sengaja TIDAK ditimpa di `.dark`, jadi nilainya benar
- *      dibaca kapan saja.
- *
- *   2. IKON BULAN SELALU TERGESER 2px.
- *      Aturan lama `[role="radio"][data-gelap="true"] .ikon-tema` cocok setiap
- *      saat — bukan hanya saat pilihan gelap sedang AKTIF. Jadi ikon bulan
- *      tampak tidak sejajar dengan dua ikon lainnya, permanen. Sekarang
- *      pergeseran hanya berlaku pada tombol yang sedang terpilih, dan
- *      mengikuti MODE YANG SEDANG TAMPIL (jadi "ikut sistem" yang kebetulan
- *      gelap juga benar arahnya).
- *
- * KENAPA TIDAK MEMAKAI `document.startViewTransition`:
- * Itu yang pertama dicoba, dan hasil pengukurannya:
- *
- *   tanpa transisi (ganti kelas langsung)      58 fps
- *   startViewTransition + clip-path            22 fps
- *   startViewTransition tanpa animasi          44 fps
- *   overlay + transform: translateX()          60 fps
- *
- * View transition memotret SELURUH halaman jadi dua bitmap raksasa lalu
- * mengompositnya tiap frame — biaya itu melekat, bukan soal penyetelan.
- * Karena permintaannya "smooth, tidak lag ataupun patah-patah", yang dipakai
- * adalah lapisan dengan transform murni.
- *
- * CARA SAPUANNYA BEKERJA:
- *   Satu lapisan selebar layar berisi warna kanvas TEMA TUJUAN bergerak
- *   menyeberangi halaman dari kiri ke kanan:
- *
- *     translateX(-120vw) -> translateX(0) -> translateX(120vw)
- *
- *   Saat berada di titik tengah, lapisan menutup penuh. Di detik itulah kelas
- *   tema ditukar, jadi perubahannya tersembunyi di balik lapisan. Setelah
- *   lewat, tepi belakangnya membuka dan memperlihatkan tema baru.
- *
- *   Karena easing-nya simetris, 50% waktu = 50% jarak = tepat saat menutup.
- *   Tidak perlu menghitung ulang timing kalau durasinya diubah.
- *
- *   Tepi depan dan tepi belakang diberi bulu (gradien) supaya tidak ada garis
- *   keras yang menusuk layar. Hanya `transform` yang dianimasikan.
+ * Tombol ganti tema — tiga pilihan (terang / gelap / ikut sistem), dengan
+ * transisi halaman Eclipse berbentuk reveal melingkar melalui View Transitions.
+ * Ikon dan aksesibilitas tombol mengikuti referensi UIArc; transisi halaman
+ * dibuat di aplikasi karena komponen referensi hanya menyediakan callback.
  */
-
-/** Durasi satu lintasan penuh (menyeberang dari luar kiri ke luar kanan). */
-const DURASI_SAPU = 700;
-/**
- * Easing simetris. Sifat simetris inilah yang membuat "50% waktu = 50% jarak",
- * sehingga penukaran tema bisa dijadwalkan tepat di DURASI_SAPU / 2 tanpa
- * menghitung ulang kurvanya.
- */
-const EASING_SAPU = "cubic-bezier(0.65, 0, 0.35, 1)";
-/**
- * Lebar bulu di tepi sapuan.
- *
- * Diukur: lapisan SOLID tanpa bulu = 60 fps, dengan bulu 220px = 44 fps.
- * Jadi bulunya yang mahal — biayanya sebanding LUAS gradien yang harus
- * dilukis ulang tiap frame, bukan jumlah elemennya. 64px masih cukup untuk
- * menghilangkan garis keras di tepi, dengan biaya jauh lebih kecil.
- */
-const LEBAR_BULU = 64;
-/** Lama ikon lama ditahan agar bisa dianimasikan keluar. */
 const DURASI_KELUAR = 240;
 
 const PILIHAN: { nilai: Tema; label: string; Ikon: typeof IconSun }[] = [
@@ -132,23 +34,6 @@ const SUDUT: Record<Tema, string> = {
 /** Geser indikator ke posisi pilihan ke-n dari 3. */
 const geserKe = (n: number) => ({ transform: `translateX(${n * 100}%)` });
 
-/**
- * Warna kanvas untuk satu mode.
- *
- * Dibaca dari `--kanvas-terang` / `--kanvas-gelap` — dua variabel yang
- * didaftarkan di `:root` dan SENGAJA tidak ditimpa di `.dark`. Kalau memakai
- * `--w-bg` (yang memang berbeda per mode), nilainya bergantung pada tema yang
- * sedang terpasang — dan saat lapisan sapuan disiapkan, tema lama masih
- * terpasang.
- */
-function warnaKanvas(gelap: boolean): string {
-  const cs = getComputedStyle(document.documentElement);
-  const v = cs.getPropertyValue(gelap ? "--kanvas-gelap" : "--kanvas-terang").trim();
-  // Cadangan kalau variabelnya belum ada, supaya sapuan tidak pernah menjadi
-  // lapisan transparan yang tak terlihat.
-  return `rgb(${v || (gelap ? "24 24 23" : "247 247 246")})`;
-}
-
 /** Mode yang benar-benar tampil untuk sebuah pilihan (menyelesaikan "sistem"). */
 function modeDari(t: Tema): "terang" | "gelap" {
   if (t !== "sistem") return t;
@@ -162,16 +47,9 @@ export function TombolTema({ kelas }: { kelas?: string }) {
   /**
    * Keadaan animasi ikon: nomor generasi + ikon mana yang sedang keluar.
    *
-   * KENAPA DIPICU OLEH PERUBAHAN TEMA, BUKAN OLEH KLIK:
-   * Ini kesalahan halus yang sempat terjadi. Tema baru tidak langsung
-   * terpasang saat tombol ditekan — ia berganti 350ms kemudian, saat lapisan
-   * sapuan sudah menutup penuh. Kalau animasi ikon dipicu saat KLIK, ikon
-   * baru berputar masuk lebih dulu, lalu 350ms kemudian dipasang ulang lagi
-   * saat temanya benar-benar berganti — dan ikon lama sempat muncul kembali
-   * di antaranya. Hasilnya tiga gerakan berturut-turut, bukan satu.
-   *
-   * Dengan memicunya dari perubahan `tema`, ikon lama dan ikon baru berputar
-   * BERSAMAAN, tepat saat tema berganti — satu gerakan, sesuai referensi.
+   * Sumber pemicu adalah perubahan state tema, bukan klik. Dengan begitu ikon
+   * lama dan baru mulai bergerak saat tema benar-benar diperbarui, dan
+   * hidrasi tetap tidak memicu animasi sebelum halaman menetap.
    */
   const [animasi, setAnimasi] = useState<{ generasi: number; keluar: Tema | null }>({
     generasi: 0,
@@ -193,10 +71,9 @@ export function TombolTema({ kelas }: { kelas?: string }) {
     };
   }, []);
 
-  // Bersihkan lapisan sapuan dan timer kalau komponen dilepas.
+  // Bersihkan timer animasi ikon kalau komponen dilepas.
   useEffect(() => {
     return () => {
-      document.getElementById("lapisan-gerhana")?.remove();
       window.clearTimeout(timerKeluar.current);
     };
   }, []);
@@ -233,68 +110,26 @@ export function TombolTema({ kelas }: { kelas?: string }) {
   const gelapAktif = aktif === "gelap";
 
   const sapuGerhana = useCallback(
-    (ke: Tema, modeTujuan: "terang" | "gelap") => {
-      // Klik cepat berturut-turut tidak boleh menumpuk lapisan.
-      document.getElementById("lapisan-gerhana")?.remove();
+    (ke: Tema) => {
+      const mulaiTransisi = (
+        document as Document & {
+          startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+        }
+      ).startViewTransition;
 
-      const warna = warnaKanvas(modeTujuan === "gelap");
-
-      const lapisan = document.createElement("div");
-      lapisan.id = "lapisan-gerhana";
-      lapisan.setAttribute("aria-hidden", "true");
-      Object.assign(lapisan.style, {
-        position: "fixed",
-        top: "0",
-        left: "0",
-        width: "100vw",
-        height: "100vh",
-        zIndex: "2147483000",
-        pointerEvents: "none",
-        background: warna,
-        willChange: "transform",
-      });
-
-      // Bulu di kedua tepi. Tanpa ini, tepi sapuan adalah garis lurus keras
-      // yang terlihat seperti potongan gambar, bukan seperti bayangan lewat.
-      for (const sisi of ["kanan", "kiri"] as const) {
-        const s = document.createElement("span");
-        Object.assign(s.style, {
-          position: "absolute",
-          top: "0",
-          bottom: "0",
-          width: `${LEBAR_BULU}px`,
-          ...(sisi === "kanan" ? { left: "100%" } : { right: "100%" }),
-          // `transparent` di CSS sama dengan rgba(0,0,0,0) — hitam transparan.
-          // Saat diinterpolasi menuju warna kanvas yang terang, mesin render
-          // bisa melewati hitam dan meninggalkan noda gelap di tepi. Menulis
-          // alpha 0 dari WARNA YANG SAMA membuat interpolasinya bersih.
-          background:
-            sisi === "kanan"
-              ? `linear-gradient(90deg, ${warna}, ${warna.replace("rgb(", "rgba(").replace(")", ", 0)")})`
-              : `linear-gradient(90deg, ${warna.replace("rgb(", "rgba(").replace(")", ", 0)")}, ${warna})`,
-        });
-        lapisan.appendChild(s);
+      // Browser tanpa View Transitions tetap dapat berganti tema, tanpa efek
+      // sapuan yang berbeda dari Eclipse.
+      if (!mulaiTransisi) {
+        setTema(ke);
+        return;
       }
 
-      document.body.appendChild(lapisan);
-
-      const anim = lapisan.animate(
-        [{ transform: "translateX(-120vw)" }, { transform: "translateX(120vw)" }],
-        { duration: DURASI_SAPU, easing: EASING_SAPU, fill: "forwards" },
-      );
-
-      // Tukar tepat saat lapisan menutup penuh. Karena easing-nya simetris,
-      // titik itu ada di separuh waktu.
-      const tukar = window.setTimeout(() => setTema(ke), DURASI_SAPU / 2);
-
-      anim.finished
-        .catch(() => {
-          /* animasi dibatalkan — tidak apa-apa */
-        })
-        .finally(() => {
-          window.clearTimeout(tukar);
-          lapisan.remove();
-        });
+      const transisi = mulaiTransisi.call(document, () => {
+        flushSync(() => setTema(ke));
+      });
+      void transisi.finished.catch(() => {
+        /* Tema sudah diterapkan; pembatalan hanya menghentikan animasinya. */
+      });
     },
     [setTema],
   );
@@ -319,7 +154,7 @@ export function TombolTema({ kelas }: { kelas?: string }) {
       return;
     }
 
-    sapuGerhana(t, modeTujuan);
+    sapuGerhana(t);
   }
 
   /**
