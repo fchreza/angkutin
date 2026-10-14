@@ -56,6 +56,10 @@ Gunakan skala radius dari konfigurasi Tailwind aktif: radius kecil untuk kontrol
 
 Katalog memakai grid responsif dua kolom pada ponsel dan menambah kolom seiring lebar layar. Kartu memakai rasio foto **4:3**; kondisi tampil sebagai label ringkas pada foto, lalu judul, harga menonjol, lokasi, dan tenggat. Hindari memperbesar satu kartu hingga memecah ritme grid.
 
+### Halaman detail barang
+
+Detail memakai galeri foto 4:3 dengan thumbnail yang dapat dipilih, lalu informasi inti dalam kolom terpisah pada desktop dan urutan vertikal yang jelas pada ponsel. Harga dan tindakan menghubungi penjual tetap mudah ditemukan; deskripsi dan lokasi penjemputan dipisah menjadi panel ringkas. Rekomendasi menampilkan barang lain dari lapak yang sama, atau barang serupa di kategori/wilayah yang sama jika lapak belum memiliki barang lain.
+
 ## Elevasi dan interaksi
 
 Kartu diam memakai border halus dan bayangan sangat ringan untuk memisahkan permukaan putih dari kanvas; hover/fokus mempertegas batas/bayangan. Elemen mengambang seperti dialog dapat memakai elevasi lebih tinggi. Batasi blur/backdrop dan animasi agar tidak mengganggu konten atau perangkat lambat.

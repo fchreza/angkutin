@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
-import { and, asc, desc, eq, ilike, or, sql, gte } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, ne, or, sql, gte } from "drizzle-orm";
 import { tanggalHariIniID } from "./format";
 
 /**
@@ -197,8 +197,9 @@ export const ambilDetail = cache(async (id: string) => {
        *
        * Menghapusnya dari query adalah pertahanan lapis kedua: walaupun ada
        * komponen yang keliru mencoba menampilkannya, datanya tidak ada.
-       */
+      */
       seller_name: listings.sellerName,
+      stall_id: listings.stallId,
       province_code: listings.provinceCode,
       province_name: listings.provinceName,
       regency_code: listings.regencyCode,
@@ -233,3 +234,104 @@ export const ambilDetail = cache(async (id: string) => {
     images: foto,
   };
 });
+
+
+/** Barang lain dari lapak yang sama; bila belum ada, tampilkan barang tersedia yang paling relevan. */
+export async function ambilRekomendasi({
+  id,
+  stallId,
+  categoryId,
+  regencyCode,
+}: {
+  id: string;
+  stallId: string | null;
+  categoryId: string | null;
+  regencyCode: string;
+}): Promise<{ data: KartuListing[]; dariLapak: boolean }> {
+  const hariIni = tanggalHariIniID();
+  const kolom = {
+    id: listings.id,
+    title: listings.title,
+    price: listings.price,
+    is_free: listings.isFree,
+    condition: listings.condition,
+    status: listings.status,
+    deadline_date: listings.deadlineDate,
+    pickup_landmark: listings.pickupLandmark,
+    province_code: listings.provinceCode,
+    province_name: listings.provinceName,
+    regency_code: listings.regencyCode,
+    regency_name: listings.regencyName,
+    district_code: listings.districtCode,
+    district_name: listings.districtName,
+    category_id: listings.categoryId,
+    category_name: categories.name,
+    created_at: listings.createdAt,
+    cover_url: sql<string | null>`(
+      select li.image_url from listing_images li
+      where li.listing_id = ${listings.id}
+      order by li.display_order asc limit 1
+    )`,
+    jumlah_foto: sql<number>`(
+      select count(*)::int from listing_images li where li.listing_id = ${listings.id}
+    )`,
+  };
+
+  const normalisasi = <T extends { created_at: Date; deadline_date: string | Date }>(
+    baris: T[],
+  ) =>
+    baris.map((b) => ({
+      ...b,
+      created_at: b.created_at.toISOString(),
+      deadline_date: String(b.deadline_date).slice(0, 10),
+    })) as unknown as KartuListing[];
+
+  if (stallId) {
+    const barisLapak = await db
+      .select(kolom)
+      .from(listings)
+      .leftJoin(categories, eq(listings.categoryId, categories.id))
+      .where(
+        and(
+          ne(listings.id, id),
+          eq(listings.stallId, stallId),
+          eq(listings.status, "AVAILABLE"),
+          gte(listings.deadlineDate, hariIni),
+        ),
+      )
+      .orderBy(desc(listings.createdAt))
+      .limit(6);
+
+    if (barisLapak.length > 0) {
+      return { data: normalisasi(barisLapak), dariLapak: true };
+    }
+  }
+
+  const relevansi = categoryId
+    ? or(
+        eq(listings.categoryId, categoryId),
+        eq(listings.regencyCode, regencyCode),
+      )!
+    : eq(listings.regencyCode, regencyCode);
+  const barisSerupa = await db
+    .select(kolom)
+    .from(listings)
+    .leftJoin(categories, eq(listings.categoryId, categories.id))
+    .where(
+      and(
+        ne(listings.id, id),
+        eq(listings.status, "AVAILABLE"),
+        gte(listings.deadlineDate, hariIni),
+        relevansi,
+      ),
+    )
+    .orderBy(
+      ...(categoryId
+        ? [sql`CASE WHEN ${listings.categoryId} = ${categoryId} THEN 0 ELSE 1 END`]
+        : []),
+      desc(listings.createdAt),
+    )
+    .limit(6);
+
+  return { data: normalisasi(barisSerupa), dariLapak: false };
+}

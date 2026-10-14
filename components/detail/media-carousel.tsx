@@ -4,19 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { IconChevronRight } from "@/components/shared/icons";
 
-/**
- * Carousel foto (Layar 2).
- *
- * Scroll-snap horizontal: bekerja dengan swipe di mobile DAN panah di
- * desktop, tanpa library tambahan (menjaga bundel tetap kecil).
- *
- * Sumber kebenaran foto aktif adalah POSISI GULIR, bukan state tombol.
- * Alasannya: penjual bisa berpindah foto dengan tiga cara — panah, swipe di
- * HP, atau trackpad. Kalau state hanya diperbarui oleh tombol, indikator
- * titik jadi salah begitu pengguna men swipe (foto sudah pindah, titiknya
- * masih menunjuk foto lama). Karena itu gulir selalu disinkronkan lewat
- * onScroll.
- */
+/** Galeri foto produk: swipe, panah desktop, dan thumbnail yang bisa dipilih. */
 export function MediaCarousel({
   foto,
   judul,
@@ -28,106 +16,103 @@ export function MediaCarousel({
   const trackRef = useRef<HTMLDivElement>(null);
   const ada = foto.length > 0;
 
-  /**
-   * Baca ulang posisi gulir dan samakan indikator dengannya.
-   * Dipanggil saat gulir (swipe/trackpad) dan setelah perpindahan lewat panah.
-   */
   const sinkron = useCallback(() => {
     const track = trackRef.current;
     if (!track || track.clientWidth === 0) return;
     const i = Math.round(track.scrollLeft / track.clientWidth);
     const aman = Math.max(0, Math.min(i, foto.length - 1));
-    setAktif((s) => (s === aman ? s : aman));
+    setAktif((sebelumnya) => (sebelumnya === aman ? sebelumnya : aman));
   }, [foto.length]);
 
-  const geser = (arah: 1 | -1) => {
+  const geserKe = (indeks: number) => {
     const track = trackRef.current;
-    const next = Math.min(Math.max(aktif + arah, 0), foto.length - 1);
-    setAktif(next);
-    // scrollTo pada wadahnya sendiri, BUKAN scrollIntoView.
-    // scrollIntoView menggulir SEMUA induk, termasuk halaman secara vertikal,
-    // sehingga layar ikut melompat saat panah ditekan.
-    track?.scrollTo({ left: next * track.clientWidth, behavior: "smooth" });
+    const aman = Math.max(0, Math.min(indeks, foto.length - 1));
+    setAktif(aman);
+    track?.scrollTo({ left: aman * track.clientWidth, behavior: "smooth" });
   };
 
   if (!ada) {
     return (
-      <div className="flex aspect-square w-full items-center justify-center rounded-md border border-line bg-appbg text-[13px] text-ink-secondary">
+      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-lg border border-line bg-surface2 text-[13px] text-ink-secondary">
         Tanpa foto
       </div>
     );
   }
 
   return (
-    <div className="relative">
-      <div
-        ref={trackRef}
-        onScroll={sinkron}
-        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-md border border-line bg-appbg"
-      >
-        {foto.map((f, i) => (
-          <div key={f.image_url} id={`foto-${i}`} className="w-full shrink-0 snap-center">
-            {/*
-             * TIDAK memakai animate-reveal di sini.
-             *
-             * Animasi revealIn mulai dari opacity 0 + blur(4px) — dirancang
-             * untuk peralihan skeleton ke konten. Kalau dipasang ke foto,
-             * setiap perpindahan foto membuat foto memudar masuk dari
-             * ketidakterlihatan, dan yang terlihat lebih dulu adalah latar
-             * carousel yang nyaris putih (#F9FAFB). Itulah "kilatan putih"
-             * saat foto digeser. Terukur: opacity foto baru 0,167 pada 80ms
-             * pertama, dan kilatan berlangsung ~320ms.
-             *
-             * Pada carousel, geseran horizontal itu SENDIRI sudah menjadi
-             * transisinya — foto tidak perlu memudar.
-             */}
-            <img
-              src={f.image_url}
-              alt={`${judul} — foto ${i + 1}`}
-              className="aspect-square w-full object-cover"
-              loading={i === 0 ? "eager" : "lazy"}
-            />
-          </div>
-        ))}
+    <div>
+      <div className="relative overflow-hidden rounded-lg border border-line bg-surface2 shadow-[0_1px_3px_rgb(var(--w-ink)/0.05)]">
+        <div
+          ref={trackRef}
+          onScroll={sinkron}
+          className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
+          aria-label={`Galeri foto ${judul}`}
+        >
+          {foto.map((f, i) => (
+            <div key={f.image_url} className="w-full shrink-0 snap-center">
+              <img
+                src={f.image_url}
+                alt={`${judul} — foto ${i + 1}`}
+                className="aspect-[4/3] w-full object-cover"
+                loading={i === 0 ? "eager" : "lazy"}
+              />
+            </div>
+          ))}
+        </div>
+
+        {foto.length > 1 && (
+          <>
+            <span className="absolute bottom-3 right-3 rounded-pill bg-scrim/75 px-2.5 py-1 text-[11px] font-medium tabular-nums text-white">
+              {aktif + 1} / {foto.length}
+            </span>
+            {aktif > 0 && (
+              <button
+                type="button"
+                onClick={() => geserKe(aktif - 1)}
+                aria-label="Foto sebelumnya"
+                className="press absolute left-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 rotate-180 items-center justify-center rounded-full border border-line bg-surface/95 text-ink shadow-card hover:bg-surface md:flex"
+              >
+                <IconChevronRight size={18} />
+              </button>
+            )}
+            {aktif < foto.length - 1 && (
+              <button
+                type="button"
+                onClick={() => geserKe(aktif + 1)}
+                aria-label="Foto berikutnya"
+                className="press absolute right-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface/95 text-ink shadow-card hover:bg-surface md:flex"
+              >
+                <IconChevronRight size={18} />
+              </button>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Indikator titik */}
       {foto.length > 1 && (
-        <>
-          <div className="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-            {foto.map((_, i) => (
-              <span
-                key={i}
-                className={cn(
-                  "h-1.5 rounded-pill transition-all",
-                  i === aktif ? "w-5 bg-white" : "w-1.5 bg-scrim/60",
-                )}
+        <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Pilih foto produk">
+          {foto.map((f, i) => (
+            <button
+              key={f.image_url}
+              type="button"
+              onClick={() => geserKe(i)}
+              aria-label={`Tampilkan foto ${i + 1}`}
+              aria-pressed={aktif === i}
+              className={cn(
+                "shrink-0 overflow-hidden rounded-md border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                aktif === i ? "border-primary" : "border-transparent hover:border-line-kuat",
+              )}
+            >
+              <img
+                src={f.image_url}
+                alt=""
+                aria-hidden="true"
+                className="h-14 w-14 object-cover sm:h-16 sm:w-16"
+                loading="lazy"
               />
-            ))}
-          </div>
-
-          {/* Panah untuk desktop */}
-          {aktif > 0 && (
-            <button
-              type="button"
-              onClick={() => geser(-1)}
-              aria-label="Foto sebelumnya"
-              className="press absolute left-2 top-1/2 hidden h-11 w-11 -translate-y-1/2 rotate-180 items-center justify-center rounded-full bg-white/90 text-scrim shadow-card hover:bg-white md:flex"
-            >
-              <IconChevronRight size={18} />
             </button>
-          )}
-          {aktif < foto.length - 1 && (
-            <button
-              type="button"
-              onClick={() => geser(1)}
-              aria-label="Foto berikutnya"
-              className="press absolute right-2 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-scrim shadow-card hover:bg-white md:flex"
-            >
-              <IconChevronRight size={18} />
-            </button>
-          )}
-        </>
+          ))}
+        </div>
       )}
     </div>
   );
