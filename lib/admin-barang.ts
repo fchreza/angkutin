@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { listings, stalls } from "@/db/schema";
-import { desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { listings, stalls, STATUS_VALUES, type ListingStatus } from "@/db/schema";
+import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 
 /**
  * Data barang untuk halaman admin.
@@ -78,6 +78,23 @@ function varianNomor(q: string): string[] {
 
 const BATAS = 500;
 
+export type JumlahStatusBarangAdmin = Record<ListingStatus, number>;
+
+/**
+ * Syarat pencarian yang dipakai bersama oleh daftar dan hitungan tab status.
+ * Pencocokan nomor tetap dilakukan di server agar nomor lengkap tidak pernah
+ * ikut dikirim ke browser.
+ */
+function syaratPencarian(kueri: string) {
+  if (!kueri) return undefined;
+  const varian = varianNomor(kueri);
+  return or(
+    ilike(listings.title, `%${kueri}%`),
+    ilike(listings.sellerName, `%${kueri}%`),
+    ...varian.map((v) => ilike(listings.sellerWhatsapp, `%${v}%`)),
+  );
+}
+
 /**
  * Ambil daftar barang untuk admin, terbaru dulu.
  *
@@ -86,17 +103,15 @@ const BATAS = 500;
  * browser dalam bentuk lengkap — jadi klien memang tidak punya bahan untuk
  * mencocokkan.
  */
-export async function daftarBarangAdmin(q?: string): Promise<BarangAdmin[]> {
+export async function daftarBarangAdmin(
+  q?: string,
+  status?: ListingStatus,
+): Promise<BarangAdmin[]> {
   const kueri = (q ?? "").trim();
-  const varian = varianNomor(kueri);
-
-  const syarat = kueri
-    ? or(
-        ilike(listings.title, `%${kueri}%`),
-        ilike(listings.sellerName, `%${kueri}%`),
-        ...varian.map((v) => ilike(listings.sellerWhatsapp, `%${v}%`)),
-      )
-    : undefined;
+  const syarat = and(
+    syaratPencarian(kueri),
+    status ? eq(listings.status, status) : undefined,
+  );
 
   const baris = await db
     .select({
@@ -160,6 +175,28 @@ export async function daftarBarangAdmin(q?: string): Promise<BarangAdmin[]> {
       barangLapakLain: lapak ? Math.max(0, lapak.jumlah - 1) : 0,
     };
   });
+}
+
+/** Hitung jumlah tiap status untuk kata pencarian yang sama dengan daftar. */
+export async function hitungStatusBarangAdmin(
+  q?: string,
+): Promise<JumlahStatusBarangAdmin> {
+  const kueri = (q ?? "").trim();
+  const baris = await db
+    .select({ status: listings.status, jumlah: sql<number>`count(*)::int` })
+    .from(listings)
+    .where(syaratPencarian(kueri))
+    .groupBy(listings.status);
+
+  const hasil = Object.fromEntries(
+    STATUS_VALUES.map((status) => [status, 0]),
+  ) as JumlahStatusBarangAdmin;
+  for (const b of baris) {
+    if (STATUS_VALUES.includes(b.status as ListingStatus)) {
+      hasil[b.status as ListingStatus] = b.jumlah;
+    }
+  }
+  return hasil;
 }
 
 /**

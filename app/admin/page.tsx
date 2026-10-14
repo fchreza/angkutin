@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { sudahMasuk, adminSiap, MIN_SANDI } from "@/lib/admin";
 import { ringkasanKunjungan } from "@/lib/analytics";
-import { daftarBarangAdmin } from "@/lib/admin-barang";
+import { daftarBarangAdmin, hitungStatusBarangAdmin } from "@/lib/admin-barang";
+import { STATUS_VALUES } from "@/db/schema";
 import { MasukAdmin } from "@/components/admin/masuk-admin";
 import { CariBarang } from "@/components/admin/cari-barang";
+import { FilterStatusBarang } from "@/components/admin/filter-status-barang";
 import { TautanBarang } from "@/components/admin/tautan-barang";
 
 /**
@@ -176,7 +178,7 @@ function sisaHari(ymd: string): number {
 export default async function HalamanAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; status?: string }>;
 }) {
   // Belum dikonfigurasi: jelaskan apa yang harus dilakukan, jangan tampilkan
   // form yang tidak akan pernah berhasil.
@@ -212,15 +214,20 @@ export default async function HalamanAdmin({
     );
   }
 
-  const { q } = await searchParams;
+  const { q, status: statusParam } = await searchParams;
   const kueri = (q ?? "").trim();
+  const statusAktif = STATUS_VALUES.find((nilai) => nilai === statusParam);
 
   // Dijalankan bersamaan, bukan berurutan: keduanya tidak saling bergantung,
   // jadi menunggunya satu per satu hanya menambah waktu muat halaman.
-  const [ringkas, barang] = await Promise.all([
+  const [ringkas, barang, jumlahStatus] = await Promise.all([
     ringkasanKunjungan(30),
-    daftarBarangAdmin(kueri),
+    daftarBarangAdmin(kueri, statusAktif),
+    hitungStatusBarangAdmin(kueri),
   ]);
+  const jumlahHasil = statusAktif
+    ? jumlahStatus[statusAktif]
+    : Object.values(jumlahStatus).reduce((total, jumlah) => total + jumlah, 0);
 
   // Nama ramah untuk tiap jenis rujukan. Kode mentahnya dipakai di database
   // supaya stabil, tapi tidak ada gunanya ditampilkan apa adanya.
@@ -247,25 +254,40 @@ export default async function HalamanAdmin({
         </p>
       </header>
 
-      <CariBarang nilaiAwal={kueri} />
+      <CariBarang nilaiAwal={kueri} status={statusAktif} />
+      <FilterStatusBarang
+        statusAktif={statusAktif}
+        kueri={kueri}
+        jumlah={jumlahStatus}
+      />
 
       {barang.length === 0 ? (
         <section className="mt-6 rounded-lg border border-line bg-surface px-6 py-10 text-center">
           <p className="font-display text-[1.25rem] font-bold text-ink">
-            {kueri ? "Tidak ada yang cocok" : "Belum ada barang"}
+            {kueri
+              ? statusAktif
+                ? `Tidak ada barang berstatus ${LABEL_STATUS[statusAktif]} yang cocok`
+                : "Tidak ada yang cocok"
+              : statusAktif
+                ? `Belum ada barang berstatus ${LABEL_STATUS[statusAktif]}`
+                : "Belum ada barang"}
           </p>
           <p className="mx-auto mt-2 max-w-baca text-[14px] leading-relaxed text-ink-secondary">
-            {kueri
-              ? `Tidak ada barang yang cocok dengan "${kueri}". Coba kata kunci lain, atau kosongkan pencarian untuk melihat semuanya.`
-              : "Barang akan muncul di sini setelah ada penjual yang memasangnya."}
+            {statusAktif
+              ? kueri
+                ? `Tidak ada barang dengan status ${LABEL_STATUS[statusAktif]} yang cocok dengan "${kueri}". Coba status lain atau ubah kata pencarian.`
+                : "Pilih status lain untuk melihat barang lainnya."
+              : kueri
+                ? `Tidak ada barang yang cocok dengan "${kueri}". Coba kata kunci lain, atau kosongkan pencarian untuk melihat semuanya.`
+                : "Barang akan muncul di sini setelah ada penjual yang memasangnya."}
           </p>
         </section>
       ) : (
         <section className="mt-6">
           <p className="text-[13px] text-ink-secondary">
-            {kueri
-              ? `${barang.length} barang cocok dengan "${kueri}"`
-              : `${barang.length} barang`}
+            {jumlahHasil > barang.length
+              ? `Menampilkan ${barang.length.toLocaleString("id-ID")} dari ${jumlahHasil.toLocaleString("id-ID")} barang${kueri ? ` yang cocok dengan "${kueri}"` : ""}`
+              : `${jumlahHasil.toLocaleString("id-ID")} barang${kueri ? ` cocok dengan "${kueri}"` : ""}`}
           </p>
           <ul className="mt-3 space-y-3">
             {barang.map((b) => {

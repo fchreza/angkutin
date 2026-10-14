@@ -11,7 +11,15 @@
  * Efek sampingnya menguntungkan: kata kunci yang dicari ikut masuk ke URL,
  * sehingga halaman hasil pencarian bisa dimuat ulang atau di-bookmark.
  */
-export function CariBarang({ nilaiAwal }: { nilaiAwal?: string }) {
+import type { ListingStatus } from "@/db/schema";
+
+export function CariBarang({
+  nilaiAwal,
+  status,
+}: {
+  nilaiAwal?: string;
+  status?: ListingStatus;
+}) {
   return (
     <form method="get" action="/admin" className="mt-4">
       <label htmlFor="cari-barang" className="block text-[14px] font-medium text-ink">
@@ -30,6 +38,7 @@ export function CariBarang({ nilaiAwal }: { nilaiAwal?: string }) {
           placeholder="Contoh: kasur, Budi, 0812"
           className="min-h-[44px] min-w-0 flex-1 rounded-md border border-line-kuat bg-surface px-4 text-base text-ink outline-none transition-colors focus:border-primary"
         />
+        {status && <input type="hidden" name="status" value={status} />}
         <button
           type="submit"
           className="inline-flex min-h-[44px] shrink-0 items-center rounded-md bg-primary px-5 text-[15px] font-semibold text-primary-teks transition-colors hover:bg-primary-hover"
