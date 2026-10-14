@@ -21,7 +21,7 @@ export function Footer() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/mark.png" alt="" width={22} height={22} className="shrink-0" />
           {/*
-            Nama brand memakai font-display (Fraunces). KENAPA: ini satu-satunya
+            Nama brand memakai font-display. KENAPA: ini satu-satunya
             tempat nama merek muncul dalam ukuran kecil, dan serif di sini
             mengikat footer ke judul-judul halaman sehingga situsnya terbaca
             sebagai satu keluarga, bukan kumpulan halaman terpisah.

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { CatatKunjungan } from "@/components/shared/catat-kunjungan";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import { ToastProvider } from "@/components/shared/toast";
@@ -26,24 +26,14 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-/**
- * Fraunces — judul besar saja (di atas 32px).
+/*
+ * Fraunces (serif) DIHAPUS dari sini.
  *
- * Serif editorial hangat dengan OPTICAL SIZING: bentuk hurufnya benar-benar
- * berubah sesuai ukuran, jadi judul besar tidak terlihat seperti teks badan
- * yang hanya diperbesar. Sumbu `SOFT` dinaikkan dan `WONK` dinyalakan supaya
- * terasa ditulis tangan, bukan dicetak.
- *
- * `axes` wajib disebut eksplisit: tanpa itu next/font hanya mengirim sumbu
- * berat, dan sumbu SOFT/WONK diam-diam tidak ikut sehingga bentuk khasnya
- * hilang.
+ * Judul sekarang memakai Plus Jakarta Sans yang sama dengan teks badan.
+ * Kalau pemuatnya dibiarkan, Next tetap mengunduh berkas fontnya di setiap
+ * halaman walaupun tidak ada satu pun elemen yang memakainya — dan itu
+ * berat yang dibayar pengguna tanpa manfaat apa pun.
  */
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  display: "swap",
-  axes: ["SOFT", "WONK", "opsz"],
-});
 
 /**
  * Alamat dasar situs untuk metadata.
@@ -128,7 +118,7 @@ export const viewport: Viewport = {
      * Warna bar browser. HARUS sama dengan --w-bg di globals.css: kalau
      * berbeda, akan terlihat pita warna lain di atas halaman.
      */
-    { media: "(prefers-color-scheme: light)", color: "#FAF8F5" },
+    { media: "(prefers-color-scheme: light)", color: "#F8FAFC" },
     { media: "(prefers-color-scheme: dark)", color: "#121212" },
   ],
   maximumScale: 5,
@@ -141,7 +131,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${jakarta.variable} ${fraunces.variable}`}>
+    <html lang="id" className={jakarta.variable}>
       <head>
         {/*
           Anti-kedip mode gelap.

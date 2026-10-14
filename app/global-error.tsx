@@ -40,8 +40,8 @@ export default function GlobalError({
           justifyContent: "center",
           padding: 24,
           textAlign: "center",
-          background: "#FAF8F5",
-          color: "#1C1A17",
+          background: "#F8FAFC",
+          color: "#0F172A",
           fontFamily: "system-ui, -apple-system, sans-serif",
         }}
       >
@@ -56,7 +56,7 @@ export default function GlobalError({
         <p
           style={{
             fontSize: 15,
-            color: "#6B655C",
+            color: "#475569",
             maxWidth: 380,
             lineHeight: 1.6,
             marginTop: 10,
@@ -72,7 +72,7 @@ export default function GlobalError({
           style={{
             marginTop: 24,
             padding: "12px 28px",
-            background: "#0E7A4F",
+            background: "#047857",
             color: "#FFFFFF",
             border: "none",
             borderRadius: 8,
@@ -86,7 +86,7 @@ export default function GlobalError({
         </button>
 
         {error.digest && (
-          <p style={{ marginTop: 22, fontSize: 13, color: "#6B655C" }}>
+          <p style={{ marginTop: 22, fontSize: 13, color: "#475569" }}>
             Kode kejadian: {error.digest}
           </p>
         )}

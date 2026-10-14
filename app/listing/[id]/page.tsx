@@ -186,7 +186,7 @@ export default async function DetailPage({
                     GRATIS
                   </span>
                 ) : (
-                  <span className="font-display text-[30px] font-bold leading-none tracking-tight text-ink">
+                  <span className="font-display text-[30px] font-bold leading-none tracking-tight tabular-nums text-ink">
                     {formatRupiah(d.price)}
                   </span>
                 )}

@@ -177,7 +177,7 @@ export function SuksesPasang({
             {data.isFree ? (
               <Badge varian="gratis">GRATIS</Badge>
             ) : (
-              <span className="font-display text-[16px] font-bold text-ink">
+              <span className="font-display text-[16px] font-bold tabular-nums text-ink">
                 {formatRupiah(data.price)}
               </span>
             )}

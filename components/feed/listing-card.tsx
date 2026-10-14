@@ -173,7 +173,7 @@ export function ListingCard({ item }: { item: KartuListing }) {
             Gratis
           </span>
         ) : (
-          <span className="font-display text-[19px] font-bold leading-none tracking-tight text-ink">
+          <span className="font-display text-[19px] font-bold leading-none tracking-tight tabular-nums text-ink">
             {formatRupiah(item.price)}
           </span>
         )}

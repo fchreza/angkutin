@@ -271,7 +271,7 @@ export function KelolaClient({
             {data.isFree ? (
               <Badge varian="gratis">GRATIS</Badge>
             ) : (
-              <span className="text-[14px] font-bold text-ink">
+              <span className="text-[14px] font-bold tabular-nums text-ink">
                 {formatRupiah(data.price)}
               </span>
             )}

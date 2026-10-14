@@ -11,7 +11,7 @@
  * Sebelumnya halaman ini memakai palet lama (#F9FAFB, #111827, #059669,
  * #047857) sehingga saat disajikan dari cache dingin, warnanya berbeda dari
  * sisa situs. Sekarang fallback-nya mengikuti palet hangat yang berlaku:
- * kanvas krem #FAF8F5, tinta #1C1A17, hijau #0E7A4F.
+ * kanvas alabaster #F8FAFC, tinta #0F172A, emerald #047857.
  *
  * `use client` wajib: ada onClick.
  */

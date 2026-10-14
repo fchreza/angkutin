@@ -122,10 +122,11 @@ export default async function BerandaPage({
           bukan lapang. Selain itu judul kecil tidak memberi titik fokus, jadi
           mata tidak tahu harus mulai dari mana.
 
-          KENAPA Fraunces (font-display) dan bukan Plus Jakarta Sans: Fraunces
-          adalah serif dengan optical sizing, jadi pada ukuran besar bentuk
-          hurufnya benar-benar berubah dan terasa ditulis, bukan diperbesar.
-          Ini yang memberi karakter editorial, bukan korporat.
+          KENAPA font-display (bukan font lain): sekarang `display` menunjuk
+          Plus Jakarta Sans yang sama dengan teks badan, jadi judul dan isi
+          satu keluarga huruf. Pemisahannya tetap ditulis lewat `font-display`
+          supaya judul punya NAMA perannya sendiri di kode — kalau nanti mau
+          dipisah lagi, cukup ubah satu baris di tailwind.config.ts.
 
           KENAPA sekarang tampil juga di mobile: sebelumnya `hidden md:block`,
           jadi pengguna ponsel tidak melihat judul sama sekali dan langsung

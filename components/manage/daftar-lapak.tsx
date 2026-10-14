@@ -235,7 +235,7 @@ function KartuBarang({ b, urut, token }: { b: BarisBarang; urut: number; token: 
           {b.isFree ? (
             <span className="text-[13px] font-bold text-primary">GRATIS</span>
           ) : (
-            <span className="font-display text-[13.5px] font-bold text-ink">
+            <span className="font-display text-[13.5px] font-bold tabular-nums text-ink">
               {formatRupiah(b.price)}
             </span>
           )}

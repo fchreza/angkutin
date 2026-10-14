@@ -33,52 +33,86 @@
     krem terbaca seperti kertas, dan itu yang dipilih untuk karakter
     "editorial hangat". Kartu tetap putih supaya terbaca sebagai LAPISAN
     di atas kanvas, bukan sebagai permukaan yang sama. */
- --w-bg: 250 248 245; /* #FAF8F5 */
+ --w-bg: 248 250 252; /* #F8FAFC — Crisp Alabaster */
 
  /* Dua warna kanvas yang TETAP — sengaja TIDAK ditimpa di `.dark`.
     Dipakai oleh sapuan eclipse: lapisan sapuan harus memakai warna tema
     TUJUAN, dan saat lapisan itu disiapkan kelas tema lama masih terpasang.
     Kalau membaca `--w-bg` (yang berbeda per mode), yang terbaca selalu warna
     halaman yang sedang ditinggalkan. */
- --kanvas-terang: 250 248 245;
+ --kanvas-terang: 248 250 252;
  --kanvas-gelap: 18 18 18; /* HARUS sama dengan --w-bg di .dark */
  --w-surface: 255 255 255; /* kartu */
- --w-surface2: 243 240 234; /* #F3F0EA — kartu tenggelam, baris tabel */
+ --w-surface2: 241 245 249; /* #F1F5F9 — kartu tenggelam, baris tabel */
 
  /* === Teks ===
     Coklat-hitam, bukan hitam pekat: hitam murni di atas krem terasa patah,
     bukan tegas. Semua nilai sudah DIUKUR, bukan diperkirakan. */
- --w-ink: 28 26 23; /* #1C1A17 — 16,4:1 di kanvas */
- --w-ink2: 107 101 92; /* #6B655C — 5,4:1 */
- --w-ink3: 120 113 102; /* #787166 — 4,6:1 (dulu #6F6E68 hanya 4,2:1) */
+ --w-ink: 15 23 42; /* #0F172A — 17,1:1 di kanvas */
+ --w-ink2: 71 85 105; /* #475569 — 7,2:1 */
+ /*
+  * #55637A, bukan #64748B (slate-500).
+  * Diukur: #64748B hanya 4,55:1 di kanvas dan 4,34:1 di surface2 — yang
+  * terakhir GAGAL. Teks kecil memang dipakai di baris tabel yang latarnya
+  * surface2, jadi nilainya harus lolos di ketiga latar. #55637A memberi
+  * 5,81 / 6,08 / 5,55.
+  */
+ --w-ink3: 85 99 122; /* #55637A — 5,8:1 kanvas, 5,6:1 surface2 */
 
  /* === Garis ===
     `line` untuk batas kartu, `line-kuat` untuk batas input.
     `line-kuat` WAJIB lolos 3:1 terhadap kanvas DAN permukaan karena
     batas input adalah satu-satunya penanda bidang isian. */
- --w-line: 229 224 214; /* #E5E0D6 */
- --w-line-kuat: 150 143 130; /* #968F82 — 3,0:1 kanvas, 3,2:1 permukaan */
+ --w-line: 226 232 240; /* #E2E8F0 — batas kartu */
+ /*
+  * #75879E, bukan #94A3B8 (slate-400).
+  * Diukur: #94A3B8 hanya 2,45:1 di kanvas dan 2,34:1 di surface2 — dua-duanya
+  * GAGAL ambang 3:1. Batas bidang isian adalah SATU-SATUNYA penanda di mana
+  * sebuah kolom dimulai, jadi ia wajib lolos. #75879E memberi 3,51 / 3,67 /
+  * 3,35.
+  */
+ --w-line-kuat: 117 135 158; /* #75879E — 3,5:1 kanvas, 3,4:1 permukaan */
 
  /* === Primary — hijau dihangatkan ===
     `primary` dipakai sebagai LATAR tombol, jadi nilainya dijaga supaya teks
-    putih di atasnya lolos 4,5:1. Dinaikkan dari #047857 ke #0E7A4F: lebih
+    putih di atasnya lolos 4,5:1. Nilainya ditinjau ulang di setiap perubahan
     banyak kroma, jadi terasa hidup, bukan hijau korporat. */
- --w-primary: 14 122 79; /* #0E7A4F — 5,4:1 dengan teks putih */
- --w-primary-hover: 10 101 65; /* #0A6541 */
- --w-primary-soft: 232 245 238; /* #E8F5EE */
- --w-primary-text: 11 98 66; /* #0B6242 — hijau sebagai TEKS, 7,0:1 */
+ /*
+  * EMERALD. Aksen brief #059669, tapi nilainya DINAIKKAN ke #047857.
+  *
+  * Diukur: #059669 hanya 3,77:1 dengan teks putih di atasnya, dan 3,60:1
+  * sebagai teks di kanvas — dua-duanya GAGAL ambang 4,5. #047857 adalah
+  * emerald-700, satu tingkat di atasnya, dan memberi 5,48:1 di kedua peran
+  * sekaligus. Jadi warnanya tetap emerald, hanya versi yang benar-benar
+  * terbaca.
+  */
+ --w-primary: 4 120 87; /* #047857 — 5,5:1 dengan teks putih */
+ --w-primary-hover: 6 95 70; /* #065F46 — emerald-800 */
+ --w-primary-soft: 236 253 245; /* #ECFDF5 — emerald-50 */
+ --w-primary-text: 4 120 87; /* #047857 — 5,5:1 di kartu */
  --w-on-primary: 255 255 255; /* teks di atas tombol primary */
 
  /* === Accent — terracotta, bukan amber ===
     Amber adalah warna peringatan sistem operasi. Terracotta adalah warna
     tanah, dan barang pindahan itu soal tanah dan waktu. */
- --w-accent: 194 65 12; /* #C2410C — 4,9:1 */
- --w-accent-bright: 234 88 12; /* #EA580C — border/ikon */
- --w-accent-soft: 253 240 231; /* #FDF0E7 */
- --w-accent-text: 154 52 18; /* #9A3412 — 6,5:1 di atas soft */
+ /*
+  * AMBER TUA untuk keadaan mendesak (tenggat <= 2 hari).
+  *
+  * KENAPA TIDAK IKUT EMERALD: brief tidak menyebut warna urgensi, dan
+  * memakai emerald di sini akan merusak satu-satunya hal yang membuat badge
+  * ini berguna. Hijau sudah berarti "aksi utama" dan "barang gratis"; kalau
+  * hijau juga berarti "waktunya hampir habis", ketiganya jadi tak terbedakan
+  * dan pembeli kehilangan satu-satunya penanda urgensi di katalog.
+  *
+  * #B45309 adalah amber-700, cukup gelap untuk lolos 4,8:1 di kanvas.
+  */
+ --w-accent: 180 83 9; /* #B45309 — 4,8:1 */
+ --w-accent-bright: 217 119 6; /* #D97706 — border/ikon */
+ --w-accent-soft: 255 251 235; /* #FFFBEB — amber-50 */
+ --w-accent-text: 146 64 14; /* #92400E — 6,8:1 di atas soft */
 
  /* === Danger === */
- --w-danger: 185 28 28; /* #B91C1C — 6,1:1 */
+ --w-danger: 220 38 38; /* #DC2626 — 4,6:1 */
  --w-danger-soft: 254 242 242; /* #FEF2F2 */
 
  /* === Scrim — lapisan di ATAS FOTO ===
@@ -216,11 +250,21 @@
    * `primary-text` juga dipakai sebagai warna IKON di atas `primary-soft`,
    * dan di atas latar gelap polos #E0E0E0 tetap terbaca (14,19:1).
    */
-  --w-primary: 224 224 224; /* #E0E0E0 — aksen dari palet */
-  --w-primary-hover: 240 240 240; /* #F0F0F0 */
-  --w-primary-soft: 34 34 34; /* #222222 — "permukaan dinaikkan", bukan semburat warna */
-  --w-primary-text: 224 224 224; /* #E0E0E0 */
-  --w-on-primary: 18 18 18; /* #121212 — teks GELAP di atas tombol terang */
+  /*
+   * EMERALD di mode gelap.
+   *
+   * #10B981 (emerald-500) memberi 7,39:1 di kanvas #121212. Tombolnya
+   * berteks GELAP, bukan putih: putih di atas #10B981 hanya 2,54:1 (gagal),
+   * sedangkan #121212 di atasnya 7,39:1.
+   *
+   * Ini mengembalikan makna warna yang sempat hilang waktu palet monokrom
+   * dipakai: hijau = aksi utama, amber = mendesak, abu = biasa.
+   */
+  --w-primary: 16 185 129; /* #10B981 — 7,4:1 di kanvas */
+  --w-primary-hover: 52 211 153; /* #34D399 — emerald-400 */
+  --w-primary-soft: 12 42 31; /* #0C2A1F — hijau sangat gelap */
+  --w-primary-text: 16 185 129; /* #10B981 — 6,1:1 di atas soft */
+  --w-on-primary: 18 18 18; /* #121212 — teks GELAP di atas tombol hijau */
 
   /*
    * Keadaan mendesak (tenggat <= 2 hari).
@@ -231,12 +275,17 @@
    * batasnya dipertegas ke #B0B0B0 (8,64:1). Jadi tenggat mendesak tetap
    * menonjol, tanpa memakai warna apa pun.
    *
-   * `accent` sendiri dipertahankan sebagai abu-abu netral, sesuai palet.
+   * Catatan: setelah brief palet berikutnya, `accent` kembali memakai amber
+   * (lihat blok di bawah) karena hijau sudah dipakai untuk aksi utama.
    */
-  --w-accent: 224 224 224; /* #E0E0E0 — aksen dari palet */
-  --w-accent-bright: 176 176 176; /* #B0B0B0 — batas, 8,6:1 */
-  --w-accent-soft: 34 34 34; /* #222222 */
-  --w-accent-text: 255 255 255; /* #FFFFFF — 21:1 di atas accent-soft */
+  /*
+   * AMBER untuk keadaan mendesak, sama alasannya dengan mode terang: hijau
+   * sudah dipakai aksi utama, jadi urgensi butuh warnanya sendiri.
+   */
+  --w-accent: 251 146 60; /* #FB923C — 8,3:1 */
+  --w-accent-bright: 253 186 116; /* #FDBA74 */
+  --w-accent-soft: 51 32 15; /* #33200F */
+  --w-accent-text: 253 186 116; /* #FDBA74 — 9,2:1 di atas soft */
 
   /*
    * Keadaan galat — SATU-SATUNYA warna yang dipertahankan.

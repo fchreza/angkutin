@@ -79,17 +79,25 @@ const config: Config = {
       },
       fontFamily: {
         /**
-         * Plus Jakarta Sans untuk badan: huruf yang dipesan untuk identitas
-         * kota Jakarta, jadi membawa karakter "Indonesia, urban, muda".
-         * Inter diganti karena netral tanpa karakter.
+         * Plus Jakarta Sans untuk SELURUH teks: badan, judul, tombol, label.
+         *
+         * KENAPA SERIF DILEPAS:
+         * Sebelumnya judul memakai Fraunces (serif) sebagai penanda editorial.
+         * Pemilik produk memutuskan pindah ke satu geometric sans untuk
+         * semuanya. Jakarta dipilih, bukan Inter, karena Inter adalah pilihan
+         * netral tanpa karakter — Jakarta membawa karakter "Indonesia, urban,
+         * muda" yang sesuai produknya.
+         *
+         * KENAPA `display` TETAP ADA meski isinya sama:
+         * Ada 45 tempat di kode yang memakai `font-display` untuk judul.
+         * Menghapus alias ini berarti menyunting 45 berkas hanya untuk
+         * mengubah satu keputusan desain, dan setiap berkas itu jadi berisiko
+         * salah sunting. Dengan alias tetap ada, judul tetap punya NAMA
+         * perannya sendiri di kode, jadi kalau nanti mau dipisah lagi
+         * (misalnya ditambah font judul baru), cukup ubah satu baris ini.
          */
         sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
-        /**
-         * Fraunces untuk JUDUL BESAR saja. Serif editorial dengan optical
-         * sizing: bentuknya berubah sesuai ukuran, jadi judul tidak terlihat
-         * seperti teks badan yang diperbesar.
-         */
-        display: ["var(--font-fraunces)", "Georgia", "serif"],
+        display: ["var(--font-jakarta)", "system-ui", "sans-serif"],
       },
       /**
        * Skala judul dengan TRACKING PER-UKURAN.
