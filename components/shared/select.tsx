@@ -59,6 +59,7 @@ export function Select({
   disabled = false,
   id,
   className,
+  triggerClassName,
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
 }: {
@@ -73,6 +74,8 @@ export function Select({
   disabled?: boolean;
   id?: string;
   className?: string;
+  /** Kelas tambahan untuk tombol pemicu; berguna saat select menjadi segmen kontrol gabungan. */
+  triggerClassName?: string;
   "aria-label"?: string;
   "aria-describedby"?: string;
 }) {
@@ -130,6 +133,7 @@ export function Select({
             disabled &&
               "cursor-not-allowed border-line bg-appbg text-ink-secondary",
             disabled && "hover:border-line",
+            triggerClassName,
           )}
         >
           {/*

@@ -133,7 +133,7 @@ export default async function BerandaPage({
           jadi pengguna ponsel tidak melihat judul sama sekali dan langsung
           mendarat di kotak pencarian tanpa tahu halaman apa ini.
         */}
-        <div className="mb-5 md:mb-6">
+        <div className="mb-7 md:mb-9">
           <h1 className="font-display text-judul-hero font-bold text-ink">
             Barang pindahan di sekitarmu
           </h1>
@@ -142,7 +142,7 @@ export default async function BerandaPage({
             dua baris, jarak baris rapat membuat barisnya saling menempel dan
             blok teksnya terbaca padat.
           */}
-          <p className="mt-2.5 max-w-baca text-[14px] leading-relaxed text-ink-secondary md:text-[15px]">
+          <p className="mt-3 max-w-baca text-[14px] leading-relaxed text-ink-secondary md:text-[15px]">
             Tanpa daftar akun, ambil sendiri, bisa gratis.
           </p>
         </div>

@@ -339,20 +339,21 @@ body {
    Lebar minimum 168px di ponsel supaya dua kolom tetap muat di layar 360px. */
 .grid-katalog {
   display: grid;
-  gap: 14px;
+  gap: 18px;
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
 }
 
 @media (min-width: 640px) {
   .grid-katalog {
     grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
-    gap: 20px;
+    gap: 24px;
   }
 }
 
 @media (min-width: 1024px) {
   .grid-katalog {
     grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+    gap: 28px;
   }
 }
 
@@ -378,6 +379,29 @@ body {
 .no-scrollbar {
  -ms-overflow-style: none;
  scrollbar-width: none;
+}
+
+.category-tab {
+  position: relative;
+  min-height: 48px;
+  white-space: nowrap;
+}
+
+.category-tab::after {
+  position: absolute;
+  right: 12px;
+  bottom: -1px;
+  left: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgb(var(--w-primary));
+  content: "";
+  transform: scaleX(0);
+  transition: transform 180ms ease;
+}
+
+.category-tab[aria-pressed="true"]::after {
+  transform: scaleX(1);
 }
 
 /* Fokus terlihat jelas — syarat aksesibilitas WCAG 2.1 AA */

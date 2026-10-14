@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { FilterPills, type Kategori } from "@/components/feed/filter-pills";
+import { SearchControl } from "@/components/feed/search-control";
 import { ListingCard } from "@/components/feed/listing-card";
 import { Reveal } from "@/components/shared/skeleton-card";
 import { MuatHalaman } from "@/components/shared/apple-breathe";
@@ -15,13 +16,10 @@ import {
   type PilihanLokasi,
 } from "@/components/feed/location-picker";
 import {
-  IconSearch,
   IconInbox,
   IconX,
   IconPin,
-  IconChevronDown,
 } from "@/components/shared/icons";
-import { cn } from "@/lib/cn";
 import type { KartuListing } from "@/lib/listing-query";
 import { bacaCacheFeed, simpanCacheFeed } from "@/lib/feed-cache";
 
@@ -386,132 +384,22 @@ export function FeedClient({
     <>
       {/* relative: jangkar untuk panel lokasi yang mengambang */}
       <div className="relative">
-      {/* Header filter — sticky di mobile supaya selalu terjangkau */}
-      <div className="sticky top-0 z-20 -mx-4 mb-4 border-b border-line bg-appbg/95 px-4 pb-3 pt-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:pb-4 md:pt-0 md:backdrop-blur-none">
-        <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center">
-          {/* Tombol lokasi */}
-          <button
-            type="button"
-            onClick={() => setPanelBuka((v) => !v)}
-            aria-expanded={panelBuka}
-            className={cn(
-              "press flex h-11 shrink-0 items-center justify-between gap-2 rounded-md border px-3 text-left md:w-[260px]",
-              lokasi.jenis === "semua"
-                ? "border-line bg-surface hover:border-primary/40"
-                : "border-primary bg-primary-soft",
-            )}
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              <IconPin
-                size={16}
-                className={lokasi.jenis === "semua" ? "text-ink-secondary" : "text-primary"}
-              />
-              <span className="min-w-0">
-                <span className="block text-[10.5px] uppercase tracking-wide text-ink-secondary">
-                  Lokasi
-                </span>
-                <span className="block truncate text-[13px] font-semibold text-ink">
-                  {lokasi.label}
-                </span>
-              </span>
-            </span>
-            <IconChevronDown
-              size={15}
-              className={cn(
-                "shrink-0 text-ink-secondary transition-transform duration-200",
-                panelBuka && "rotate-180",
-              )}
-            />
-          </button>
-
-          {/*
-            Kolom pencarian dengan beam yang berjalan di tepi bawah saat
-            difokuskan. Referensi: ui.spectrumhq.in/docs/beam-search.
-
-            Nilai terkendali (value + onChange) dan tombol hapus tetap seperti
-            sebelumnya — yang berubah hanya tampilannya. Enter dan Escape
-            ditangani sama seperti komponen referensi.
-
-            `wadah-beam` ada di sini (bukan di dalam globals) supaya nama
-            kelasnya jelas berasal dari komponen ini.
-          */}
-          <div className="wadah-beam relative flex-1">
-            <div className="relative">
-              <IconSearch
-                size={17}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-secondary"
-              />
-              <input
-                type="search"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => {
-                  // Escape mengosongkan pencarian, seperti komponen referensi.
-                  if (e.key === "Escape") setQ("");
-                }}
-                placeholder="Cari barang atau patokan lokasi…"
-                aria-label="Cari barang"
-                className={cn(
-                  "h-11 w-full rounded-md border border-line bg-surface pl-10 pr-9",
-                  /*
-                   * 16px, bukan 14px. Dua alasan: pada iOS, input di bawah
-                   * 16px membuat Safari memperbesar halaman otomatis saat
-                   * kolomnya disentuh, dan itu menggeser seluruh tata letak.
-                   * Kedua, ini kolom yang paling sering dipakai di katalog.
-                   */
-                  "text-[16px] text-ink placeholder:text-ink-secondary/70",
-                  /*
-                   * SENGAJA TIDAK memakai `focus:border-primary`.
-                   *
-                   * Dulu garis bawahnya berubah emerald #047857 saat fokus.
-                   * Setelah beam ditambahkan, keduanya jadi warna yang sama
-                   * persis — diukur: border fokus rgb(4,120,87) dan warna beam
-                   * juga rgb(4,120,87). Akibatnya beam yang berjalan tidak
-                   * bisa dibedakan dari garis statis di bawahnya, dan efeknya
-                   * hilang sama sekali.
-                   *
-                   * Sekarang border fokus hanya menguat (line-kuat), dan
-                   * seluruh penanda fokus diserahkan ke beam yang bergerak.
-                   * Ini juga lebih baik untuk aksesibilitas: `:focus-within`
-                   * tetap bekerja untuk pengguna keyboard, dan sinyal fokusnya
-                   * bukan warna saja.
-                   */
-                  "focus:border-primary focus:outline-none",
-                  // Sembunyikan tombol hapus bawaan WebKit: kita punya sendiri,
-                  // dan yang bawaan tidak bisa ditata agar cocok dengan tema.
-                  "[&::-webkit-search-cancel-button]:hidden",
-                )}
-              />
-              {q && (
-                <button
-                  type="button"
-                  onClick={() => setQ("")}
-                  aria-label="Hapus pencarian"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-secondary hover:bg-appbg"
-                >
-                  <IconX size={15} />
-                </button>
-              )}
-            </div>
-
-            {/* Beam: murni dekoratif, jadi aria-hidden. Nyala hanya saat
-                kolom di dalam wadah ini difokuskan (lihat :focus-within). */}
-            <span className="beam-rel" aria-hidden>
-              <span className="beam-cahaya" />
-              <span className="beam-pendar" />
-            </span>
-          </div>
-
-          <Select
-            nilai={sort}
-            onUbah={(v) => setSort(v as Sort)}
-            aria-label="Urutkan"
-            opsi={OPSI_SORT.map((o) => ({ value: o.id, label: o.label }))}
-            className="shrink-0 md:w-[190px]"
-          />
+      {/* Header katalog: pencarian terpadu dan navigasi kategori. */}
+      <div className="sticky top-[64px] z-20 -mx-4 mb-4 border-b border-line bg-appbg/95 px-4 pb-2 pt-2 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:pb-4 md:pt-0 md:backdrop-blur-none">
+        <SearchControl
+          q={q}
+          onQueryChange={setQ}
+          onCari={() => setQDebounce(q.trim())}
+          lokasi={lokasi}
+          panelBuka={panelBuka}
+          onToggleLokasi={() => setPanelBuka((v) => !v)}
+          kategori={kategori}
+          kategoriId={kategoriId}
+          onKategoriChange={setKategoriId}
+        />
+        <div className="mt-2">
+          <FilterPills kategori={kategori} aktif={kategoriId} onPilih={setKategoriId} />
         </div>
-
-        <FilterPills kategori={kategori} aktif={kategoriId} onPilih={setKategoriId} />
       </div>
 
       {/* Panel pemilih lokasi.
@@ -528,7 +416,7 @@ export function FeedClient({
             onClick={() => setPanelBuka(false)}
             aria-hidden
           />
-          <div className="absolute left-4 right-4 top-[68px] z-40 animate-slide-down md:left-0 md:right-auto md:w-[380px]">
+          <div className="absolute left-4 right-4 top-[168px] z-40 animate-slide-down md:left-0 md:right-auto md:top-[128px] md:w-[380px]">
             <LocationPicker
               wilayah={wilayah}
               nilai={lokasi}
@@ -539,36 +427,47 @@ export function FeedClient({
         </>
       )}
 
-      {/* Chip lokasi aktif + pintasan pilihan terakhir */}
-      <div className="mb-3 flex flex-wrap items-center gap-2 text-[12.5px]">
-        <span className="text-ink-secondary" aria-live="polite">
-          {memuat ? "Memuat…" : `${total} barang ditemukan`}
-          {lokasi.jenis !== "semua" ? ` di ${lokasi.label}` : " di semua lokasi"}
-          {qDebounce && !memuat ? ` untuk "${qDebounce}"` : ""}
-        </span>
+      {/* Ringkasan hasil, pintasan lokasi, dan urutan. */}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-[12.5px]">
+          <span className="text-ink-secondary" aria-live="polite">
+            {memuat ? "Memuat…" : `${total} barang ditemukan`}
+            {lokasi.jenis !== "semua" ? ` di ${lokasi.label}` : " di semua lokasi"}
+            {qDebounce && !memuat ? ` untuk "${qDebounce}"` : ""}
+          </span>
 
-        {lokasi.jenis !== "semua" && (
-          <button
-            type="button"
-            onClick={() => terapkanLokasi({ jenis: "semua", label: "Semua Lokasi" })}
-            className="inline-flex items-center gap-1 rounded-pill border border-primary/30 bg-primary-soft px-2.5 py-1 text-[11.5px] font-medium text-primary-dark hover:bg-primary/15"
-          >
-            {lokasi.label}
-            <IconX size={12} />
-          </button>
-        )}
+          {lokasi.jenis !== "semua" && (
+            <button
+              type="button"
+              onClick={() => terapkanLokasi({ jenis: "semua", label: "Semua Lokasi" })}
+              className="inline-flex items-center gap-1 rounded-pill border border-primary/30 bg-primary-soft px-2.5 py-1 text-[11.5px] font-medium text-primary-dark hover:bg-primary/15"
+            >
+              {lokasi.label}
+              <IconX size={12} />
+            </button>
+          )}
 
-        {/* Pintasan: harus ditekan, tidak pernah otomatis */}
-        {terakhir && lokasi.jenis === "semua" && (
-          <button
-            type="button"
-            onClick={() => terapkanLokasi(terakhir)}
-            className="inline-flex items-center gap-1 rounded-pill border border-line bg-surface px-2.5 py-1 text-[11.5px] text-ink-secondary hover:border-primary hover:text-primary"
-          >
-            <IconPin size={12} />
-            Pakai {terakhir.label} lagi
-          </button>
-        )}
+          {/* Pintasan lokasi terakhir tetap memerlukan tindakan eksplisit. */}
+          {terakhir && lokasi.jenis === "semua" && (
+            <button
+              type="button"
+              onClick={() => terapkanLokasi(terakhir)}
+              className="inline-flex items-center gap-1 rounded-pill border border-line bg-surface px-2.5 py-1 text-[11.5px] text-ink-secondary hover:border-primary hover:text-primary"
+            >
+              <IconPin size={12} />
+              Pakai {terakhir.label} lagi
+            </button>
+          )}
+        </div>
+
+        <Select
+          nilai={sort}
+          onUbah={(v) => setSort(v as Sort)}
+          aria-label="Urutkan"
+          opsi={OPSI_SORT.map((o) => ({ value: o.id, label: o.label }))}
+          className="ml-auto w-[176px] shrink-0"
+          triggerClassName="h-10 rounded-full border-line bg-surface px-3 text-[12.5px] font-semibold"
+        />
       </div>
 
       {/* Konten */}
