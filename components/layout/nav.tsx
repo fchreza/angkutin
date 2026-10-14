@@ -3,7 +3,6 @@
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  IconArrowRight,
   IconHome,
   IconPlus,
   IconUser,
@@ -122,7 +121,7 @@ export function TopNav() {
               <Link
                 href="/pasang"
                 aria-label="Pasang barang"
-                className="press group inline-flex h-10 items-center gap-2 rounded-pill bg-primary pl-4 pr-1.5 text-[13.5px] font-semibold text-primary-teks shadow-[0_4px_12px_rgba(4,120,87,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_7px_16px_rgba(4,120,87,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="press inline-flex h-10 items-center gap-2 rounded-pill bg-primary px-4 text-[13.5px] font-semibold text-primary-teks shadow-[0_4px_12px_rgba(4,120,87,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_7px_16px_rgba(4,120,87,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <IsiTautan
                   label="Pasang Barang"
@@ -133,9 +132,6 @@ export function TopNav() {
                     </>
                   }
                 />
-                <span className="flex h-7 w-7 items-center justify-center rounded-pill bg-white/15 transition-transform duration-200 group-hover:translate-x-0.5">
-                  <IconArrowRight size={14} />
-                </span>
               </Link>
             )}
           </div>
