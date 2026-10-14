@@ -2,32 +2,23 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { IconHome, IconPlus, IconUser } from "@/components/shared/icons";
+import {
+  IconArrowRight,
+  IconHome,
+  IconPlus,
+  IconUser,
+} from "@/components/shared/icons";
 import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { TombolTema } from "@/components/shared/tombol-tema";
 import { cn } from "@/lib/cn";
 
 /**
- * Top nav (desktop) + bottom tab bar (mobile) + FAB.
+ * Navigasi berbentuk kapsul: bar atas yang ringan di desktop, identitas ringkas
+ * di ponsel, dan tab bawah yang mengambang agar mudah dijangkau ibu jari.
  *
- * Mobile-first: tab bar di bawah dengan 3 aksi utama, karena jempol lebih
- * mudah menjangkau bawah layar.
- *
- * Logo memakai berkas mark (pin + titik oranye) dari public/brand, bukan
- * huruf — supaya identitasnya sama dengan ikon aplikasi di layar utama.
- * Nama ditulis "angkut" + "in" dengan "in" berwarna emerald, sesuai logo.
- *
- * UMPAN BALIK NAVIGASI:
- * Menekan "Pasang Barang" dulu tidak memberi reaksi apa pun sampai halaman
- * form selesai dimuat — terasa seperti tombolnya tidak bekerja. Sekarang
- * tautan yang sedang dibuka langsung menampilkan spinner di tempat ikonnya,
- * sejak milidetik pertama ditekan. Ditambah loading.tsx di rute /pasang,
- * peralihan halaman terasa disengaja, bukan menggantung.
- *
- * LEBAR: memakai kelas .shell (bukan max-w-[1200px] seperti sebelumnya)
- * supaya nav dan konten punya tepi yang sama persis di semua ukuran layar.
+ * Umpan balik tautan tetap memakai useLinkStatus agar setiap perpindahan terasa
+ * langsung, termasuk ketika halaman berikutnya masih dimuat.
  */
-
 function Logo({ ukuran = 28 }: { ukuran?: number }) {
   return (
     <img
@@ -48,16 +39,7 @@ function NamaBrand({ kelas }: { kelas: string }) {
   );
 }
 
-/**
- * Isi tautan yang berubah saat tautannya sedang dibuka.
- *
- * Dipakai di dalam <Link>: `useLinkStatus` membaca status tautan terdekat di
- * atasnya, jadi umpan baliknya muncul sejak milidetik pertama ditekan —
- * sebelum server selesai menyiapkan halaman berikutnya. Ini yang membuat
- * perpindahan halaman terasa direspons, bukan menggantung.
- *
- * Hanya satu dari dua yang dirender, jadi tidak ada elemen menganggur.
- */
+/** Isi tautan berubah seketika menjadi loader saat halaman berikutnya dibuka. */
 function IsiTautan({
   label,
   ikon,
@@ -87,21 +69,7 @@ function IsiTautan({
   );
 }
 
-/**
- * Tautan navigasi desktop.
- *
- * "/pasang" SENGAJA TIDAK ADA di sini.
- *
- * KENAPA: halaman Pasang sudah punya tombol aksinya sendiri di kanan bar
- * (lihat di bawah). Waktu ia masih ada di daftar ini, "Pasang Barang" muncul
- * DUA KALI berdampingan di bar yang sama — satu sebagai tautan teks, satu
- * sebagai tombol. Dua kontrol dengan label identik dan tujuan identik bukan
- * sekadar berulang: pengguna berhenti sejenak untuk memutuskan mana yang
- * dimaksud, dan keputusan itu tidak ada gunanya karena keduanya sama.
- *
- * Satu aksi utama, satu tempat. Ini juga sebabnya tautan ini tidak perlu
- * penanda "halaman aktif": tombolnya sudah terlihat sebagai tombol.
- */
+/** Satu tempat untuk tiap tujuan: aksi utama tidak diulang sebagai tautan teks. */
 const TAUTAN = [
   { href: "/", label: "Katalog" },
   { href: "/tentang", label: "Tentang" },
@@ -111,75 +79,67 @@ export function TopNav() {
   const path = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/85 backdrop-blur-md md:block">
-      <div className="shell flex h-14 items-center justify-between">
-        <Link href="/" className="press flex items-center gap-2 rounded-md">
-          <Logo />
-          <NamaBrand kelas="font-display text-[16px] font-bold tracking-tight text-ink" />
-        </Link>
+    <header className="sticky top-0 z-30 hidden md:block">
+      <div className="shell py-2.5">
+        <div className="flex h-[60px] items-center justify-between rounded-pill border border-line/80 bg-surface/95 px-2.5 shadow-[0_5px_24px_rgba(15,23,42,0.07)] backdrop-blur-xl">
+          <Link
+            href="/"
+            className="press flex shrink-0 items-center gap-2 rounded-pill py-1 pl-1 pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-pill bg-primary-soft">
+              <Logo ukuran={27} />
+            </span>
+            <NamaBrand kelas="font-display text-[16px] font-bold tracking-tight text-ink" />
+          </Link>
 
-        <nav className="flex items-center gap-0.5">
-          {TAUTAN.map((t) => {
-            const aktif = path === t.href;
-            return (
+          <nav
+            aria-label="Navigasi utama"
+            className="flex items-center gap-1 rounded-pill bg-surface2/75 p-1"
+          >
+            {TAUTAN.map((tautan) => {
+              const aktif = path === tautan.href;
+              return (
+                <Link
+                  key={tautan.href}
+                  href={tautan.href}
+                  aria-current={aktif ? "page" : undefined}
+                  className={cn(
+                    "press inline-flex h-10 items-center rounded-pill px-4 text-[13.5px] font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                    aktif
+                      ? "bg-surface text-ink shadow-sm ring-1 ring-line/70"
+                      : "text-ink-secondary hover:bg-surface/70 hover:text-ink",
+                  )}
+                >
+                  <IsiTautan label={tautan.label} teks />
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <TombolTema />
+            {path !== "/pasang" && (
               <Link
-                key={t.href}
-                href={t.href}
-                aria-current={aktif ? "page" : undefined}
-                className={cn(
-                  /*
-                   * KENAPA tautan aktif punya garis bawah, bukan hanya warna
-                   * teks yang lebih gelap: perbedaan "abu tua" dan "hampir
-                   * hitam" terlalu halus untuk dibaca sekilas, jadi pengguna
-                   * harus membaca untuk tahu sedang di halaman mana. Garis
-                   * bawah memberi penanda yang terbaca tanpa membaca.
-                   *
-                   * Garisnya diletakkan sebagai ::after absolut supaya tidak
-                   * mengubah tinggi baris saat berpindah halaman.
-                   */
-                  "press relative rounded-sm px-3 py-2 text-[13.5px] font-medium transition-colors",
-                  "after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-pill after:transition-opacity",
-                  aktif
-                    ? "text-ink after:bg-primary after:opacity-100"
-                    : "text-ink-secondary after:bg-transparent after:opacity-0 hover:text-ink",
-                )}
+                href="/pasang"
+                aria-label="Pasang barang"
+                className="press group inline-flex h-10 items-center gap-2 rounded-pill bg-primary pl-4 pr-1.5 text-[13.5px] font-semibold text-primary-teks shadow-[0_4px_12px_rgba(4,120,87,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_7px_16px_rgba(4,120,87,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                <IsiTautan label={t.label} teks />
+                <IsiTautan
+                  label="Pasang Barang"
+                  ikon={
+                    <>
+                      <IconPlus size={16} />
+                      <span>Pasang Barang</span>
+                    </>
+                  }
+                />
+                <span className="flex h-7 w-7 items-center justify-center rounded-pill bg-white/15 transition-transform duration-200 group-hover:translate-x-0.5">
+                  <IconArrowRight size={14} />
+                </span>
               </Link>
-            );
-          })}
-
-          {/* Pemisah tipis antara navigasi dan kontrol tema */}
-          <span className="mx-1.5 h-5 w-px bg-line" aria-hidden />
-          <TombolTema />
-
-          {/*
-            Aksi utama DIPINDAH ke navbar di desktop.
-            Sebelumnya satu-satunya aksi utama adalah tombol mengambang di
-            kanan bawah, dan di desktop tombol mengambang itu terbaca sebagai
-            pola aplikasi ponsel yang dipaksakan ke layar lebar. Airbnb dan
-            Apple menaruh aksi utamanya di dalam bar atas.
-            Tombol mengambangnya sendiri tetap ada di mobile (lihat FabPasang),
-            karena di sana jempol yang jadi acuan.
-          */}
-          {path !== "/pasang" && (
-            <Link
-              href="/pasang"
-              aria-label="Pasang barang"
-              className="press ml-2 inline-flex h-9 items-center gap-1.5 rounded-sm bg-primary px-3.5 text-[13.5px] font-semibold text-primary-teks hover:bg-primary-hover"
-            >
-              <IsiTautan
-                label="Pasang Barang"
-                ikon={
-                  <>
-                    <IconPlus size={15} />
-                    <span>Pasang Barang</span>
-                  </>
-                }
-              />
-            </Link>
-          )}
-        </nav>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );
@@ -189,26 +149,34 @@ export function MobileAppBar() {
   const path = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-md md:hidden">
-      <div className="flex h-14 items-center justify-between px-4">
-        <Link href="/" className="press flex h-11 items-center gap-2 rounded-sm">
-          <Logo ukuran={26} />
-          <NamaBrand kelas="font-display text-[15.5px] font-bold tracking-tight text-ink" />
-        </Link>
-
-        {/* Di mobile, tema tetap bisa diganti — jangan sembunyikan kontrol
-            yang memengaruhi seluruh tampilan. Celah gap-2 (8px) dipakai agar
-            pill tema tidak menempel pada tautan "Tentang"; pada 375px masih
-            tersisa ruang, dan tidak ada overflow horizontal. */}
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 md:hidden">
+      <div className="px-3 pb-1 pt-2">
+        <div className="flex h-[54px] items-center justify-between rounded-pill border border-line/80 bg-surface/95 px-2 shadow-[0_4px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl">
           <Link
-            href="/tentang"
-            aria-current={path === "/tentang" ? "page" : undefined}
-            className="press inline-flex h-11 items-center rounded-sm px-2.5 text-[13px] font-medium text-ink-secondary hover:text-ink"
+            href="/"
+            className="press flex h-11 items-center gap-2 rounded-pill pl-1 pr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <IsiTautan label="Tentang" teks />
+            <span className="flex h-9 w-9 items-center justify-center rounded-pill bg-primary-soft">
+              <Logo ukuran={25} />
+            </span>
+            <NamaBrand kelas="font-display text-[15.5px] font-bold tracking-tight text-ink" />
           </Link>
-          <TombolTema />
+
+          <div className="flex items-center gap-1.5">
+            <Link
+              href="/tentang"
+              aria-current={path === "/tentang" ? "page" : undefined}
+              className={cn(
+                "press inline-flex h-10 items-center rounded-pill px-3 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                path === "/tentang"
+                  ? "bg-primary-soft text-primary-dark"
+                  : "text-ink-secondary hover:bg-surface2 hover:text-ink",
+              )}
+            >
+              <IsiTautan label="Tentang" teks />
+            </Link>
+            <TombolTema />
+          </div>
         </div>
       </div>
     </header>
@@ -220,12 +188,11 @@ export function MobileTabBar() {
 
   const item = (aktif: boolean) =>
     cn(
-      "press flex flex-1 flex-col items-center justify-center gap-1 py-2",
-      "text-[11px] font-medium",
-      aktif ? "text-primary" : "text-ink-secondary",
+      "press flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-pill px-1 py-1.5 text-[11px] font-semibold transition-colors",
+      aktif ? "bg-primary-soft text-primary-dark" : "text-ink-secondary hover:text-ink",
     );
 
-  /** Ikon: skala lebih besar saat aktif. */
+  /** Ikon aktif membesar halus agar lokasi terasa jelas tanpa mengandalkan warna saja. */
   const ikon = (aktif: boolean, node: React.ReactNode) => (
     <span className={cn("transition-transform duration-200", aktif && "scale-110")}>
       {node}
@@ -234,11 +201,16 @@ export function MobileTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface md:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      aria-label="Navigasi bawah"
+      className="fixed inset-x-3 z-30 rounded-pill border border-line/80 bg-surface/95 p-1.5 shadow-[0_10px_32px_rgba(15,23,42,0.13)] backdrop-blur-xl md:hidden"
+      style={{ bottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
     >
-      <div className="flex h-[60px] items-stretch">
-        <Link href="/" className={item(path === "/")} aria-current={path === "/" ? "page" : undefined}>
+      <div className="flex h-[56px] items-stretch">
+        <Link
+          href="/"
+          className={item(path === "/")}
+          aria-current={path === "/" ? "page" : undefined}
+        >
           <IsiTautan label="Katalog" ikon={ikon(path === "/", <IconHome size={20} />)} teks />
         </Link>
         <Link
@@ -248,7 +220,11 @@ export function MobileTabBar() {
         >
           <IsiTautan label="Pasang" ikon={ikon(path === "/pasang", <IconPlus size={20} />)} teks />
         </Link>
-        <Link href="/tentang" className={item(path === "/tentang")} aria-current={path === "/tentang" ? "page" : undefined}>
+        <Link
+          href="/tentang"
+          className={item(path === "/tentang")}
+          aria-current={path === "/tentang" ? "page" : undefined}
+        >
           <IsiTautan label="Tentang" ikon={ikon(path === "/tentang", <IconUser size={20} />)} teks />
         </Link>
       </div>
@@ -256,27 +232,18 @@ export function MobileTabBar() {
   );
 }
 
-/**
- * Tombol aksi mengambang "+ Pasang Barang" (FAB).
- *
- * KHUSUS MOBILE (md:hidden). Di desktop aksi yang sama sudah ada di navbar
- * sebagai tombol, jadi tombol mengambang di sana hanya mengulang aksi yang
- * sudah terlihat dan menutupi sudut kanan bawah katalog.
- */
+/** Tombol aksi mengambang di ponsel, dengan jarak aman di atas tab bar kapsul. */
 export function FabPasang() {
   const path = usePathname();
-
-  // Di halaman pasang tombolnya tidak perlu — tapi elemennya tetap dirender
-  // (hanya disembunyikan) supaya tidak ada kedipan saat berpindah halaman.
   const sembunyi = path === "/pasang" || path.startsWith("/manage");
 
   return (
     <Link
       href="/pasang"
+      aria-label="Pasang barang"
       className={cn(
-        "press fixed z-30 inline-flex items-center gap-2 rounded-pill px-4 py-3.5 md:hidden",
-        "bg-primary font-semibold text-primary-teks shadow-fab hover:bg-primary-hover",
-        "bottom-[76px] right-4",
+        "press fixed right-4 z-30 inline-flex items-center gap-2 rounded-pill px-4 py-3.5 md:hidden",
+        "bottom-[calc(env(safe-area-inset-bottom)+84px)] bg-primary font-semibold text-primary-teks shadow-[0_8px_24px_rgba(4,120,87,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         sembunyi && "hidden",
       )}
     >

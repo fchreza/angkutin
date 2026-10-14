@@ -52,7 +52,9 @@ Kontras teks, kontrol, dan state interaktif harus tetap mengikuti nilai terukur 
 
 ## Bentuk dan tata letak
 
-Gunakan skala radius dari konfigurasi Tailwind aktif: radius kecil untuk kontrol, `rounded-md` untuk kartu/panel, `rounded-lg` untuk permukaan lebih besar, dan pill hanya untuk badge/chip. Pastikan radius kartu dan foto terasa menyatu melalui `overflow-hidden`.
+Gunakan skala radius dari konfigurasi Tailwind aktif: radius kecil untuk kontrol, `rounded-md` untuk kartu/panel, `rounded-lg` untuk permukaan lebih besar, dan pill untuk badge/chip serta navigasi berbentuk kapsul. Pastikan radius kartu dan foto terasa menyatu melalui `overflow-hidden`.
+
+Navigasi desktop memakai satu kapsul permukaan yang mengambang dengan tautan aktif yang mudah dikenali dan aksi utama emerald. Di ponsel, identitas dan kontrol tetap ringkas di atas, sementara tab utama menjadi kapsul bawah yang mengambang, aman terhadap area sensor, dan mudah dijangkau ibu jari.
 
 Katalog memakai grid responsif dua kolom pada ponsel dan menambah kolom seiring lebar layar. Kartu memakai bingkai foto tetap rasio **4:3**; seluruh foto ditampilkan utuh di dalam bingkai (`object-fit: contain`) dengan latar netral, bukan dipotong mengikuti rasio bingkai. Kondisi tampil sebagai label ringkas pada foto, lalu judul, harga menonjol, lokasi, dan tenggat. Hindari memperbesar satu kartu hingga memecah ritme grid.
 
