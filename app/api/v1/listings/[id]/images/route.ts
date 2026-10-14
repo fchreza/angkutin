@@ -3,11 +3,12 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/db";
 import { listingImages } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { ok, gagal } from "@/lib/api";
+import { ok, gagal, ipKlien } from "@/lib/api";
 import { BUCKET, keyFoto, s3, s3Siap, urlPublik } from "@/lib/s3";
 import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { kompresDiServer } from "@/lib/compress-image";
 import { tokenSesiKelola } from "@/lib/manage-session";
+import { lepaskanRateLimit, reservasiRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -19,14 +20,10 @@ export const maxDuration = 60;
  * satu foto gagal diunggah, dan supaya body request tidak melewati batas
  * Vercel (4.5 MB).
  *
- * Alur ukuran:
- *   - Klien sudah mengompresi (< 500 KB, WebP) — jalur normal, server hanya
- *     meneruskan.
- *   - Kalau klien gagal mengompresi atau mengunggah lewat API langsung,
- *     server mengompresi ulang dengan sharp (jaring pengaman).
+ * Klien mengompresi untuk menghemat kuota, tetapi server tetap memeriksa dan
+ * mengodekan ulang setiap berkas dengan sharp sebelum menyimpannya.
  */
 const MAKS_FOTO = 3;
-const MAKS_BYTE = 500 * 1024; // 500 KB — batas setelah kompresi klien
 /**
  * Batas berkas mentah. Vercel menolak body request di atas 4,5 MB SEBELUM
  * kode ini dijalankan (respons 413 tanpa pesan), jadi batas di sini dibuat
@@ -41,17 +38,27 @@ const TIPE_DIIZINKAN = new Set([
   "image/avif",
 ]);
 
+class GambarUnggahanTidakValid extends Error {}
+
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  let idReservasi: string | undefined;
+  const kunciDiunggah: string[] = [];
+  let dbCommitted = false;
   try {
     const { id } = await ctx.params;
 
     // Token wajib: hanya pembuat listing yang boleh menambah foto.
     // Urutan penting: otorisasi DULU, baru cek konfigurasi storage.
     // Kalau dibalik, orang tanpa token bisa tahu status konfigurasi server.
-    const form = await req.formData();
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return gagal("Format unggahan tidak valid.", 400);
+    }
     // Upload saat pemasangan masih memakai token sementara di body; dashboard
     // kelola menggunakan cookie HttpOnly dan tidak mengirim token dari klien.
     const token = tokenSesiKelola(req, id) || String(form.get("token") ?? "");
@@ -91,6 +98,9 @@ export async function POST(
     if (keep.length + berkas.length > MAKS_FOTO) {
       return gagal(`Maksimal ${MAKS_FOTO} foto per listing.`, 400);
     }
+    if (new Set(keep).size !== keep.length) {
+      return gagal("Foto yang dipertahankan tidak boleh duplikat.", 400);
+    }
 
     // Baru sekarang cek storage — sudah terautentikasi, jadi aman memberi tahu.
     if (!s3Siap) {
@@ -120,14 +130,38 @@ export async function POST(
     for (let i = 0; i < berkas.length; i++) {
       const f = berkas[i];
       if (!TIPE_DIIZINKAN.has(f.type)) {
-        return gagal(`Foto ${i + 1}: format harus WebP atau JPEG.`, 400);
+        return gagal(`Foto ${i + 1}: format harus gambar WebP, JPEG, PNG, atau AVIF.`, 400);
       }
-      if (f.size > MAKS_BYTE_MENTAH) {
+      if (f.size === 0 || f.size > MAKS_BYTE_MENTAH) {
         const mb = (f.size / 1024 / 1024).toFixed(1);
         return gagal(
-          `Foto ${i + 1} berukuran ${mb} MB, maksimal 4 MB. ` +
-            `Kompresi otomatis di perangkat gagal; coba pilih ulang fotonya.`,
+          f.size === 0
+            ? `Foto ${i + 1} kosong.`
+            : `Foto ${i + 1} berukuran ${mb} MB, maksimal 4 MB. ` +
+              `Kompresi otomatis di perangkat gagal; coba pilih ulang fotonya.`,
           400,
+        );
+      }
+    }
+
+    const reservasi = await reservasiRateLimit(ipKlien(req), "image_upload");
+    if (!reservasi.boleh) {
+      return gagal("Terlalu banyak unggahan foto dari jaringan ini. Coba lagi nanti.", 429);
+    }
+    idReservasi = reservasi.idReservasi;
+
+    // Decode + encode ulang SETIAP file, termasuk WebP kecil dari klien.
+    // MIME dari browser saja tidak cukup untuk membuktikan isi file.
+    const fotoTernormalisasi: Buffer[] = [];
+    for (let i = 0; i < berkas.length; i++) {
+      const f = berkas[i];
+      try {
+        const asli = Buffer.from(await f.arrayBuffer());
+        const hasilKompres = await kompresDiServer(asli, f.type);
+        fotoTernormalisasi.push(hasilKompres.buf);
+      } catch {
+        throw new GambarUnggahanTidakValid(
+          `Foto ${i + 1} tidak terbaca sebagai gambar ${f.type.replace("image/", "").toUpperCase()} yang valid.`,
         );
       }
     }
@@ -148,47 +182,40 @@ export async function POST(
       hasil.push({ image_url: url, display_order: i });
     });
 
-    let adaKompresServer = false;
+    const adaKompresServer = berkas.length > 0;
     const offset = keepSah.length;
 
     for (let i = 0; i < berkas.length; i++) {
-      const f = berkas[i];
       const key = keyFoto(id, offset + i, versi);
-      let buf = Buffer.from(await f.arrayBuffer());
-      let tipe = f.type;
-
-      // Jalur normal: klien sudah mengompresi di bawah 500 KB.
-      // Kalau belum, server mengompresi ulang — supaya storage tidak
-      // kemasukan foto besar dan halaman tetap ringan.
-      if (buf.length > MAKS_BYTE) {
-        const k = await kompresDiServer(buf);
-        buf = Buffer.from(k.buf);
-        tipe = k.tipe;
-        adaKompresServer = true;
-      }
 
       await s3.send(
         new PutObjectCommand({
           Bucket: BUCKET,
           Key: key,
-          Body: buf,
-          ContentType: tipe,
+          Body: fotoTernormalisasi[i],
+          ContentType: "image/webp",
           CacheControl: "public, max-age=31536000, immutable",
         }),
       );
+      kunciDiunggah.push(key);
 
       hasil.push({ image_url: urlPublik(key), display_order: offset + i });
     }
 
-    // Tukar baris: hapus lama, isi baru.
-    await db.delete(listingImages).where(eq(listingImages.listingId, id));
-    await db.insert(listingImages).values(
-      hasil.map((h) => ({
-        listingId: id,
-        imageUrl: h.image_url,
-        displayOrder: h.display_order,
-      })),
-    );
+    // Tukar seluruh daftar dalam satu transaksi agar kegagalan insert tidak
+    // meninggalkan listing tanpa foto.
+    await db.transaction(async (tx) => {
+      await tx.delete(listingImages).where(eq(listingImages.listingId, id));
+      await tx.insert(listingImages).values(
+        hasil.map((h) => ({
+          listingId: id,
+          imageUrl: h.image_url,
+          displayOrder: h.display_order,
+        })),
+      );
+    });
+    dbCommitted = true;
+    idReservasi = undefined;
 
     // Bersihkan foto lama yang sudah tidak dipakai dari storage.
     // Contoh: sebelumnya 3 foto, sekarang 2 -> foto ke-3 jadi yatim.
@@ -217,7 +244,29 @@ export async function POST(
 
     return ok({ id, images: hasil, dikompres_server: adaKompresServer }, 201);
   } catch (e) {
+    if (!dbCommitted && kunciDiunggah.length > 0) {
+      try {
+        await s3.send(
+          new DeleteObjectsCommand({
+            Bucket: BUCKET,
+            Delete: { Objects: kunciDiunggah.map((Key) => ({ Key })) },
+          }),
+        );
+      } catch (cleanupError) {
+        console.error("[images] gagal membersihkan unggahan parsial:", cleanupError);
+      }
+    }
+    if (!dbCommitted && idReservasi) {
+      try {
+        await lepaskanRateLimit(idReservasi);
+      } catch (releaseError) {
+        console.error("[images] gagal melepas reservasi rate limit:", releaseError);
+      }
+    }
     console.error("[images POST] gagal:", e);
+    if (e instanceof GambarUnggahanTidakValid) {
+      return gagal(e.message, 400);
+    }
     return gagal("Gagal mengunggah foto. Coba lagi.", 500);
   }
 }

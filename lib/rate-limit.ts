@@ -41,6 +41,7 @@ type KonfigurasiBatas = {
 const BATAS_AKSI: Record<string, KonfigurasiBatas> = {
   create_listing: { batas: 5, jendelaJam: 1 },
   wa_click: { batas: 60, jendelaJam: 1 },
+  image_upload: { batas: 30, jendelaJam: 1 },
   /**
    * `admin_login`: 10 percobaan per jam.
    *
@@ -75,13 +76,11 @@ function konfigurasi(aksi: string): KonfigurasiBatas {
 }
 
 /**
- * Periksa kuota TANPA memakainya.
+ * Pemeriksaan awal kuota tanpa memakai slot.
  *
- * PENTING — kenapa dipisah dari `catatRateLimit`:
- * Dulu fungsi ini langsung mencatat percobaan. Akibatnya pengguna yang salah
- * mengetik nomor WhatsApp 5 kali akan terkunci 1 jam, padahal tidak satu pun
- * listing-nya tersimpan. Sekarang kuota hanya dipotong setelah listing BENAR
- * tersimpan (lihat catatRateLimit).
+ * Ini hanya optimisasi untuk menolak permintaan yang sudah pasti melampaui
+ * batas sebelum kerja lebih lanjut. Operasi yang akan berhasil tetap WAJIB
+ * memanggil `reservasiRateLimit` sebelum efek samping agar tidak ada race.
  */
 export async function cekRateLimit(
   ip: string,
@@ -106,13 +105,61 @@ export async function cekRateLimit(
   return { boleh: true, sisa: batas - jumlah };
 }
 
-/** Catat satu percobaan yang BERHASIL. Panggil setelah data tersimpan. */
-export async function catatRateLimit(
+/**
+ * Reservasi satu slot pemakaian secara atomik.
+ *
+ * Advisory lock PostgreSQL yang terikat transaksi menserialkan penghitungan
+ * dan insert untuk satu IP/aksi di semua instance serverless. Pemanggil
+ * mempertahankan reservasi saat berhasil dan melepasnya dengan
+ * `lepaskanRateLimit` bila operasi yang dilindungi gagal.
+ */
+export async function reservasiRateLimit(
   ip: string,
   aksi = "create_listing",
-): Promise<void> {
+): Promise<
+  | { boleh: false; sisa: 0 }
+  | { boleh: true; sisa: number; idReservasi: string }
+> {
+  const { batas, jendelaJam } = konfigurasi(aksi);
   const ipHash = await hashIp(ip);
-  await db.insert(rateLimits).values({ ipHash, action: aksi });
+  const sejak = new Date(Date.now() - jendelaJam * 3600_000);
+
+  return db.transaction(async (tx) => {
+    // hashtextextended menghasilkan kunci lock 64-bit yang stabil; lock
+    // dilepas otomatis saat transaksi singkat ini commit atau rollback.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`${ipHash}:${aksi}`}, 0))`,
+    );
+
+    const [{ jumlah }] = await tx
+      .select({ jumlah: sql<number>`count(*)::int` })
+      .from(rateLimits)
+      .where(
+        and(
+          eq(rateLimits.ipHash, ipHash),
+          eq(rateLimits.action, aksi),
+          gte(rateLimits.createdAt, sejak),
+        ),
+      );
+
+    if (jumlah >= batas) return { boleh: false, sisa: 0 };
+
+    const [reservasi] = await tx
+      .insert(rateLimits)
+      .values({ ipHash, action: aksi })
+      .returning({ id: rateLimits.id });
+
+    return {
+      boleh: true,
+      sisa: batas - jumlah - 1,
+      idReservasi: reservasi.id,
+    };
+  });
+}
+
+/** Lepas slot bila operasi yang dilindungi reservasi tidak berhasil. */
+export async function lepaskanRateLimit(idReservasi: string): Promise<void> {
+  await db.delete(rateLimits).where(eq(rateLimits.id, idReservasi));
 }
 
 /**
@@ -120,7 +167,8 @@ export async function catatRateLimit(
  *
  * Jendela terpanjang yang dipakai adalah 1 jam, jadi menyimpan catatan 24 jam
  * sudah lebih dari cukup. Pembersihan ini penting karena tabel ini tumbuh
- * setiap kali ada orang memasang barang ATAU menekan tombol WhatsApp, dan
+ * setiap kali ada orang memasang barang, mengunggah foto, membuka WhatsApp,
+ * mencoba masuk admin, atau mengambil tautan kelola, dan
  * tanpa pembersihan ia akan jadi tabel terbesar di database ini.
  */
 export async function bersihkanRateLimit(): Promise<number> {

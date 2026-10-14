@@ -60,7 +60,7 @@ npm run db:push
 | GET | `/api/v1/listings` | Feed + filter (`province_code`, `regency_code`, `category_id`, `q`, `sort`) |
 | POST | `/api/v1/listings` | Buat listing (rate limit 5/jam/IP) |
 | GET | `/api/v1/listings/:id` | Detail satu listing |
-| POST | `/api/v1/listings/:id/images` | Unggah 1-3 foto (butuh token) |
+| POST | `/api/v1/listings/:id/images` | Unggah 1-3 foto (butuh token; rate limit 30/jam/IP) |
 | POST | `/api/v1/listings/:id/wa-click` | Ambil link WhatsApp + catat klik |
 | GET | `/api/v1/listings/manage/:id?token=` | Data dashboard penjual |
 | PATCH | `/api/v1/listings/manage/:id/status` | Ubah status (butuh token) |

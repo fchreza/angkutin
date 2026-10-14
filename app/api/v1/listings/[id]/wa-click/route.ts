@@ -2,7 +2,11 @@ import { db } from "@/db";
 import { listings } from "@/db/schema";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { ok, gagal, ipKlien } from "@/lib/api";
-import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
+import {
+  cekRateLimit,
+  lepaskanRateLimit,
+  reservasiRateLimit,
+} from "@/lib/rate-limit";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { tanggalHariIniID } from "@/lib/format";
 
@@ -23,6 +27,7 @@ export async function POST(
   req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  let idReservasi: string | undefined;
   try {
     const { id } = await ctx.params;
     if (!/^[0-9a-f-]{36}$/i.test(id)) return gagal("Barang tidak ditemukan.", 404);
@@ -79,6 +84,26 @@ export async function POST(
       );
     }
 
+    const url = buildWhatsAppLink({
+      sellerName: row.sellerName,
+      itemTitle: row.title,
+      wilayahNama:
+        [row.districtName, row.regencyName].filter(Boolean).join(", ") || "sekitar",
+      sellerWhatsapp: row.sellerWhatsapp,
+      catatanAkses: row.accessNotes,
+    });
+
+    // Reservasi final dilakukan setelah validasi listing, namun sebelum
+    // membuka kontak. Ini menutup race check-then-insert lintas instance.
+    const reservasi = await reservasiRateLimit(ip, "wa_click");
+    if (!reservasi.boleh) {
+      return gagal(
+        "Terlalu banyak percobaan menghubungi penjual. Coba lagi nanti ya.",
+        429,
+      );
+    }
+    idReservasi = reservasi.idReservasi;
+
     // Pemeriksaan diulang secara atomik agar perubahan status/tenggat yang
     // terjadi setelah SELECT tidak sempat membuka kontak listing yang tutup.
     const [bolehKontak] = await db
@@ -92,29 +117,22 @@ export async function POST(
       .returning({ id: listings.id });
 
     if (!bolehKontak) {
+      await lepaskanRateLimit(idReservasi);
+      idReservasi = undefined;
       return gagal("Barang ini sudah tidak tersedia untuk diambil.", 409);
     }
 
-    /*
-     * Dicatat SETELAH link berhasil dibangun, bukan sebelum.
-     *
-     * Mengikuti pola yang sama dengan pemasangan barang: kuota hanya dipotong
-     * kalau aksinya benar-benar berhasil. Kalau ada galat di tengah jalan,
-     * pengguna tidak seharusnya kehilangan jatahnya.
-     */
-    await catatRateLimit(ip, "wa_click");
-
-    const url = buildWhatsAppLink({
-      sellerName: row.sellerName,
-      itemTitle: row.title,
-      wilayahNama:
-        [row.districtName, row.regencyName].filter(Boolean).join(", ") || "sekitar",
-      sellerWhatsapp: row.sellerWhatsapp,
-      catatanAkses: row.accessNotes,
-    });
-
+    // Klik sukses; pertahankan catatan rate limit.
+    idReservasi = undefined;
     return ok({ url });
   } catch (e) {
+    if (idReservasi) {
+      try {
+        await lepaskanRateLimit(idReservasi);
+      } catch (releaseError) {
+        console.error("[wa-click] gagal melepas reservasi rate limit:", releaseError);
+      }
+    }
     console.error("[wa-click] gagal:", e);
     return gagal("Gagal membuka WhatsApp.", 500);
   }

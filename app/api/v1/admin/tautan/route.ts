@@ -3,7 +3,7 @@ import { z } from "zod";
 import { sudahMasuk, adminSiap } from "@/lib/admin";
 import { tautanBarang } from "@/lib/admin-barang";
 import { ipKlien } from "@/lib/api";
-import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
+import { lepaskanRateLimit, reservasiRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
    * bekerja. Tujuannya bukan membatasi pemakaian normal, melainkan menahan
    * pengambilan otomatis kalau sesi admin sampai bocor.
    */
-  const rl = await cekRateLimit(ip, "admin_tautan");
+  const rl = await reservasiRateLimit(ip, "admin_tautan");
   if (!rl.boleh) {
     return NextResponse.json(
       { error: "Terlalu banyak permintaan tautan. Coba lagi nanti." },
@@ -59,15 +59,21 @@ export async function GET(req: Request) {
   const id = new URL(req.url).searchParams.get("id") ?? "";
   const parsed = skema.safeParse({ id });
   if (!parsed.success) {
+    if (rl.idReservasi) await lepaskanRateLimit(rl.idReservasi);
     return NextResponse.json({ error: "Id barang tidak valid." }, { status: 400 });
   }
 
-  const data = await tautanBarang(parsed.data.id);
+  let data;
+  try {
+    data = await tautanBarang(parsed.data.id);
+  } catch (e) {
+    if (rl.idReservasi) await lepaskanRateLimit(rl.idReservasi);
+    throw e;
+  }
   if (!data) {
+    if (rl.idReservasi) await lepaskanRateLimit(rl.idReservasi);
     return NextResponse.json({ error: "Barang tidak ditemukan." }, { status: 404 });
   }
-
-  await catatRateLimit(ip, "admin_tautan");
 
   /*
    * Dicatat di log server.

@@ -6,7 +6,11 @@ import { ok, gagal, ipKlien } from "@/lib/api";
 import { listingSchema, validasiTenggat } from "@/lib/validators";
 import { validasiWilayah } from "@/lib/wilayah-server";
 import { generateSecretToken, tokenCocok } from "@/lib/token";
-import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
+import {
+  cekRateLimit,
+  lepaskanRateLimit,
+  reservasiRateLimit,
+} from "@/lib/rate-limit";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 import { buatLapak, urlLapak } from "@/lib/lapak";
 
@@ -63,6 +67,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  let idReservasi: string | undefined;
   try {
     // 1. Rate limit (5 listing/jam/IP)
     const ip = ipKlien(req);
@@ -160,6 +165,17 @@ export async function POST(req: Request) {
       }
     }
 
+    // Reservasi final dilakukan tepat sebelum efek samping. Advisory lock di
+    // helper membuat count + insert atomik lintas semua instance serverless.
+    const reservasi = await reservasiRateLimit(ip);
+    if (!reservasi.boleh) {
+      return gagal(
+        "Kamu sudah memasang 5 barang dalam 1 jam terakhir. Coba lagi nanti ya.",
+        429,
+      );
+    }
+    idReservasi = reservasi.idReservasi;
+
     if (!lapakId) {
       const lapakBaru = await buatLapak(generateSecretToken());
       lapakId = lapakBaru.id;
@@ -194,9 +210,8 @@ export async function POST(req: Request) {
       })
       .returning({ id: listings.id, secretToken: listings.secretToken });
 
-    // 7. Baru sekarang kuota dipotong. Kalau penyimpanan gagal di atas,
-    // pengguna tidak kehilangan jatah hanya karena kesalahan sendiri.
-    await catatRateLimit(ip);
+    // Listing sudah tersimpan, jadi reservasi kini menjadi catatan pemakaian.
+    idReservasi = undefined;
 
     // 8. Susun ketiga tautan.
     // Origin diambil dari request yang sebenarnya, bukan env — kalau memakai
@@ -218,6 +233,13 @@ export async function POST(req: Request) {
       201,
     );
   } catch (e) {
+    if (idReservasi) {
+      try {
+        await lepaskanRateLimit(idReservasi);
+      } catch (releaseError) {
+        console.error("[listings POST] gagal melepas reservasi rate limit:", releaseError);
+      }
+    }
     console.error("[listings POST] gagal:", e);
     return gagal("Gagal menyimpan listing. Coba lagi sebentar.", 500);
   }

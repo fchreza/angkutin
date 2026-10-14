@@ -128,7 +128,7 @@ export const pageviews = pgTable("pageviews", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-/** Tabel bantu untuk rate limiting POST /api/v1/listings (5/jam/IP). */
+/** Tabel bantu untuk rate limiting berbasis hash IP dan aksi. */
 export const rateLimits = pgTable("rate_limits", {
   id: uuid("id").primaryKey().defaultRandom(),
   ipHash: varchar("ip_hash", { length: 64 }).notNull(),

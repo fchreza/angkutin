@@ -4,18 +4,20 @@ const {
   select,
   update,
   cekRateLimit,
-  catatRateLimit,
+  reservasiRateLimit,
+  lepaskanRateLimit,
   buildWhatsAppLink,
 } = vi.hoisted(() => ({
   select: vi.fn(),
   update: vi.fn(),
   cekRateLimit: vi.fn(),
-  catatRateLimit: vi.fn(),
+  reservasiRateLimit: vi.fn(),
+  lepaskanRateLimit: vi.fn(),
   buildWhatsAppLink: vi.fn(),
 }));
 
 vi.mock("@/db", () => ({ db: { select, update } }));
-vi.mock("@/lib/rate-limit", () => ({ cekRateLimit, catatRateLimit }));
+vi.mock("@/lib/rate-limit", () => ({ cekRateLimit, reservasiRateLimit, lepaskanRateLimit }));
 vi.mock("@/lib/whatsapp", () => ({ buildWhatsAppLink }));
 vi.mock("@/lib/format", () => ({ tanggalHariIniID: () => "2026-10-14" }));
 
@@ -68,11 +70,16 @@ describe("POST /api/v1/listings/[id]/wa-click", () => {
     select.mockReset();
     update.mockReset();
     cekRateLimit.mockReset().mockResolvedValue({ boleh: true });
-    catatRateLimit.mockReset().mockResolvedValue(undefined);
+    reservasiRateLimit.mockReset().mockResolvedValue({
+      boleh: true,
+      sisa: 59,
+      idReservasi: "reservation-1",
+    });
+    lepaskanRateLimit.mockReset().mockResolvedValue(undefined);
     buildWhatsAppLink.mockReset().mockReturnValue("https://wa.me/628123456789");
   });
 
-  it("membuka kontak dan mencatat klik hanya untuk listing AVAILABLE yang belum lewat tenggat", async () => {
+  it("membuka kontak dan mempertahankan slot hanya untuk listing yang valid", async () => {
     select.mockReturnValue(queryDenganHasil([BARANG]));
     update.mockReturnValue(updateDenganHasil([{ id: ID }]));
 
@@ -80,16 +87,18 @@ describe("POST /api/v1/listings/[id]/wa-click", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ url: "https://wa.me/628123456789" });
     expect(update).toHaveBeenCalledOnce();
-    expect(catatRateLimit).toHaveBeenCalledOnce();
+    expect(reservasiRateLimit).toHaveBeenCalledOnce();
+    expect(lepaskanRateLimit).not.toHaveBeenCalled();
   });
 
-  it("menolak status TAKEN tanpa membangun tautan atau mencatat klik", async () => {
+  it("menolak status TAKEN tanpa membuka kontak atau memakai kuota", async () => {
     select.mockReturnValue(queryDenganHasil([{ ...BARANG, status: "TAKEN" }]));
     const response = await post();
     expect(response.status).toBe(409);
     expect((await response.json()).error).toContain("sudah diambil");
     expect(update).not.toHaveBeenCalled();
     expect(buildWhatsAppLink).not.toHaveBeenCalled();
+    expect(reservasiRateLimit).not.toHaveBeenCalled();
   });
 
   it("menolak status DELETED tanpa menyingkap kontak", async () => {
@@ -98,6 +107,7 @@ describe("POST /api/v1/listings/[id]/wa-click", () => {
     expect(response.status).toBe(404);
     expect(update).not.toHaveBeenCalled();
     expect(buildWhatsAppLink).not.toHaveBeenCalled();
+    expect(reservasiRateLimit).not.toHaveBeenCalled();
   });
 
   it("menolak listing yang tenggatnya lewat walau status DB belum diperbarui cron", async () => {
@@ -107,14 +117,16 @@ describe("POST /api/v1/listings/[id]/wa-click", () => {
     expect((await response.json()).error).toContain("lewat");
     expect(update).not.toHaveBeenCalled();
     expect(buildWhatsAppLink).not.toHaveBeenCalled();
+    expect(reservasiRateLimit).not.toHaveBeenCalled();
   });
 
-  it("menolak race saat status berubah sebelum update atomik", async () => {
+  it("melepas reservasi bila status berubah sebelum update atomik", async () => {
     select.mockReturnValue(queryDenganHasil([BARANG]));
     update.mockReturnValue(updateDenganHasil([]));
     const response = await post();
     expect(response.status).toBe(409);
-    expect(buildWhatsAppLink).not.toHaveBeenCalled();
-    expect(catatRateLimit).not.toHaveBeenCalled();
+    expect(buildWhatsAppLink).toHaveBeenCalledOnce();
+    expect(reservasiRateLimit).toHaveBeenCalledOnce();
+    expect(lepaskanRateLimit).toHaveBeenCalledWith("reservation-1");
   });
 });

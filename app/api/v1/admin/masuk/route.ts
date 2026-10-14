@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { periksaSandi, cookieSesi, NAMA_COOKIE, adminSiap } from "@/lib/admin";
 import { ipKlien } from "@/lib/api";
-import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
+import { lepaskanRateLimit, reservasiRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/v1/admin/masuk — masuk ke halaman admin.
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const rl = await cekRateLimit(ip, "admin_login");
+  const rl = await reservasiRateLimit(ip, "admin_login");
   if (!rl.boleh) {
     return NextResponse.json(
       { error: "Terlalu banyak percobaan. Coba lagi nanti." },
@@ -38,40 +38,59 @@ export async function POST(req: Request) {
     );
   }
 
-  let masukan = "";
+  let idReservasi: string | undefined = rl.idReservasi;
   try {
-    const body = (await req.json()) as { sandi?: unknown };
-    if (typeof body?.sandi === "string") masukan = body.sandi;
-  } catch {
-    /* body kosong atau rusak: diperlakukan sebagai sandi salah */
+    let masukan = "";
+    try {
+      const body = (await req.json()) as { sandi?: unknown };
+      if (typeof body?.sandi === "string") masukan = body.sandi;
+    } catch {
+      /* body kosong atau rusak: diperlakukan sebagai sandi salah */
+    }
+
+    if (!periksaSandi(masukan)) {
+      // Percobaan gagal tetap memakai slot; reservasi sudah dicatat atomik.
+      idReservasi = undefined;
+      return NextResponse.json({ error: "Sandi salah." }, { status: 401 });
+    }
+
+    const nilai = cookieSesi();
+    if (!nilai) {
+      if (idReservasi) await lepaskanRateLimit(idReservasi);
+      idReservasi = undefined;
+      return NextResponse.json({ error: "Sandi salah." }, { status: 401 });
+    }
+
+    // Password benar bukan percobaan gagal, jadi kembalikan slot sebelum
+    // membuat sesi. Jika cookie gagal dipasang, tidak ada kuota yang tertahan.
+    if (idReservasi) await lepaskanRateLimit(idReservasi);
+    idReservasi = undefined;
+
+    const jar = await cookies();
+    jar.set(NAMA_COOKIE, nilai, {
+      /*
+       * httpOnly: skrip di halaman tidak bisa membaca cookie ini, jadi satu
+       * celah XSS tidak langsung berarti sesi admin dicuri.
+       *
+       * secure: hanya dikirim lewat HTTPS. Di pengembangan lokal (http) cookie
+       * ini tetap dipasang, jadi syaratnya hanya berlaku saat produksi.
+       */
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 12,
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (idReservasi) {
+      try {
+        await lepaskanRateLimit(idReservasi);
+      } catch (releaseError) {
+        console.error("[admin login] gagal melepas reservasi rate limit:", releaseError);
+      }
+    }
+    throw e;
   }
-
-  if (!periksaSandi(masukan)) {
-    // Dicatat hanya saat GAGAL: percobaan yang gagal itulah yang perlu dibatasi.
-    await catatRateLimit(ip, "admin_login");
-    return NextResponse.json({ error: "Sandi salah." }, { status: 401 });
-  }
-
-  const nilai = cookieSesi();
-  if (!nilai) {
-    return NextResponse.json({ error: "Sandi salah." }, { status: 401 });
-  }
-
-  const jar = await cookies();
-  jar.set(NAMA_COOKIE, nilai, {
-    /*
-     * httpOnly: skrip di halaman tidak bisa membaca cookie ini, jadi satu
-     * celah XSS tidak langsung berarti sesi admin dicuri.
-     *
-     * secure: hanya dikirim lewat HTTPS. Di pengembangan lokal (http) cookie
-     * ini tetap dipasang, jadi syaratnya hanya berlaku saat produksi.
-     */
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 12,
-  });
-
-  return NextResponse.json({ ok: true });
 }

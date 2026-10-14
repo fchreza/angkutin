@@ -1,88 +1,95 @@
 import sharp from "sharp";
 
 /**
- * Kompresi foto di sisi SERVER — jaring pengaman.
+ * Normalisasi gambar sisi server.
  *
- * Kompresi utama tetap dilakukan di perangkat pengguna (Canvas API) supaya
- * unggahan hemat kuota. Fungsi ini menangkap kasus:
- *   - browser lama/tidak mendukung WebP,
- *   - pengguna mengunggah lewat API langsung (bukan form),
- *   - Canvas gagal senyap dan mengirim file asli.
- *
- * Tanpa ini, foto 4 MB dari kamera HP bisa masuk ke storage dan membuat
- * halaman detail berat saat dibuka di jaringan lambat.
- *
- * Keluaran SELALU WebP (konsisten dengan key `listings/{id}/{n}.webp`),
- * orientasi EXIF sudah diterapkan supaya foto tidak tampil miring.
+ * Kompresi klien menghemat kuota, tetapi tidak dipercaya sebagai pemeriksaan
+ * keamanan: semua unggahan tetap didekode dan dikodekan ulang menjadi WebP di
+ * server. Ini menolak file palsu/rusak, membatasi decompression bomb, dan
+ * membuang metadata sensitif seperti koordinat GPS EXIF.
  */
-
 const SISI_MAKS = 1080;
-const BYTE_MAKS = 500 * 1024; // 500 KB
+const BYTE_MAKS = 500 * 1024;
+const PIXEL_MAKS = 40_000_000;
 const KUALITAS = [82, 74, 66, 58, 50];
 
 export type HasilKompres = {
   buf: Buffer;
-  tipe: string;
-  /** Lebar/tinggi akhir — berguna untuk log & pengujian. */
+  tipe: "image/webp";
   lebar: number;
   tinggi: number;
-  /** Ukuran sebelum dikompresi. */
   byteAsli: number;
 };
 
-/** Bangun pipeline sharp dari buffer. Dipisah supaya bisa dipakai berulang. */
-const pipeline = (buf: Buffer) =>
-  sharp(buf, { failOn: "none" }).rotate(); // rotate() tanpa argumen = ikuti EXIF
+const opsiBaca = {
+  failOn: "error" as const,
+  limitInputPixels: PIXEL_MAKS,
+  sequentialRead: true,
+};
+
+function mimeTerdeteksi(format?: string, compression?: string): string | null {
+  if (format === "jpeg") return "image/jpeg";
+  if (format === "png") return "image/png";
+  if (format === "webp") return "image/webp";
+  // Sharp melaporkan container AVIF sebagai HEIF dengan codec AV1.
+  if (format === "heif" && compression === "av1") return "image/avif";
+  return null;
+}
 
 /**
- * Kompres satu gambar. Melempar error kalau berkasnya bukan gambar yang
- * bisa dibaca — pemanggil mengubahnya jadi respons 400.
+ * Kompres satu gambar. `tipeDeklarasi` dibandingkan dengan format yang
+ * benar-benar terdeteksi dari bytes; MIME dari browser sendiri tidak dipercaya.
  */
-export async function kompresDiServer(buf: Buffer): Promise<HasilKompres> {
-  const meta = await sharp(buf, { failOn: "none" }).metadata();
+export async function kompresDiServer(
+  buf: Buffer,
+  tipeDeklarasi: string,
+): Promise<HasilKompres> {
+  const meta = await sharp(buf, opsiBaca).metadata();
+  const tipeAsli = mimeTerdeteksi(meta.format, meta.compression);
 
-  if (!meta.width || !meta.height) {
-    throw new Error("Dimensi gambar tidak terbaca");
+  if (!tipeAsli || tipeAsli !== tipeDeklarasi) {
+    throw new Error("Format gambar tidak valid atau tidak cocok dengan MIME.");
+  }
+  if (!meta.width || !meta.height || meta.width * meta.height > PIXEL_MAKS) {
+    throw new Error("Dimensi gambar tidak valid atau terlalu besar.");
   }
 
-  const perluKecilkan = meta.width > SISI_MAKS || meta.height > SISI_MAKS;
-
-  // Coba turunkan kualitas bertahap pada ukuran maksimal dulu.
-  for (const q of KUALITAS) {
-    let p = pipeline(buf);
-    if (perluKecilkan) {
-      p = p.resize({
-        width: SISI_MAKS,
-        height: SISI_MAKS,
+  const proses = (maksSisi: number, kualitas: number) =>
+    sharp(buf, opsiBaca)
+      .rotate()
+      .resize({
+        width: maksSisi,
+        height: maksSisi,
         fit: "inside",
         withoutEnlargement: true,
-      });
-    }
-    const out = await p.webp({ quality: q }).toBuffer();
-    if (out.length <= BYTE_MAKS) {
-      const m = await sharp(out).metadata();
-      return {
-        buf: out,
-        tipe: "image/webp",
-        lebar: m.width ?? 0,
-        tinggi: m.height ?? 0,
-        byteAsli: buf.length,
-      };
+      })
+      .webp({ quality: kualitas })
+      .toBuffer();
+
+  let out: Buffer | undefined;
+  for (const q of KUALITAS) {
+    out = await proses(SISI_MAKS, q);
+    if (out.length <= BYTE_MAKS) break;
+  }
+
+  // Turunkan resolusi hanya bila foto sangat detail masih melewati batas.
+  if (!out || out.length > BYTE_MAKS) {
+    for (const [sisi, kualitas] of [[800, 48], [640, 42], [480, 36]] as const) {
+      out = await proses(sisi, kualitas);
+      if (out.length <= BYTE_MAKS) break;
     }
   }
 
-  // Masih terlalu besar (mis. foto sangat detail): kecilkan dimensinya.
-  const out = await pipeline(buf)
-    .resize({ width: 800, height: 800, fit: "inside", withoutEnlargement: true })
-    .webp({ quality: 55 })
-    .toBuffer();
+  if (!out || out.length > BYTE_MAKS) {
+    throw new Error("Gambar tidak dapat dikompresi ke ukuran yang diizinkan.");
+  }
 
-  const m = await sharp(out).metadata();
+  const hasilMeta = await sharp(out, opsiBaca).metadata();
   return {
     buf: out,
     tipe: "image/webp",
-    lebar: m.width ?? 0,
-    tinggi: m.height ?? 0,
+    lebar: hasilMeta.width ?? 0,
+    tinggi: hasilMeta.height ?? 0,
     byteAsli: buf.length,
   };
 }
