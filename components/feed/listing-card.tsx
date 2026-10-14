@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link, { useLinkStatus } from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/shared/badge";
 import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { IconPin, IconClock, IconCamera } from "@/components/shared/icons";
@@ -129,11 +130,11 @@ export function ListingCard({ item }: { item: KartuListing }) {
         {item.cover_url ? (
           <>
             <span className="skeleton absolute inset-0" aria-hidden />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={item.cover_url}
               alt={item.title}
-              loading="lazy"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1600px) 25vw, 400px"
               onError={() => setGagal(true)}
               className={cn(
                 "relative h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]",

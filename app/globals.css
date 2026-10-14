@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.mts";
 
 /**
 * ============================================================================
@@ -8,7 +7,7 @@
 * ============================================================================
 *
 * Bentuk nilai: kanal RGB terpisah spasi ("23 24 26"), BUKAN hex.
-* Alasannya: tailwind.config.ts memakainya sebagai `rgb(var(--x) / <alpha>)`
+* Alasannya: tailwind.config.mts memakainya sebagai `rgb(var(--x) / <alpha>)`
 * supaya opacity seperti `bg-surface/95` tetap bekerja. Hex di sini akan
 * mematikan semua opacity modifier secara diam-diam.
 *
@@ -21,8 +20,8 @@
 *   gelap : teks utama 14,9:1 · sekunder 6,8:1 · tombol 6,8:1 · input 3,2:1
 * Ambang: teks 4,5:1 (AA), garis input 3:1. Semua lolos.
 *
-* Palet sengaja HANGAT (netral sedikit kekuningan), bukan abu dingin —
-* mengikuti bahasa desain referensi, dan lebih nyaman dilihat lama.
+* Palet terang memakai alabaster netral-sejuk (#F8FAFC), bukan kanvas krem.
+* Mode gelap memakai neutral gelap (#121212); semua komponen membaca token ini.
 * ============================================================================
 */
 :root {

@@ -164,6 +164,7 @@ export function WilayahPicker({
           onUbah={pilihKecamatan}
           disabled={!kecamatanSiap}
           salah={Boolean(galat)}
+          aria-describedby={galat ? "wilayah-error" : undefined}
           placeholder={
             memuat
               ? "Memuat kecamatan…"
@@ -175,7 +176,7 @@ export function WilayahPicker({
         />
 
         {galat ? (
-          <p className="mt-1.5 flex items-start gap-1.5 text-[14px] text-danger">
+          <p id="wilayah-error" className="mt-1.5 flex items-start gap-1.5 text-[14px] text-danger" role="alert">
             <IconAlert size={13} className="mt-[2px] shrink-0" />
             {galat}
           </p>

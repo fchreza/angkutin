@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { IconAlert, IconPlus } from "@/components/shared/icons";
+import { IconPlus } from "@/components/shared/icons";
 import {
   bacaKonteksLapakSnapshot,
   langgananHash,
-  urlPasangKeLapak,
 } from "@/lib/konteks-lapak";
 
 /**
@@ -63,11 +62,15 @@ export function PanelLapak() {
   useEffect(() => {
     if (!konteks) return;
     let batal = false;
-    fetch(`/api/v1/lapak/${konteks.stallId}?token=${encodeURIComponent(konteks.token)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        if (!batal && j && j.jenis === "lapak") setNama(j.nama ?? null);
-      })
+    fetch("/api/v1/manage/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: konteks.stallId, token: konteks.token }),
+      cache: "no-store",
+    })
+      .then((sesi) => (sesi.ok ? fetch(`/api/v1/lapak/${konteks.stallId}`) : null))
+      .then((r) => (r?.ok ? r.json() : null))
+      .then((j) => { if (!batal && j?.jenis === "lapak") setNama(j.nama ?? null); })
       .catch(() => {
         /* biarkan tanpa nama */
       });

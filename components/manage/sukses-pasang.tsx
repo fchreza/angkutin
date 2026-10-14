@@ -61,7 +61,6 @@ function IsiTautan({
 
 export function SuksesPasang({
   data,
-  manageUrl,
   publicUrl,
   stallUrl,
   stallId,
@@ -73,7 +72,6 @@ export function SuksesPasang({
   onTambahLagi,
 }: {
   data: RingkasanListing;
-  manageUrl: string;
   /** Tautan PUBLIK — untuk dibagikan, tanpa akses kelola. */
   publicUrl: string;
   /** Tautan RAHASIA lapak — mengelola semua barang. */

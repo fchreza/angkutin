@@ -11,7 +11,7 @@ import { Badge } from "@/components/shared/badge";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { IconPin } from "@/components/shared/icons";
 import { formatRupiah } from "@/lib/format";
-import { LABEL_KONDISI } from "@/lib/urgency";
+import { LABEL_KONDISI, statusEfektif } from "@/lib/urgency";
 
 export const dynamic = "force-dynamic";
 
@@ -114,7 +114,8 @@ export default async function DetailPage({
     }
   });
 
-  const sudahDiambil = d.status === "TAKEN";
+  const status = statusEfektif(d.status, d.deadline_date);
+  const sudahDiambil = status === "TAKEN";
 
   return (
     <>
@@ -174,6 +175,7 @@ export default async function DetailPage({
                 </Badge>
               )}
               {sudahDiambil && <Badge varian="taken">SUDAH DIAMBIL</Badge>}
+              {status === "EXPIRED" && <Badge varian="netral">WAKTU HABIS</Badge>}
             </div>
 
             <div>
@@ -217,7 +219,7 @@ export default async function DetailPage({
               <DetailActions
                 listingId={d.id}
                 deadline={d.deadline_date}
-                status={d.status}
+                status={status}
               />
             </div>
 
@@ -284,7 +286,7 @@ export default async function DetailPage({
         <DetailActions
           listingId={d.id}
           deadline={d.deadline_date}
-          status={d.status}
+          status={status}
           ringkas
         />
       </div>

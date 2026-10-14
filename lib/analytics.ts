@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { pageviews } from "@/db/schema";
-import { and, gte, lt, sql } from "drizzle-orm";
+import { gte, lt, sql } from "drizzle-orm";
 
 /**
  * Analitik kunjungan halaman — milik sendiri, tanpa pihak ketiga.

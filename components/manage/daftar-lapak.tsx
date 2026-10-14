@@ -194,7 +194,7 @@ export function DaftarLapak({
       ) : (
         <div className="space-y-2.5">
           {barang.map((b, i) => (
-            <KartuBarang key={b.id} b={b} urut={i} token={token} />
+            <KartuBarang key={b.id} b={b} urut={i} />
           ))}
         </div>
       )}
@@ -203,7 +203,7 @@ export function DaftarLapak({
 }
 
 /** Satu baris barang di daftar lapak. */
-function KartuBarang({ b, urut, token }: { b: BarisBarang; urut: number; token: string }) {
+function KartuBarang({ b, urut }: { b: BarisBarang; urut: number }) {
   const habis = b.status === "EXPIRED";
   const laku = b.status === "TAKEN";
 
@@ -215,7 +215,6 @@ function KartuBarang({ b, urut, token }: { b: BarisBarang; urut: number; token: 
       {/* Foto */}
       <div className="relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-md border border-line bg-appbg">
         {b.foto ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={b.foto} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full items-center justify-center text-[10px] text-ink-mono">
@@ -258,7 +257,7 @@ function KartuBarang({ b, urut, token }: { b: BarisBarang; urut: number; token: 
 
         {/* Dua aksi yang dibedakan jelas: kelola (rahasia) vs bagikan (publik) */}
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <Link href={`/manage/${b.id}?token=${encodeURIComponent(b.manageUrl.split("token=")[1] ?? "")}`}>
+          <Link href={b.manageUrl}>
             <span className="press inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 py-1.5 text-[12px] font-semibold text-ink hover:bg-appbg">
               Kelola
             </span>

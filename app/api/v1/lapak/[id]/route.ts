@@ -5,11 +5,12 @@ import { ok, gagal } from "@/lib/api";
 import { periksaAkses } from "@/lib/lapak";
 import { tokenCocok } from "@/lib/token";
 import { stalls } from "@/db/schema";
+import { tokenSesiKelola } from "@/lib/manage-session";
 
 export const dynamic = "force-dynamic";
 
 /**
- * GET  /api/v1/lapak/[id]?token=...  -> daftar barang + nama lapak
+ * GET  /api/v1/lapak/[id]           -> daftar barang + nama lapak
  * PATCH /api/v1/lapak/[id]           -> ubah nama lapak
  *
  * Semua akses diverifikasi lewat `periksaAkses`, jadi aturan otorisasi hanya
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const token = new URL(req.url).searchParams.get("token") ?? "";
+    const token = tokenSesiKelola(req, id);
 
     const akses = await periksaAkses(id, token);
     // Pesan yang sama untuk "tidak ada" dan "token salah" — bedanya akan
@@ -66,8 +67,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return gagal("Format permintaan tidak valid.", 400);
     }
 
-    const b = body as { token?: unknown; nama?: unknown; pindahkan_listing_id?: unknown };
-    const token = typeof b.token === "string" ? b.token : "";
+    const b = body as { nama?: unknown; pindahkan_listing_id?: unknown };
+    const token = tokenSesiKelola(req, id);
 
     const akses = await periksaAkses(id, token);
     if (!akses) return gagal("Tautan tidak valid.", 403);

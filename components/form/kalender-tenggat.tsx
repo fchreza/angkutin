@@ -147,6 +147,8 @@ export function KalenderTenggat({
         onClick={() => setBuka((b) => !b)}
         aria-haspopup="dialog"
         aria-expanded={buka}
+        aria-invalid={adaGalat}
+        aria-describedby={adaGalat ? "tenggat-error" : undefined}
         className={cn(
           /*
            * 16px supaya sejajar dengan kolom isian lain: kontrol ini MENYERUPAI

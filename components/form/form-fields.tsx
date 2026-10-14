@@ -107,6 +107,7 @@ export function validasiForm(v: NilaiForm, opsi?: { wajibFoto?: boolean; jumlahF
   else if (v.judul.trim().length > 50) g.judul = "Judul maksimal 50 karakter.";
 
   if (v.deskripsi.trim().length < 10) g.deskripsi = "Deskripsi minimal 10 karakter.";
+  if (!v.kategoriId) g.kategoriId = "Pilih kategori barang.";
 
   if (!v.kondisi) g.kondisi = "Pilih kondisi barang.";
 
@@ -136,6 +137,23 @@ export function rapikanGalatServer(detail: Galat): Galat {
   // menampilkannya di satu tempat (bawah pilihan kecamatan), jadi digabung
   // dulu — kalau tidak, galatnya tidak terlihat sama sekali.
   const d: Galat = { ...detail };
+  const pemetaan: Record<string, string> = {
+    title: "judul",
+    description: "deskripsi",
+    category_id: "kategoriId",
+    condition: "kondisi",
+    price: "harga",
+    pickup_landmark: "patokan",
+    deadline_date: "tenggat",
+    seller_name: "nama",
+    seller_whatsapp: "wa",
+  };
+  for (const [asal, tujuan] of Object.entries(pemetaan)) {
+    if (d[asal]) {
+      d[tujuan] = d[asal];
+      delete d[asal];
+    }
+  }
   const w = d.district_code ?? d.regency_code ?? d.province_code ?? undefined;
   if (w) {
     d.wilayah = w;
@@ -144,6 +162,24 @@ export function rapikanGalatServer(detail: Galat): Galat {
     delete d.province_code;
   }
   return d;
+}
+
+/** Fokuskan dan gulir ke field invalid pertama sesuai urutan formulir. */
+export function fokusFieldGalat(galat: Galat): void {
+  const urutan = ["foto", "judul", "kategoriId", "kondisi", "harga", "deskripsi", "wilayah", "patokan", "tenggat", "nama", "wa"];
+  for (const field of urutan) {
+    if (!galat[field]) continue;
+    const id = field === "kategoriId" ? "kategori" : field === "wilayah"
+      ? (/kecamatan/i.test(galat[field]) ? "kecamatan" : /kabupaten/i.test(galat[field]) ? "kabupaten" : "provinsi")
+      : field;
+    const elemen = field === "kondisi"
+      ? document.querySelector<HTMLElement>("#kondisi [role='radio']")
+      : document.getElementById(id);
+    if (!(elemen instanceof HTMLElement)) continue;
+    elemen.focus({ preventScroll: true });
+    elemen.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
 }
 
 /** Payload yang dikirim ke API. Bentuknya sama untuk create dan edit. */
@@ -200,6 +236,8 @@ export function FormListingFields({
           </label>
           <input
             id="judul"
+            aria-invalid={Boolean(galat.judul)}
+            aria-describedby={galat.judul ? "judul-error" : undefined}
             value={nilai.judul}
             onChange={(e) => onUbah("judul", e.target.value.slice(0, 50))}
             placeholder="Contoh: Kasur spring bed 120x200"
@@ -210,7 +248,7 @@ export function FormListingFields({
           />
           <div className="mt-1 flex justify-between">
             {galat.judul ? (
-              <p className="text-[14px] text-danger">{galat.judul}</p>
+              <p id="judul-error" className="text-[14px] text-danger">{galat.judul}</p>
             ) : (
               <span />
             )}
@@ -226,8 +264,11 @@ export function FormListingFields({
             id="kategori"
             nilai={nilai.kategoriId}
             onUbah={(v) => onUbah("kategoriId", v)}
+            salah={Boolean(galat.kategoriId)}
+            aria-describedby={galat.kategoriId ? "kategori-error" : undefined}
             opsi={kategori.map((k) => ({ value: k.id, label: k.name }))}
           />
+          {galat.kategoriId && <p id="kategori-error" className="mt-1.5 text-[14px] text-danger">{galat.kategoriId}</p>}
         </div>
 
         <ConditionSegmented
@@ -250,6 +291,8 @@ export function FormListingFields({
           </label>
           <textarea
             id="deskripsi"
+            aria-invalid={Boolean(galat.deskripsi)}
+            aria-describedby={galat.deskripsi ? "deskripsi-error" : undefined}
             rows={4}
             value={nilai.deskripsi}
             onChange={(e) => onUbah("deskripsi", e.target.value.slice(0, 500))}
@@ -261,7 +304,7 @@ export function FormListingFields({
           />
           <div className="mt-1 flex justify-between">
             {galat.deskripsi ? (
-              <p className="text-[14px] text-danger">{galat.deskripsi}</p>
+              <p id="deskripsi-error" className="text-[14px] text-danger">{galat.deskripsi}</p>
             ) : (
               <span />
             )}
@@ -295,6 +338,8 @@ export function FormListingFields({
           </label>
           <input
             id="patokan"
+            aria-invalid={Boolean(galat.patokan)}
+            aria-describedby={galat.patokan ? "patokan-error" : undefined}
             value={nilai.patokan}
             onChange={(e) => onUbah("patokan", e.target.value.slice(0, 150))}
             placeholder="Contoh: Dekat Indomaret Point, gang sebelah warung Bu Ida"
@@ -304,7 +349,7 @@ export function FormListingFields({
             )}
           />
           {galat.patokan ? (
-            <p className="mt-1.5 text-[14px] text-danger">{galat.patokan}</p>
+            <p id="patokan-error" className="mt-1.5 text-[14px] text-danger">{galat.patokan}</p>
           ) : (
             <p className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
               Cukup patokan umum, jangan tulis nomor kamar atau alamat lengkap.
@@ -325,7 +370,7 @@ export function FormListingFields({
             maksHari={MAKS_HARI}
           />
           {galat.tenggat ? (
-            <p className="mt-1.5 text-[14px] text-danger">{galat.tenggat}</p>
+            <p id="tenggat-error" className="mt-1.5 text-[14px] text-danger">{galat.tenggat}</p>
           ) : (
             <p className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
               Maksimal {MAKS_HARI} hari. Listing otomatis kedaluwarsa pada 00:01 WIB
@@ -387,6 +432,8 @@ export function FormListingFields({
             </label>
             <input
               id="nama"
+              aria-invalid={Boolean(galat.nama)}
+              aria-describedby={galat.nama ? "nama-error" : undefined}
               value={nilai.nama}
               onChange={(e) => onUbah("nama", e.target.value.slice(0, 50))}
               placeholder="Contoh: Rina"
@@ -395,7 +442,7 @@ export function FormListingFields({
                 galat.nama ? "border-danger" : "border-line-kuat focus:border-primary",
               )}
             />
-            {galat.nama && <p className="mt-1.5 text-[14px] text-danger">{galat.nama}</p>}
+            {galat.nama && <p id="nama-error" className="mt-1.5 text-[14px] text-danger">{galat.nama}</p>}
           </div>
 
           <div>
@@ -404,6 +451,8 @@ export function FormListingFields({
             </label>
             <input
               id="wa"
+              aria-invalid={Boolean(galat.wa)}
+              aria-describedby={galat.wa ? "wa-error" : undefined}
               inputMode="tel"
               value={nilai.wa}
               onChange={(e) => onUbah("wa", e.target.value.slice(0, 20))}
@@ -414,7 +463,7 @@ export function FormListingFields({
               )}
             />
             {galat.wa ? (
-              <p className="mt-1.5 text-[14px] text-danger">{galat.wa}</p>
+              <p id="wa-error" className="mt-1.5 text-[14px] text-danger">{galat.wa}</p>
             ) : (
               <p className="mt-1.5 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
                 Nomor ini tidak ditampilkan di halaman publik, hanya dipakai
@@ -431,7 +480,7 @@ export function FormListingFields({
 /** Kotak peringatan umum di atas form (dipakai create & edit). */
 export function GalatUmum({ pesan }: { pesan: string }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-md border border-danger/30 bg-danger-soft px-3.5 py-3 text-[14px] text-danger">
+    <div role="alert" className="flex items-start gap-2.5 rounded-md border border-danger/30 bg-danger-soft px-3.5 py-3 text-[14px] text-danger">
       <IconAlert size={16} className="mt-[1px] shrink-0" />
       <span>{pesan}</span>
     </div>

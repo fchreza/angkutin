@@ -7,6 +7,7 @@ import { TombolSalin } from "@/components/shared/tombol-salin";
 import { useToast } from "@/components/shared/toast";
 import { IconWhatsApp, IconTrash } from "@/components/shared/icons";
 import { cn } from "@/lib/cn";
+import { invalidasiCacheFeed } from "@/lib/feed-cache";
 
 /**
  * Kotak tautan di dashboard BARANG (tautan lama).
@@ -125,12 +126,10 @@ export function SecretLinkBox({
 /** Panel kontrol status + konfirmasi hapus. */
 export function StatusControls({
   listingId,
-  token,
   status,
   onBerubah,
 }: {
   listingId: string;
-  token: string;
   status: string;
   onBerubah: (s: string) => void;
 }) {
@@ -144,9 +143,10 @@ export function StatusControls({
       const r = await fetch(`/api/v1/listings/manage/${listingId}/status`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ token, status: baru }),
+        body: JSON.stringify({ status: baru }),
       });
       if (!r.ok) throw new Error();
+      invalidasiCacheFeed();
       onBerubah(baru);
       setKonfirmasiHapus(false);
 

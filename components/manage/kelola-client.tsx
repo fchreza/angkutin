@@ -21,7 +21,6 @@ import {
   LABEL_KONDISI,
   LABEL_STATUS_PENJUAL,
   keteranganSisaWaktu,
-  hariTersisaID,
 } from "@/lib/urgency";
 import { cn } from "@/lib/cn";
 import type { Kategori } from "@/components/feed/filter-pills";
@@ -74,7 +73,6 @@ export type DataKelola = {
  */
 export function KelolaClient({
   data: dataAwal,
-  token,
   manageUrl,
   publicUrl,
   punyaLapak,
@@ -82,7 +80,6 @@ export function KelolaClient({
   fotoGagal,
 }: {
   data: DataKelola;
-  token: string;
   manageUrl: string;
   /** Tautan PUBLIK barang ini — untuk dibagikan, tanpa akses kelola. */
   publicUrl: string;
@@ -137,7 +134,6 @@ export function KelolaClient({
       <div className="mx-auto max-w-[760px]">
         <FormEdit
           data={data}
-          token={token}
           kategori={kategori}
           nonaktif={sudahDiambil}
           tenggatLewat={sudahLewatTenggat}
@@ -238,7 +234,7 @@ export function KelolaClient({
         jalan penjual barang lama bisa memakai dashboard lapak — tanpa ini,
         barang lamanya selamanya hanya bisa dikelola lewat tautan sendiri.
       */}
-      {!punyaLapak && <PindahKeLapak listingId={data.id} token={token} />}
+      {!punyaLapak && <PindahKeLapak listingId={data.id} />}
 
       {/* Statistik KPI (wajib tampil menurut PRD §3.2 ENHANCED) */}
       <div className="grid grid-cols-3 gap-3">
@@ -333,7 +329,6 @@ export function KelolaClient({
         <div className="border-t border-line bg-appbg px-4 py-4">
           <StatusControls
             listingId={data.id}
-            token={token}
             status={status}
             onBerubah={ubahStatus}
           />

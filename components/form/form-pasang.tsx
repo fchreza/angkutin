@@ -10,6 +10,7 @@ import {
   nilaiAwal,
   payloadDari,
   rapikanGalatServer,
+  fokusFieldGalat,
   validasiForm,
   type Galat,
   type NilaiForm,
@@ -18,6 +19,7 @@ import { Button } from "@/components/shared/button";
 import { SuksesPasang, type RingkasanListing } from "@/components/manage/sukses-pasang";
 import { bacaKonteksLapak } from "@/lib/konteks-lapak";
 import type { Kategori } from "@/components/feed/filter-pills";
+import { invalidasiCacheFeed } from "@/lib/feed-cache";
 
 /**
  * Form Pasang Listing (Layar 3).
@@ -106,9 +108,7 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
     if (Object.keys(g).length > 0) {
       setGalat(g);
       setGalatUmum("Masih ada isian yang perlu diperbaiki.");
-      document
-        .querySelector("[data-galat='1']")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      requestAnimationFrame(() => fokusFieldGalat(g));
       return;
     }
 
@@ -139,7 +139,11 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
           error?: string;
           detail?: Galat;
         };
-        if (j.detail) setGalat(rapikanGalatServer(j.detail));
+        if (j.detail) {
+          const detail = rapikanGalatServer(j.detail);
+          setGalat(detail);
+          requestAnimationFrame(() => fokusFieldGalat(detail));
+        }
         setGalatUmum(j.error ?? "Gagal menayangkan listing. Coba lagi.");
         setMengirim(false);
         return;
@@ -149,11 +153,11 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
         id: string;
         secret_token: string;
         public_url: string;
-        manage_url: string;
         stall_url: string;
         stall_id: string;
         stall_token: string;
       };
+      invalidasiCacheFeed();
       const { id, secret_token } = j1;
 
       // Catatan: tidak ada lagi yang disimpan di perangkat. Konteks lapak
@@ -238,7 +242,6 @@ export function FormPasang({ kategori }: { kategori: Kategori[] }) {
     return (
       <SuksesPasang
         data={ringkasan}
-        manageUrl={`${window.location.origin}/manage/${hasil.id}?token=${encodeURIComponent(hasil.token)}`}
         publicUrl={hasil.publicUrl}
         stallUrl={hasil.stallUrl}
         stallId={hasil.stallId}

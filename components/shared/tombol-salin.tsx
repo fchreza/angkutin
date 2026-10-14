@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { IconCheck, IconAlert, IconCopy } from "./icons";
+import { IconAlert, IconCopy } from "./icons";
 
 /**
  * Tombol salin dengan konfirmasi yang tenang.

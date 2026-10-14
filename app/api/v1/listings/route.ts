@@ -8,7 +8,7 @@ import { validasiWilayah } from "@/lib/wilayah-server";
 import { generateSecretToken, tokenCocok } from "@/lib/token";
 import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
-import { buatLapak, urlBarang, urlLapak } from "@/lib/lapak";
+import { buatLapak, urlLapak } from "@/lib/lapak";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -17,12 +17,10 @@ export const maxDuration = 30;
  * GET /api/v1/listings — feed katalog terfilter (FR-2).
  * POST /api/v1/listings — buat listing baru (FR-3).
  *
- * MENGEMBALIKAN DUA TAUTAN YANG BERBEDA PERANNYA:
+ * MENGEMBALIKAN TAUTAN PUBLIK dan tautan lapak untuk penjual:
  *
  *   public_url   -> untuk DIBAGIKAN. Unik per barang. Tidak memberi akses
  *                   kelola apa pun.
- *   manage_url   -> untuk MENGELOLA SATU BARANG INI (tautan lama, tetap
- *                   dipertahankan supaya tautan yang sudah beredar hidup).
  *   stall_url    -> untuk MENGELOLA SELURUH BARANG di lapak.
  *   stall_token  -> token lapak, dipakai browser menyimpan lapak aktif.
  *
@@ -212,8 +210,6 @@ export async function POST(req: Request) {
         secret_token: baru.secretToken,
         /** Untuk DIBAGIKAN. Tidak memberi akses kelola apa pun. */
         public_url: `${origin}/listing/${baru.id}`,
-        /** Mengelola barang ini saja (tautan lama, tetap sah). */
-        manage_url: urlBarang(origin, baru.id, baru.secretToken),
         /** Mengelola seluruh barang di lapak. */
         stall_url: urlLapak(origin, lapakId, lapakToken as string),
         stall_id: lapakId,

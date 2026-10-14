@@ -50,7 +50,6 @@ export function LivePreview({
       <div className="overflow-hidden rounded-md border border-line bg-surface shadow-card">
         <div className="relative aspect-square w-full bg-appbg">
           {foto[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={foto[0].preview}
               alt="Pratinjau foto utama"

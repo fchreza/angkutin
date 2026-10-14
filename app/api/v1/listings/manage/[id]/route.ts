@@ -6,19 +6,20 @@ import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { editSchema, validasiTenggat } from "@/lib/validators";
 import { validasiWilayah } from "@/lib/wilayah-server";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
+import { tokenSesiKelola } from "@/lib/manage-session";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 /**
- * GET   /api/v1/listings/manage/:id?token= — data kelola listing (FR-4).
+ * GET   /api/v1/listings/manage/:id — data kelola listing (FR-4).
  * PATCH /api/v1/listings/manage/:id         — ubah isi listing (FR-4).
  *
  * KEAMANAN (berlaku untuk kedua metode):
  *  - Token dibandingkan dengan waktu tetap (constant-time).
  *  - Token salah -> 404, BUKAN 403, supaya penyerang tidak bisa membedakan
  *    antara "listing tidak ada" dan "token salah" (mencegah enumerasi).
- *  - Token hanya dibaca dari query param / body, tidak pernah dari localStorage.
+ *  - Token sesi hanya dibaca dari cookie HttpOnly.
  */
 
 export async function GET(
@@ -29,7 +30,7 @@ export async function GET(
     const { id } = await ctx.params;
     // `?? ""` bukan sekadar kerapian: tanpa token, periksaAkses harus
     // mengembalikan null (ditolak), bukan melempar karena tipe null.
-    const token = new URL(req.url).searchParams.get("token") ?? "";
+    const token = tokenSesiKelola(req, id);
 
     if (!/^[0-9a-f-]{36}$/i.test(id)) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
@@ -154,7 +155,7 @@ export async function PATCH(
     // Otorisasi terpusat (lib/lapak.ts). Menerima DUA jenis token, dan
     // `bolehKelolaBarang` memastikan token lapak tidak bisa menyentuh barang
     // milik lapak lain.
-    const akses = await periksaAkses(id, d.token);
+    const akses = await periksaAkses(id, tokenSesiKelola(req, id));
     if (!akses || !(await bolehKelolaBarang(akses, id))) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }

@@ -23,6 +23,7 @@ import {
 } from "@/components/shared/icons";
 import { cn } from "@/lib/cn";
 import type { KartuListing } from "@/lib/listing-query";
+import { bacaCacheFeed, simpanCacheFeed } from "@/lib/feed-cache";
 
 type Sort = "mendesak" | "terbaru" | "termurah" | "gratis";
 
@@ -44,6 +45,24 @@ const KUNCI_TERAKHIR = "angkutin:lokasi-terakhir";
  */
 const UKURAN_HALAMAN = 24;
 
+function lokasiDariFilter(
+  wilayah: WilayahAdaBarang[],
+  regency: string,
+  province: string,
+): PilihanLokasi {
+  if (regency) {
+    for (const prov of wilayah) {
+      const kab = prov.kabupaten.find((k) => k.regency_code === regency);
+      if (kab) return { jenis: "regency", kode: regency, label: `${kab.regency_name}, ${prov.province_name}` };
+    }
+  }
+  if (province) {
+    const prov = wilayah.find((p) => p.province_code === province);
+    if (prov) return { jenis: "province", kode: province, label: prov.province_name };
+  }
+  return { jenis: "semua", label: "Semua Lokasi" };
+}
+
 /**
  * Feed Katalog (Layar 1).
  *
@@ -61,6 +80,9 @@ export function FeedClient({
   totalAwal,
   kategoriAwal = "semua",
   regencyAwal = "",
+  provinsiAwal = "",
+  queryAwal = "",
+  sortAwal = "mendesak",
 }: {
   wilayah: WilayahAdaBarang[];
   kategori: Kategori[];
@@ -70,30 +92,18 @@ export function FeedClient({
   kategoriAwal?: string;
   /** Filter awal dari URL (?regency=) — dipakai remah navigasi. */
   regencyAwal?: string;
+  provinsiAwal?: string;
+  queryAwal?: string;
+  sortAwal?: Sort;
 }) {
-  const [lokasi, setLokasi] = useState<PilihanLokasi>(() => {
-    if (!regencyAwal) return { jenis: "semua", label: "Semua Lokasi" };
-    // Nama wilayah dicari dari daftar yang sudah dikirim server, supaya label
-    // di tombol tidak menampilkan kode mentah.
-    for (const prov of wilayah) {
-      const kab = prov.kabupaten.find((k) => k.regency_code === regencyAwal);
-      if (kab) {
-        return {
-          jenis: "regency",
-          kode: regencyAwal,
-          label: `${kab.regency_name}, ${prov.province_name}`,
-        };
-      }
-    }
-    return { jenis: "semua", label: "Semua Lokasi" };
-  });
+  const [lokasi, setLokasi] = useState<PilihanLokasi>(() => lokasiDariFilter(wilayah, regencyAwal, provinsiAwal));
   const [panelBuka, setPanelBuka] = useState(false);
   const [terakhir, setTerakhir] = useState<PilihanLokasi | null>(null);
 
   const [kategoriId, setKategoriId] = useState(kategoriAwal);
-  const [sort, setSort] = useState<Sort>("mendesak");
-  const [q, setQ] = useState("");
-  const [qDebounce, setQDebounce] = useState("");
+  const [sort, setSort] = useState<Sort>(sortAwal);
+  const [q, setQ] = useState(queryAwal);
+  const [qDebounce, setQDebounce] = useState(queryAwal.trim());
 
   const [data, setData] = useState<KartuListing[]>(feedAwal);
   const [total, setTotal] = useState(totalAwal);
@@ -117,28 +127,37 @@ export function FeedClient({
   // Kalau filter awal datang dari URL, data awalnya juga sudah tersaring di
   // server — jadi fetch pertama tetap boleh dilewati. Tapi penanda "pertama"
   // harus tetap benar saat URL berubah tanpa mount ulang.
-  const filterAwalRef = useRef(`${kategoriAwal}|${regencyAwal}`);
+  const filterAwalRef = useRef(`${kategoriAwal}|${regencyAwal}|${provinsiAwal}|${queryAwal}|${sortAwal}`);
   useEffect(() => {
-    const sekarang = `${kategoriAwal}|${regencyAwal}`;
+    const sekarang = `${kategoriAwal}|${regencyAwal}|${provinsiAwal}|${queryAwal}|${sortAwal}`;
     if (sekarang !== filterAwalRef.current) {
       filterAwalRef.current = sekarang;
       setKategoriId(kategoriAwal);
-      setLokasi(() => {
-        if (!regencyAwal) return { jenis: "semua", label: "Semua Lokasi" };
-        for (const prov of wilayah) {
-          const kab = prov.kabupaten.find((k) => k.regency_code === regencyAwal);
-          if (kab) {
-            return {
-              jenis: "regency",
-              kode: regencyAwal,
-              label: `${kab.regency_name}, ${prov.province_name}`,
-            };
-          }
-        }
-        return { jenis: "semua", label: "Semua Lokasi" };
-      });
+      setLokasi(lokasiDariFilter(wilayah, regencyAwal, provinsiAwal));
+      setQ(queryAwal);
+      setQDebounce(queryAwal.trim());
+      setSort(sortAwal);
     }
-  }, [kategoriAwal, regencyAwal, wilayah]);
+  }, [kategoriAwal, regencyAwal, provinsiAwal, queryAwal, sortAwal, wilayah]);
+
+  // Tombol Back/Forward memulihkan semua filter dan mengulang query feed.
+  useEffect(() => {
+    const pulihkan = () => {
+      const p = new URLSearchParams(window.location.search);
+      const kategoriUrl = p.get("kategori") ?? "semua";
+      const regencyUrl = p.get("regency") ?? "";
+      const provinsiUrl = p.get("provinsi") ?? "";
+      const queryUrl = p.get("q") ?? "";
+      const sortUrl = p.get("sort") ?? "mendesak";
+      setKategoriId(kategoriUrl);
+      setLokasi(lokasiDariFilter(wilayah, regencyUrl, provinsiUrl));
+      setQ(queryUrl);
+      setQDebounce(queryUrl.trim());
+      setSort(((["mendesak", "terbaru", "termurah", "gratis"].includes(sortUrl) ? sortUrl : "mendesak") as Sort));
+    };
+    window.addEventListener("popstate", pulihkan);
+    return () => window.removeEventListener("popstate", pulihkan);
+  }, [wilayah]);
 
   // Debounce pencarian 350ms — supaya tidak fetch tiap ketikan
   useEffect(() => {
@@ -159,11 +178,8 @@ export function FeedClient({
     }
   }, []);
 
-  // Cache hasil per kombinasi filter. Menekan filter yang sama dua kali jadi
-  // instan, dan kembali ke filter sebelumnya tidak perlu memuat ulang.
-  const cacheRef = useRef<Map<string, { data: KartuListing[]; total: number }>>(
-    new Map(),
-  );
+  // Cache hasil per filter dibatasi TTL 15 dtk dan jumlah entri; mutasi
+  // listing mengosongkannya melalui invalidasi global.
   // Permintaan yang sedang jalan — dibatalkan kalau filter berubah lagi,
   // supaya balasan lama tidak menimpa hasil filter yang lebih baru.
   const abortRef = useRef<AbortController | null>(null);
@@ -181,50 +197,77 @@ export function FeedClient({
     p.set("sort", sort);
     return p.toString();
   }, [lokasi, kategoriId, qDebounce, sort]);
+  const filterAktifRef = useRef(kunciFilter);
+  filterAktifRef.current = kunciFilter;
+
+  // URL menjadi state yang dapat dibagikan/bookmark, tanpa navigasi full page.
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (kategoriId !== "semua") p.set("kategori", kategoriId);
+    if (lokasi.jenis === "regency" && lokasi.kode) p.set("regency", lokasi.kode);
+    if (lokasi.jenis === "province" && lokasi.kode) p.set("provinsi", lokasi.kode);
+    if (qDebounce) p.set("q", qDebounce);
+    if (sort !== "mendesak") p.set("sort", sort);
+    const query = p.toString();
+    const href = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", href);
+  }, [kategoriId, lokasi, qDebounce, sort]);
+
+  // Cache SSR awal agar kembali ke filter asal tidak memanggil endpoint lagi.
+  useEffect(() => {
+    simpanCacheFeed(kunciFilter, { data: feedAwal, total: totalAwal });
+  }, [kunciFilter, feedAwal, totalAwal]);
 
   const muat = useCallback(async () => {
     const kunci = kunciFilter;
 
+    abortRef.current?.abort();
+    if (timerSkeleton.current) clearTimeout(timerSkeleton.current);
+    const ac = new AbortController();
+    abortRef.current = ac;
+    setMemuatLagi(false);
+    setGalatLagi(null);
+
     // 1. Hasil sudah ada di cache -> tampilkan seketika, tidak ada skeleton.
-    const tersimpan = cacheRef.current.get(kunci);
+    const tersimpan = bacaCacheFeed(kunci);
     if (tersimpan) {
       setData(tersimpan.data);
       setTotal(tersimpan.total);
       setGalat(null);
       setMemuat(false);
+      if (abortRef.current === ac) abortRef.current = null;
       return;
     }
-
-    // 2. Batalkan permintaan sebelumnya yang belum selesai.
-    abortRef.current?.abort();
-    const ac = new AbortController();
-    abortRef.current = ac;
 
     // 3. Skeleton baru muncul setelah 150 ms. Pemuatan yang lebih cepat dari
     //    itu tidak perlu indikator apa pun.
     if (timerSkeleton.current) clearTimeout(timerSkeleton.current);
-    timerSkeleton.current = setTimeout(() => setMemuat(true), 150);
+    timerSkeleton.current = setTimeout(() => {
+      if (abortRef.current === ac) setMemuat(true);
+    }, 150);
     setGalat(null);
 
     try {
       const r = await fetch(`/api/v1/listings?${kunci}`, {
         signal: ac.signal,
-        // Cache HTTP sebentar: filter yang sama dalam 15 detik tidak perlu
-        // memanggil server lagi (mis. pengguna menekan bolak-balik).
-        next: { revalidate: 15 },
+        cache: "no-store",
       });
       if (!r.ok) throw new Error("gagal");
       const j = (await r.json()) as { data: KartuListing[]; total: number };
-      cacheRef.current.set(kunci, { data: j.data, total: j.total });
+      if (ac.signal.aborted || filterAktifRef.current !== kunci) return;
+      simpanCacheFeed(kunci, { data: j.data, total: j.total });
       setData(j.data);
       setTotal(j.total);
     } catch (e) {
       // Abort bukan kegagalan — permintaan yang lebih baru sudah menggantikan.
-      if ((e as { name?: string })?.name === "AbortError") return;
+      if (ac.signal.aborted || (e as { name?: string })?.name === "AbortError") return;
       setGalat("Gagal memuat barang. Periksa koneksi lalu coba lagi.");
     } finally {
-      if (timerSkeleton.current) clearTimeout(timerSkeleton.current);
-      setMemuat(false);
+      if (abortRef.current === ac) {
+        if (timerSkeleton.current) clearTimeout(timerSkeleton.current);
+        setMemuat(false);
+        abortRef.current = null;
+      }
     }
   }, [kunciFilter]);
 
@@ -250,12 +293,17 @@ export function FeedClient({
     p.set("offset", String(data.length));
     p.set("limit", String(UKURAN_HALAMAN));
 
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
     try {
       const r = await fetch(`/api/v1/listings?${p.toString()}`, {
-        next: { revalidate: 15 },
+        signal: ac.signal,
+        cache: "no-store",
       });
       if (!r.ok) throw new Error("gagal");
       const j = (await r.json()) as { data: KartuListing[]; total: number };
+      if (ac.signal.aborted || filterAktifRef.current !== kunciFilter) return;
 
       /*
        * Saring barang yang sudah ada berdasarkan id.
@@ -271,9 +319,13 @@ export function FeedClient({
       });
       setTotal(j.total);
     } catch {
+      if (ac.signal.aborted) return;
       setGalatLagi("Gagal memuat barang berikutnya.");
     } finally {
-      setMemuatLagi(false);
+      if (abortRef.current === ac) {
+        setMemuatLagi(false);
+        abortRef.current = null;
+      }
     }
   }, [kunciFilter, data.length, total, memuatLagi]);
 

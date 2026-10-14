@@ -9,6 +9,7 @@ import {
   nilaiTenggatBaru,
   payloadDari,
   rapikanGalatServer,
+  fokusFieldGalat,
   validasiForm,
   WILAYAH_KOSONG,
   type Galat,
@@ -17,6 +18,7 @@ import {
 import { PhotoManager, type FotoTersimpan } from "./photo-manager";
 import type { Kategori } from "@/components/feed/filter-pills";
 import type { DataKelola } from "./kelola-client";
+import { invalidasiCacheFeed } from "@/lib/feed-cache";
 
 /**
  * Form ubah listing di halaman kelola (FR-4).
@@ -33,7 +35,6 @@ import type { DataKelola } from "./kelola-client";
  */
 export function FormEdit({
   data,
-  token,
   kategori,
   onSimpan,
   onBatal,
@@ -41,7 +42,6 @@ export function FormEdit({
   tenggatLewat = false,
 }: {
   data: DataKelola;
-  token: string;
   kategori: Kategori[];
   onSimpan: (baru: Partial<DataKelola>) => void;
   onBatal: () => void;
@@ -102,9 +102,7 @@ export function FormEdit({
     if (Object.keys(g).length > 0) {
       setGalat(g);
       setGalatUmum("Masih ada isian yang perlu diperbaiki.");
-      document
-        .querySelector("[data-galat='1']")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      requestAnimationFrame(() => fokusFieldGalat(g));
       return;
     }
 
@@ -113,7 +111,7 @@ export function FormEdit({
       const r = await fetch(`/api/v1/listings/manage/${data.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...payloadDari(nilai), token }),
+        body: JSON.stringify(payloadDari(nilai)),
       });
 
       if (!r.ok) {
@@ -121,7 +119,11 @@ export function FormEdit({
           error?: string;
           detail?: Galat;
         };
-        if (j.detail) setGalat(rapikanGalatServer(j.detail));
+        if (j.detail) {
+          const detail = rapikanGalatServer(j.detail);
+          setGalat(detail);
+          requestAnimationFrame(() => fokusFieldGalat(detail));
+        }
         setGalatUmum(j.error ?? "Gagal menyimpan perubahan. Coba lagi.");
         return;
       }
@@ -133,6 +135,7 @@ export function FormEdit({
       // mengembalikan EXPIRED ke AVAILABLE, dan tanpa meneruskannya di sini
       // penjual tetap melihat "Waktu Habis" walaupun listingnya sudah tayang
       // lagi — dia harus refresh untuk tahu bahwa berhasil.
+      invalidasiCacheFeed();
       onSimpan({
         title: nilai.judul.trim(),
         description: nilai.deskripsi.trim(),
@@ -192,7 +195,6 @@ export function FormEdit({
       <section className="rounded-md border border-line bg-surface p-4">
         <PhotoManager
           listingId={data.id}
-          token={token}
           foto={foto}
           onBerubah={setFoto}
           nonaktif={nonaktif}

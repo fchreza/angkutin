@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { listings, stalls } from "@/db/schema";
-import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 
 /**
  * Data barang untuk halaman admin.

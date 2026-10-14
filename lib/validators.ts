@@ -123,7 +123,6 @@ export function validasiTenggat(ymd: string, now = new Date()): string | null {
 }
 
 export const statusSchema = z.object({
-  token: z.string().min(20, "Token tidak valid"),
   status: z.enum(["TAKEN", "DELETED", "AVAILABLE"]),
 });
 
@@ -135,5 +134,5 @@ export const statusSchema = z.object({
  * Menulis skema kedua adalah cara paling mudah membuat keduanya menyimpang.
  */
 export const editSchema = listingSchema.and(
-  z.object({ token: z.string().min(20, "Token tidak valid") }),
+  z.object({}),
 );

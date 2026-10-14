@@ -1,12 +1,13 @@
 import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomBytes } from "node:crypto";
 import { db } from "@/db";
-import { listings, listingImages } from "@/db/schema";
+import { listingImages } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
 import { BUCKET, keyFoto, s3, s3Siap, urlPublik } from "@/lib/s3";
 import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { kompresDiServer } from "@/lib/compress-image";
+import { tokenSesiKelola } from "@/lib/manage-session";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -51,7 +52,9 @@ export async function POST(
     // Urutan penting: otorisasi DULU, baru cek konfigurasi storage.
     // Kalau dibalik, orang tanpa token bisa tahu status konfigurasi server.
     const form = await req.formData();
-    const token = String(form.get("token") ?? "");
+    // Upload saat pemasangan masih memakai token sementara di body; dashboard
+    // kelola menggunakan cookie HttpOnly dan tidak mengirim token dari klien.
+    const token = tokenSesiKelola(req, id) || String(form.get("token") ?? "");
 
     // Otorisasi terpusat (lib/lapak.ts) — menerima token lapak maupun token
     // barang. `bolehKelolaBarang` memastikan token lapak tidak bisa menambah

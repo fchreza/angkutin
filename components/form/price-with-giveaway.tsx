@@ -48,6 +48,8 @@ export function PriceWithGiveaway({
           </span>
           <input
             id="harga"
+            aria-invalid={Boolean(galat && !gratis)}
+            aria-describedby={galat && !gratis ? "harga-error" : undefined}
             inputMode="numeric"
             disabled={gratis}
             value={gratis ? "0" : harga}
@@ -67,7 +69,7 @@ export function PriceWithGiveaway({
         </div>
 
         {galat && !gratis && (
-          <p className="mt-1.5 text-[14px] text-danger">{galat}</p>
+          <p id="harga-error" className="mt-1.5 text-[14px] text-danger">{galat}</p>
         )}
       </div>
 

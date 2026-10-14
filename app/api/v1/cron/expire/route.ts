@@ -35,8 +35,7 @@ export async function GET(req: Request) {
     }
 
     const auth = req.headers.get("authorization") ?? "";
-    const dariQuery = new URL(req.url).searchParams.get("secret") ?? "";
-    const sah = auth === `Bearer ${secret}` || dariQuery === secret;
+    const sah = auth === `Bearer ${secret}`;
 
     if (!sah) return gagal("Tidak diizinkan.", 401);
 

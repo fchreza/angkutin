@@ -354,7 +354,6 @@ export function PhotoUploader({
                 key={f.preview}
                 className="animate-pop group relative aspect-square overflow-hidden rounded-md border border-line bg-appbg"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={f.preview}
                   alt={`Foto ${i + 1}`}
@@ -400,8 +399,11 @@ export function PhotoUploader({
          */}
         {kosong && !sedangKompres && (
           <button
+            id="foto"
             type="button"
             onClick={() => inputRef.current?.click()}
+            aria-invalid={Boolean(galat)}
+            aria-describedby={galat ? "foto-error" : undefined}
             className="flex w-full flex-col items-center justify-center gap-2.5 rounded-md border-2 border-dashed border-line-kuat px-4 py-7 text-center"
           >
             <span className="baris-muncul flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft">
@@ -472,7 +474,7 @@ export function PhotoUploader({
       </p>
 
       {(pesan || galat) && (
-        <p className="mt-1.5 text-[14px] text-danger">{pesan || galat}</p>
+        <p id={galat ? "foto-error" : undefined} className="mt-1.5 text-[14px] text-danger" role="alert">{pesan || galat}</p>
       )}
     </div>
   );

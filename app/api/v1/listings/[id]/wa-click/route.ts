@@ -1,9 +1,10 @@
 import { db } from "@/db";
 import { listings } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { ok, gagal, ipKlien } from "@/lib/api";
 import { cekRateLimit, catatRateLimit } from "@/lib/rate-limit";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { tanggalHariIniID } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,7 @@ export async function POST(
         sellerName: listings.sellerName,
         sellerWhatsapp: listings.sellerWhatsapp,
         status: listings.status,
+        deadlineDate: listings.deadlineDate,
         regencyName: listings.regencyName,
         districtName: listings.districtName,
         // Catatan akses dibaca di sini supaya bisa ikut ke pesan WhatsApp.
@@ -69,13 +71,29 @@ export async function POST(
       .where(eq(listings.id, id))
       .limit(1);
 
-    if (!row) return gagal("Barang tidak ditemukan.", 404);
-    if (row.status === "DELETED") return gagal("Barang tidak ditemukan.", 404);
+    if (!row || row.status === "DELETED") return gagal("Barang tidak ditemukan.", 404);
+    if (row.status !== "AVAILABLE" || String(row.deadlineDate).slice(0, 10) < tanggalHariIniID()) {
+      return gagal(
+        row.status === "TAKEN" ? "Barang ini sudah diambil." : "Batas pengambilan barang ini sudah lewat.",
+        409,
+      );
+    }
 
-    await db
+    // Pemeriksaan diulang secara atomik agar perubahan status/tenggat yang
+    // terjadi setelah SELECT tidak sempat membuka kontak listing yang tutup.
+    const [bolehKontak] = await db
       .update(listings)
       .set({ whatsappClicks: sql`${listings.whatsappClicks} + 1` })
-      .where(eq(listings.id, id));
+      .where(and(
+        eq(listings.id, id),
+        eq(listings.status, "AVAILABLE"),
+        gte(listings.deadlineDate, tanggalHariIniID()),
+      ))
+      .returning({ id: listings.id });
+
+    if (!bolehKontak) {
+      return gagal("Barang ini sudah tidak tersedia untuk diambil.", 409);
+    }
 
     /*
      * Dicatat SETELAH link berhasil dibangun, bukan sebelum.

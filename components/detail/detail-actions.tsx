@@ -33,6 +33,8 @@ export function DetailActions({
   const urgency = getUrgency(deadline);
   const mendesak = urgency === "urgent" || urgency === "today";
   const sudahDiambil = status === "TAKEN";
+  const kedaluwarsa = status === "EXPIRED" || urgency === "expired";
+  const tidakTersedia = sudahDiambil || kedaluwarsa || status !== "AVAILABLE";
 
   const bukaWA = async () => {
     setMemuat(true);
@@ -40,11 +42,14 @@ export function DetailActions({
       const r = await fetch(`/api/v1/listings/${listingId}/wa-click`, {
         method: "POST",
       });
-      if (!r.ok) throw new Error();
+      if (!r.ok) {
+        const j = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? "Gagal membuka WhatsApp. Coba lagi ya.");
+      }
       const j = (await r.json()) as { url: string };
       window.open(j.url, "_blank", "noopener,noreferrer");
-    } catch {
-      tampilkan("Gagal membuka WhatsApp. Coba lagi ya.", { jenis: "galat" });
+    } catch (e) {
+      tampilkan(e instanceof Error ? e.message : "Gagal membuka WhatsApp. Coba lagi ya.", { jenis: "galat" });
     } finally {
       setMemuat(false);
     }
@@ -83,6 +88,8 @@ export function DetailActions({
           <div className={cn("font-semibold", mendesak ? "text-accent-text" : "text-ink")}>
             {sudahDiambil
               ? "Barang ini sudah diambil"
+              : kedaluwarsa
+                ? "Batas pengambilan barang ini sudah lewat"
               : mendesak
                 ? "Segera, batas pengambilan dekat"
                 : "Batas pengambilan"}
@@ -99,11 +106,15 @@ export function DetailActions({
         ukuran="lg"
         penuh
         memuat={memuat}
-        disabled={sudahDiambil}
+        disabled={tidakTersedia || memuat}
         onClick={() => void bukaWA()}
       >
         {!memuat && <IconWhatsApp size={19} />}
-        {sudahDiambil ? "Sudah Diambil" : "Ambil Barang via WhatsApp"}
+        {sudahDiambil
+          ? "Sudah Diambil"
+          : kedaluwarsa
+            ? "Waktu Pengambilan Habis"
+            : "Ambil Barang via WhatsApp"}
       </Button>
 
       {!ringkas && (

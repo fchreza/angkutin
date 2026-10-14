@@ -70,14 +70,17 @@ export function ConditionSegmented({
 
   return (
     <div>
-      <label className="mb-2 block text-[14px] font-semibold text-ink">
+      <label id="kondisi-label" className="mb-2 block text-[14px] font-semibold text-ink">
         Kondisi barang <span className="text-danger">*</span>
       </label>
 
       <div
         ref={refWadah}
+        id="kondisi"
         role="radiogroup"
-        aria-label="Kondisi barang"
+        aria-labelledby="kondisi-label"
+        aria-invalid={Boolean(galat)}
+        aria-describedby={galat ? "kondisi-error" : undefined}
         onKeyDown={onKeyDown}
         className="relative grid grid-cols-3 gap-1 rounded-md border border-line-kuat bg-appbg p-1"
       >
@@ -119,7 +122,7 @@ export function ConditionSegmented({
         ))}
       </div>
 
-      {galat && <p className="mt-1.5 text-[14px] text-danger">{galat}</p>}
+      {galat && <p id="kondisi-error" className="mt-1.5 text-[14px] text-danger">{galat}</p>}
     </div>
   );
 }

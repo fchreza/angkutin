@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { db } from "@/db";
 import { categories, listings, listingImages } from "@/db/schema";
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { periksaAkses, urlBarang, urlLapak } from "@/lib/lapak";
 import { tanggalHariIniID } from "@/lib/format";
 import { statusEfektif } from "@/lib/urgency";
@@ -10,6 +10,8 @@ import { Button } from "@/components/shared/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { KelolaClient, type DataKelola } from "@/components/manage/kelola-client";
 import { DaftarLapak, type BarisBarang } from "@/components/manage/daftar-lapak";
+import { ManageSessionBootstrap } from "@/components/manage/session-bootstrap";
+import { namaCookieSesiKelola } from "@/lib/manage-session";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +51,9 @@ export default async function KelolaPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const token = sp.token ?? "";
+  const cookieStore = await cookies();
+  const token = sp.token ?? cookieStore.get(namaCookieSesiKelola(id))?.value ?? "";
+  const perluTukarSesi = Boolean(sp.token);
 
   const gagalTautan = (
     <div className="mx-auto max-w-[520px] py-14">
@@ -117,12 +121,13 @@ export default async function KelolaPage({
             displayOrder: listingImages.displayOrder,
           })
           .from(listingImages)
+          .where(inArray(listingImages.listingId, [...idBarang]))
           .orderBy(asc(listingImages.displayOrder))
       : [];
 
     const fotoUtama = new Map<string, string>();
     for (const f of semuaFoto) {
-      if (idBarang.has(f.listingId) && !fotoUtama.has(f.listingId)) {
+      if (!fotoUtama.has(f.listingId)) {
         fotoUtama.set(f.listingId, f.imageUrl);
       }
     }
@@ -146,6 +151,8 @@ export default async function KelolaPage({
     }));
 
     return (
+      <>
+      <ManageSessionBootstrap aktif={perluTukarSesi} />
       <main className="shell w-full pb-[110px] pt-4 md:pb-24 md:pt-6">
         <DaftarLapak
           barang={barang}
@@ -155,6 +162,7 @@ export default async function KelolaPage({
           stallId={akses.stallId}
         />
       </main>
+      </>
     );
   }
 
@@ -256,10 +264,11 @@ export default async function KelolaPage({
   };
 
   return (
+    <>
+    <ManageSessionBootstrap aktif={perluTukarSesi} />
     <main className="shell w-full pb-[110px] pt-4 md:pb-24 md:pt-6">
       <KelolaClient
         data={data}
-        token={token}
         manageUrl={urlBarang(origin, id, token)}
         publicUrl={`${origin}/listing/${row.id}`}
         punyaLapak={Boolean(akses.stallId)}
@@ -267,5 +276,6 @@ export default async function KelolaPage({
         fotoGagal={sp.foto === "gagal"}
       />
     </main>
+    </>
   );
 }

@@ -67,7 +67,6 @@ export function MediaCarousel({
       >
         {foto.map((f, i) => (
           <div key={f.image_url} id={`foto-${i}`} className="w-full shrink-0 snap-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             {/*
              * TIDAK memakai animate-reveal di sini.
              *

@@ -18,7 +18,6 @@ export function Footer() {
       <div className="shell flex flex-col gap-5 py-8 sm:flex-row sm:items-center sm:justify-between">
         {/* Identitas */}
         <div className="flex items-center gap-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/mark.png" alt="" width={22} height={22} className="shrink-0" />
           {/*
             Nama brand memakai font-display. KENAPA: ini satu-satunya

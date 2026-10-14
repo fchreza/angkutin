@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn } from "@/lib/cn";
 import { IconCheck, IconChevronDown } from "./icons";
@@ -60,6 +60,7 @@ export function Select({
   id,
   className,
   "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
 }: {
   nilai: string;
   onUbah: (v: string) => void;
@@ -73,6 +74,7 @@ export function Select({
   id?: string;
   className?: string;
   "aria-label"?: string;
+  "aria-describedby"?: string;
 }) {
   const idOtomatis = useId();
   const kontrolId = id ?? idOtomatis;
@@ -113,6 +115,7 @@ export function Select({
         <SelectPrimitive.Trigger
           id={kontrolId}
           aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
           aria-invalid={salah || undefined}
           className={cn(
             "group flex h-11 w-full items-center justify-between gap-3",

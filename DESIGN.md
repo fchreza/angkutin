@@ -1,155 +1,75 @@
 # angkutin — Arah Desain
 
-Dokumen ini adalah sumber kebenaran untuk setiap keputusan visual di angkutin.
-Kalau ada keputusan yang tidak bisa dijelaskan lewat dokumen ini, keputusan itu
-belum layak diambil.
+Dokumen ini mencatat **UI yang benar-benar berjalan**; implementasi warna dan tipografi bersumber dari `app/globals.css`, `app/layout.tsx`, dan konfigurasi Tailwind. Jika UI berubah, perbarui dokumen ini bersamaan.
 
-## Apa ini
+## Produk dan pengguna
 
-Marketplace barang pindahan tanpa akun. Mahasiswa yang pindah kos memasang
-barangnya dalam satu menit, dapat dua tautan (satu untuk dibagikan, satu
-rahasia untuk mengelola), lalu pembeli menghubungi lewat WhatsApp. Tidak ada
-pendaftaran, tidak ada pembayaran, tidak ada kurir.
+Angkutin adalah marketplace barang pindahan mahasiswa di Indonesia. Penjual memasang barang tanpa akun, membagikan tautan publik, dan mengelolanya lewat tautan rahasia. Pembeli mengambil sendiri dan menghubungi penjual melalui WhatsApp; tidak ada checkout, kurir, atau pembayaran di aplikasi.
 
-## Untuk siapa
+Pengguna utama adalah mahasiswa dan penghuni kos yang sering memakai ponsel, perlu bergerak cepat, dan mungkin memakai koneksi lambat. Karena itu, katalog harus mudah dipindai, gambar harus proporsional, dan tindakan utama harus jelas tanpa menambah langkah yang tidak perlu.
 
-Mahasiswa dan anak kos di Indonesia, 18 sampai 25 tahun, hampir selalu di
-ponsel, sering dengan koneksi lambat. Mereka tidak sedang berbelanja dengan
-santai; mereka sedang buru-buru mengosongkan kamar sebelum tanggal keluar.
+## Karakter visual
 
-## Karakter
+**Ringkas, ramah, dan terang.** Kanvas alabaster netral, kartu putih, tinta biru-arang, dan hijau emerald membentuk identitas yang bersih tanpa terasa korporat. Foto barang dan harga menjadi pusat perhatian; label kecil, ikon garis, serta ruang antarkelompok membantu pemindaian cepat.
 
-**Editorial hangat.** Kanvas krem, foto barang jadi bintang, tipografi besar
-dan ramah, terasa lokal dan terpercaya. Ini bukan toko mewah dan bukan
-dashboard perusahaan. Ini seperti katalog barang bekas yang ditata rapi oleh
-orang yang peduli.
-
-Tiga kata yang mengikat: **hangat, jujur, lapang.**
-
-Tiga kata yang harus dihindari: **dingin, korporat, penuh.**
-
-## Dial
-
-```
-ENERGY 2 / RHYTHM 2 / MOTION 2
-```
-
-- **ENERGY 2** — desain menyapa dengan tenang, tapi tidak datar. Bukan GOV.UK
-  yang sepenuhnya linear, bukan portofolio agensi yang berteriak.
-- **RHYTHM 2** — grid konsisten dengan beberapa jeda yang disengaja. Katalog
-  itu grid; itu memang sifat produknya. Yang boleh berbeda hanya halaman
-  Tentang dan kepala halaman detail.
-- **MOTION 2** — transisi dan hover, tanpa parallax dan tanpa scroll-linked.
-  Satu pengecualian: perpindahan tema eclipse, yang sudah ada dan sudah diuji.
-
-Dial ini dipegang dari section pertama sampai terakhir.
+Prinsip yang dipakai: **jelas, mudah dipindai, tepercaya**. Hindari dekorasi yang membuat kartu katalog padat atau mengalihkan perhatian dari barang dan tindakan.
 
 ## Warna
 
-Hijau tetap identitas, tapi dihangatkan. Kanvasnya krem, bukan putih dingin.
+Nilai di bawah mengikuti custom properties `--w-*` pada `app/globals.css`. Gunakan token, bukan nilai warna baru yang dipilih secara terpisah.
 
-### Terang
+### Mode terang
 
-| Peran | Nilai | Alasan |
+| Peran | Nilai | Pemakaian |
 |---|---|---|
-| Kanvas | `#FAF8F5` | Krem hangat. Putih murni terasa klinis; krem terasa seperti kertas. |
-| Permukaan (kartu) | `#FFFFFF` | Kartu harus terpisah dari kanvas. Putih di atas krem justru terbaca sebagai lapisan, bukan sebagai dingin. |
-| Permukaan tenggelam | `#F3F0EA` | Baris tabel, kolom filter, area yang tidak perlu menonjol. |
-| Tinta utama | `#1C1A17` | Coklat-hitam, bukan hitam pekat. Hitam pekat di atas krem terasa patah. |
-| Tinta sekunder | `#6B655C` | Abu hangat. |
-| Tinta mono | `#8A8378` | Keterangan kecil, label. |
-| Garis | `#E5E0D6` | Batas kartu. Harus terlihat, tidak boleh jadi garis yang berteriak. |
-| Garis kuat | `#B5AEA1` | Batas input, harus lolos 3:1 terhadap kanvas. |
-| Primary | `#0E7A4F` | Hijau dihidupkan dari `#047857`. Lebih banyak kroma, tetap lolos 4,5:1 dengan teks putih. |
-| Primary hover | `#0A6541` | |
-| Primary soft | `#E8F5EE` | Latar badge dan tombol sekunder. |
-| Accent (urgensi) | `#C2410C` | Terracotta, bukan amber. Amber adalah warna peringatan sistem; terracotta adalah warna tanah, dan barang pindahan itu soal tanah dan waktu. |
+| Kanvas (`--w-bg`) | `#F8FAFC` | Latar halaman, alabaster sejuk. |
+| Permukaan (`--w-surface`) | `#FFFFFF` | Kartu dan panel. |
+| Permukaan kedua (`--w-surface2`) | `#F1F5F9` | Bidang sekunder dan skeleton. |
+| Tinta utama (`--w-ink`) | `#0F172A` | Judul dan teks utama. |
+| Tinta sekunder (`--w-ink2`) | `#475569` | Keterangan dan teks pendukung. |
+| Tinta lembut (`--w-ink3`) | `#55637A` | Metadata berukuran kecil. |
+| Garis (`--w-line`) | `#E2E8F0` | Batas kartu dan panel. |
+| Garis kuat (`--w-line-kuat`) | `#75879E` | Batas kontrol input. |
+| Primary (`--w-primary`) | `#047857` | Tombol utama dan identitas emerald. |
+| Primary hover | `#065F46` | Hover/fokus tombol utama. |
+| Primary soft | `#ECFDF5` | Latar aksen hijau yang lembut. |
+| Aksen tenggat (`--w-accent`) | `#B45309` | Peringatan urgensi; bukan aksen dekoratif umum. |
+| Bahaya (`--w-danger`) | `#DC2626` | Error dan tindakan berisiko. |
 
-### Gelap
+### Mode gelap
 
-Kanvas `#17150F` (coklat-gelap hangat, bukan abu netral), permukaan `#201D16`,
-tinta `#F2EFE9`. Hijau dinaikkan ke `#3DBE85` supaya tetap terbaca sebagai
-hijau di atas gelap, bukan jadi hijau lumpur.
+Mode gelap memakai kanvas `#121212`, permukaan `#1A1A1A` dan `#222222`, tinta `#E0E0E0`/`#B0B0B0`, garis `#444444`/`#6E6E6E`, primary `#10B981`, serta aksen `#FB923C`. Nilai lengkap ada di blok `.dark` pada `app/globals.css`; jangan mengasumsikan warna terang hanya dibalik secara otomatis.
 
-Aturan: **setiap warna di kedua mode harus diukur, bukan diperkirakan.**
-Teks normal minimal 4,5:1, teks besar minimal 3:1, batas input minimal 3:1.
+Kontras teks, kontrol, dan state interaktif harus tetap mengikuti nilai terukur yang didokumentasikan dekat token CSS. Perubahan warna perlu diperiksa pada kedua tema.
 
 ## Tipografi
 
-Dua rupa huruf, masing-masing dengan alasan tertulis.
+**Plus Jakarta Sans** adalah satu-satunya keluarga font UI, dimuat lewat `next/font/google` di `app/layout.tsx` dan dipakai sebagai `font-sans`. Berat yang tersedia 400, 500, 600, 700, dan 800. Fraunces tidak lagi dimuat; jangan menambahkan font kedua tanpa kebutuhan dan evaluasi performa yang jelas.
 
-### Plus Jakarta Sans — badan dan antarmuka
+- Harga pada kartu dibuat besar dan tegas agar cepat ditemukan.
+- Judul dan label memakai hierarki ukuran/berat, bukan keluarga font berbeda.
+- Label bagian kecil boleh memakai kapital dan tracking lebar; teks bantuan tetap mudah dibaca pada layar ponsel.
 
-Dipesan untuk identitas kota Jakarta (Tokotype, 2020). Jadi huruf ini secara
-harfiah membawa karakter "Indonesia, urban, muda" yang jadi tempat produk ini
-hidup. Bentuknya geometris tapi hangat, dengan huruf `a`, `g`, dan `k` yang
-khas. Ini alasan yang bisa ditulis satu baris, bukan "kelihatan bagus".
+## Bentuk dan tata letak
 
-### Fraunces — judul besar saja
+Gunakan skala radius dari konfigurasi Tailwind aktif: radius kecil untuk kontrol, `rounded-md` untuk kartu/panel, `rounded-lg` untuk permukaan lebih besar, dan pill hanya untuk badge/chip. Pastikan radius kartu dan foto terasa menyatu melalui `overflow-hidden`.
 
-Serif editorial hangat dengan **optical sizing**: bentuk hurufnya benar-benar
-berubah sesuai ukuran, yang persis prinsip tipografi display. Dipakai hanya di
-atas 32px, dengan sumbu `SOFT` dinaikkan dan `WONK` dinyalakan supaya terasa
-ditulis tangan, bukan dicetak.
+Katalog memakai grid responsif dua kolom pada ponsel dan menambah kolom seiring lebar layar. Kartu memakai rasio foto **4:3**, judul ringkas, harga menonjol, lalu lokasi dan tenggat. Hindari memperbesar satu kartu hingga memecah ritme grid.
 
-### Aturan
+## Elevasi dan interaksi
 
-- **Tracking bersifat per-ukuran.** Judul besar justru dirapatkan
-  (`-0.02em`), teks kecil dilonggarkan. Satu nilai untuk semua ukuran adalah
-  tanda tipografi yang belum dipikirkan.
-- **Skala judul dinaikkan.** H1 katalog dari 26px jadi 40px di desktop. Judul
-  yang kecil di halaman lapang membuat halamannya terasa kosong, bukan lapang.
-- **Jarak baris judul dirapatkan** (1,05 sampai 1,15) karena huruf besar
-  dengan jarak baris normal terlihat mengambang.
+Kartu diam memakai border halus dan bayangan sangat ringan untuk memisahkan permukaan putih dari kanvas; hover/fokus mempertegas batas/bayangan. Elemen mengambang seperti dialog dapat memakai elevasi lebih tinggi. Batasi blur/backdrop dan animasi agar tidak mengganggu konten atau perangkat lambat.
 
-## Bentuk
+Interaksi harus memiliki state hover, focus-visible, disabled, loading, dan error yang dapat dikenali. Animasi bersifat singkat dan membantu memberi umpan balik; hormati preferensi pengurangan gerak. Validasi menautkan pesan ke kontrol, mengumumkan error, dan memfokuskan field pertama yang perlu diperbaiki.
 
-Radius bertingkat, bukan seragam. Semua seragam berarti radius jadi hiasan,
-bukan alat hierarki.
+## Aksesibilitas dan PWA
 
-```
---radius-sm   : 8px   (input, tombol kecil)
---radius-md   : 14px  (kartu, panel)
---radius-lg   : 22px  (modal, lembar besar)
---radius-pill : 999px (chip filter, badge, FAB)
-```
+- Gunakan label yang terhubung ke input, `aria-invalid`, dan `aria-describedby` untuk error.
+- Semua tindakan dapat dijangkau dengan keyboard serta memiliki focus-visible yang jelas.
+- Status tidak disampaikan hanya dengan warna.
+- `public/manifest.json` dan `viewport.themeColor` di `app/layout.tsx` harus cocok dengan token kanvas mode terang `#F8FAFC`; warna identitas tombol tetap `#047857`.
+- Pertahankan ukuran tap yang nyaman di ponsel dan teks yang terbaca tanpa zoom.
 
-## Elevasi
+## Area yang memerlukan kehati-hatian
 
-Bayangan hanya untuk menandai ketinggian, dan alasannya harus bisa ditulis.
-
-- **Kartu saat diam: tanpa bayangan.** Cukup batas 1px. Katalog berisi banyak
-  kartu; kalau semuanya melayang, tidak ada yang melayang.
-- **Kartu saat hover: bayangan berlapis** (ambient + direct). Alasannya:
-  memberi tahu kartu ini bisa ditekan.
-- **FAB dan lapisan mengambang: bayangan lebih dalam.** Alasannya: mereka
-  memang di atas halaman.
-- **Lapisan gerhana tema: bayangan penuh.** Alasannya: menutup seluruh layar.
-
-Aturan: maksimal satu lapisan kaca (`backdrop-filter`) per layar, dan hanya
-untuk navbar.
-
-## Identitas
-
-Satu motif yang diulang: **garis label kecil huruf kapital dengan tracking
-lebar**, dipakai sebagai penanda bagian di seluruh situs. Ini bahasa visual
-katalog cetak, dan itu yang membuat halaman-halamannya terasa satu keluarga.
-
-Satu detail tanda tangan: **kartu barang memakai rasio foto 4:3 dengan sudut
-foto yang mengikuti radius kartu**, dan harga diletakkan sebagai elemen paling
-besar di kartu. Di marketplace, harga adalah informasi pertama yang dicari
-mata, jadi harga yang harus paling menonjol, bukan judulnya.
-
-## Yang tidak boleh diubah
-
-Ini sudah teruji dan berfungsi. Redesain tidak boleh menyentuhnya, kecuali
-untuk menyesuaikan warna lewat token.
-
-- Loader `apple-breathe` (`components/shared/apple-breathe.tsx`)
-- Tombol salin (`components/shared/tombol-salin.tsx`)
-- Dropdown Radix (`components/shared/select.tsx`)
-- Pengalih tema eclipse (`components/shared/tombol-tema.tsx`)
-- Pengunggah foto (`components/form/photo-uploader.tsx`)
-- Panel lapak (`components/form/panel-lapak.tsx`) dan seluruh logika lapak
-- Struktur rute dan URL
-- Semua teks yang sudah ada (boleh ditata ulang, tidak boleh diubah maknanya)
+Loader `apple-breathe`, tombol salin, dropdown Radix, pengalih tema, pengunggah foto, panel lapak, struktur URL, dan makna teks produk telah memiliki perilaku khusus. Perubahan pada area tersebut harus mempertahankan fungsinya, aksesibilitas, dan kontrak yang digunakan halaman lain.

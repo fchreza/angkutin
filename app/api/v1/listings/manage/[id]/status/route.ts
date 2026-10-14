@@ -6,6 +6,7 @@ import { ok, gagal, bacaJson } from "@/lib/api";
 import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { statusSchema } from "@/lib/validators";
 import { BUCKET, s3, s3Siap } from "@/lib/s3";
+import { tokenSesiKelola } from "@/lib/manage-session";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export async function PATCH(
     // lapak (boleh mengubah barang apa pun di lapaknya) dan token barang itu
     // sendiri (tautan lama). `bolehKelolaBarang` yang memastikan token lapak
     // TIDAK bisa menyentuh barang milik lapak lain.
-    const akses = await periksaAkses(id, parsed.data.token);
+    const akses = await periksaAkses(id, tokenSesiKelola(req, id));
     if (!akses || !(await bolehKelolaBarang(akses, id))) {
       return gagal("Tautan pengelolaan tidak valid atau sudah kedaluwarsa", 404);
     }

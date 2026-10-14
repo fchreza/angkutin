@@ -27,10 +27,8 @@ import { urlPasangKeLapak } from "@/lib/konteks-lapak";
  */
 export function PindahKeLapak({
   listingId,
-  token,
 }: {
   listingId: string;
-  token: string;
 }) {
   const { tampilkan } = useToast();
   const [memuat, setMemuat] = useState(false);
@@ -48,7 +46,7 @@ export function PindahKeLapak({
       const r = await fetch("/api/v1/lapak", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ listing_id: listingId, listing_token: token }),
+        body: JSON.stringify({ listing_id: listingId }),
       });
 
       const j = (await r.json().catch(() => ({}))) as {

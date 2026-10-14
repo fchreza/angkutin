@@ -3,7 +3,6 @@
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { IconHome, IconPlus, IconUser } from "@/components/shared/icons";
-import { Spinner } from "@/components/shared/spinner";
 import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { TombolTema } from "@/components/shared/tombol-tema";
 import { cn } from "@/lib/cn";
@@ -31,7 +30,6 @@ import { cn } from "@/lib/cn";
 
 function Logo({ ukuran = 28 }: { ukuran?: number }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/brand/mark.png"
       alt=""

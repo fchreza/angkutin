@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * Halaman cadangan saat offline.
  *
@@ -90,7 +92,7 @@ export default function OfflinePage() {
         minimum WCAG 2.5.5, dengan `display:flex` supaya teksnya tetap
         terpusat di dalam area itu.
       */}
-      <a
+      <Link
         href="/"
         style={{
           marginTop: 10,
@@ -104,7 +106,7 @@ export default function OfflinePage() {
         }}
       >
         Kembali ke Katalog
-      </a>
+      </Link>
     </main>
   );
 }

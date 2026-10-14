@@ -4,6 +4,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
 import { buatLapak, urlLapak } from "@/lib/lapak";
 import { generateSecretToken, tokenCocok } from "@/lib/token";
+import { tokenSesiKelola } from "@/lib/manage-session";
 
 export const dynamic = "force-dynamic";
 
@@ -42,9 +43,9 @@ export async function POST(req: Request) {
       return gagal("Format permintaan tidak valid.", 400);
     }
 
-    const b = body as { listing_id?: unknown; listing_token?: unknown };
+    const b = body as { listing_id?: unknown };
     const listingId = typeof b.listing_id === "string" ? b.listing_id : "";
-    const listingToken = typeof b.listing_token === "string" ? b.listing_token : "";
+    const listingToken = tokenSesiKelola(req, listingId);
 
     if (!listingId || !listingToken) {
       return gagal("Barang dan tokennya wajib diisi.", 400);

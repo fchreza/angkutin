@@ -5,6 +5,7 @@ import { IconCamera, IconX, IconChevronRight } from "@/components/shared/icons";
 import { Spinner } from "@/components/shared/spinner";
 import { useToast } from "@/components/shared/toast";
 import { cn } from "@/lib/cn";
+import { invalidasiCacheFeed } from "@/lib/feed-cache";
 
 /**
  * Pengelola foto untuk listing yang SUDAH tayang.
@@ -30,13 +31,11 @@ export type FotoTersimpan = { image_url: string; display_order: number };
 
 export function PhotoManager({
   listingId,
-  token,
   foto,
   onBerubah,
   nonaktif = false,
 }: {
   listingId: string;
-  token: string;
   foto: FotoTersimpan[];
   onBerubah: (f: FotoTersimpan[]) => void;
   /** true saat status listing tidak memungkinkan diubah (mis. sudah diambil). */
@@ -57,7 +56,6 @@ export function PhotoManager({
     setPesan(null);
     try {
       const fd = new FormData();
-      fd.append("token", token);
       pertahankan.forEach((url) => fd.append("keep", url));
       baru.forEach((f) => fd.append("images", f));
 
@@ -77,6 +75,7 @@ export function PhotoManager({
       }
 
       if (j.images) onBerubah(j.images);
+      invalidasiCacheFeed();
       return true;
     } catch {
       setPesan("Gagal menghubungi server. Periksa koneksi lalu coba lagi.");
@@ -197,7 +196,6 @@ export function PhotoManager({
             key={f.image_url}
             className="group relative aspect-square overflow-hidden rounded-md border border-line bg-appbg"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={f.image_url}
               alt={`Foto ${i + 1}`}

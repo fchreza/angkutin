@@ -18,23 +18,26 @@ export const dynamic = "force-dynamic";
  * Data awal diambil di server (SSR) supaya konten sudah ada saat halaman
  * pertama tampil — penting untuk FCP < 1.8s (NFR §11 no.1).
  *
- * FILTER AWAL DARI URL (?kategori=&regency=):
+ * FILTER AWAL DARI URL (?kategori=&regency=&provinsi=&q=&sort=):
  * Dipakai oleh remah navigasi di halaman detail barang, supaya "Rak & Meja"
  * atau "Sleman, DI Yogyakarta" di remah benar-benar membuka katalog yang sudah
  * tersaring — bukan tautan yang mendarat di katalog penuh.
  *
- * Batasnya: hanya dua filter pertama yang dibaca. Sort, kata kunci, dan
- * provinsi sengaja tidak, supaya URL tetap pendek dan tidak ada permukaan
- * tambahan yang perlu diamankan.
+ * Filter dapat dibagikan dan dipulihkan lewat URL, termasuk sort dan kata kunci.
  */
 export default async function BerandaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ kategori?: string; regency?: string }>;
+  searchParams: Promise<{ kategori?: string; regency?: string; provinsi?: string; q?: string; sort?: string }>;
 }) {
   const sp = await searchParams;
   const kategoriAwal = sp.kategori ?? "semua";
   const regencyAwal = sp.regency ?? "";
+  const provinsiAwal = sp.provinsi ?? "";
+  const queryAwal = sp.q ?? "";
+  const sortAwal = (["mendesak", "terbaru", "termurah", "gratis"].includes(sp.sort ?? "")
+    ? sp.sort
+    : "mendesak") as "mendesak" | "terbaru" | "termurah" | "gratis";
 
   // Zona WIB, bukan UTC — lihat catatan di lib/format.ts. Dengan
   // toISOString() tanggalnya masih kemarin antara 00:00–06:59 WIB.
@@ -65,16 +68,14 @@ export default async function BerandaPage({
       .select({ id: categories.id, name: categories.name, slug: categories.slug })
       .from(categories)
       .orderBy(asc(categories.displayOrder)),
-    // Filter awal dari URL: kabupaten kalau ada, kalau tidak kategori saja.
-    // (Katalog tidak menerima keduanya sekaligus dari remah.)
+    // Terapkan semua filter URL sekaligus, sama dengan filter katalog interaktif.
     ambilFeed({
-      sort: "mendesak",
+      sort: sortAwal,
       limit: 24,
-      ...(regencyAwal
-        ? { regency_code: regencyAwal }
-        : kategoriAwal !== "semua"
-          ? { category_id: kategoriAwal }
-          : {}),
+      ...(regencyAwal ? { regency_code: regencyAwal } : {}),
+      ...(!regencyAwal && provinsiAwal ? { province_code: provinsiAwal } : {}),
+      ...(kategoriAwal !== "semua" ? { category_id: kategoriAwal } : {}),
+      ...(queryAwal ? { q: queryAwal } : {}),
     }),
   ]);
 
@@ -126,7 +127,7 @@ export default async function BerandaPage({
           Plus Jakarta Sans yang sama dengan teks badan, jadi judul dan isi
           satu keluarga huruf. Pemisahannya tetap ditulis lewat `font-display`
           supaya judul punya NAMA perannya sendiri di kode — kalau nanti mau
-          dipisah lagi, cukup ubah satu baris di tailwind.config.ts.
+          dipisah lagi, cukup ubah satu baris di tailwind.config.mts.
 
           KENAPA sekarang tampil juga di mobile: sebelumnya `hidden md:block`,
           jadi pengguna ponsel tidak melihat judul sama sekali dan langsung
@@ -153,6 +154,9 @@ export default async function BerandaPage({
           totalAwal={feed.total}
           kategoriAwal={kategoriAwal}
           regencyAwal={regencyAwal}
+          provinsiAwal={provinsiAwal}
+          queryAwal={queryAwal}
+          sortAwal={sortAwal}
         />
       </main>
     </>
