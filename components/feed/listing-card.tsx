@@ -5,7 +5,7 @@ import { Badge } from "@/components/shared/badge";
 import { AppleBreathe } from "@/components/shared/apple-breathe";
 import { IconPin, IconClock, IconCamera } from "@/components/shared/icons";
 import { formatRupiah } from "@/lib/format";
-import { getUrgency, labelTenggat } from "@/lib/urgency";
+import { getUrgency, labelTenggat, LABEL_KONDISI } from "@/lib/urgency";
 import { cn } from "@/lib/cn";
 import type { KartuListing } from "@/lib/listing-query";
 
@@ -85,6 +85,7 @@ export function ListingCard({ item }: { item: KartuListing }) {
   const urgency = getUrgency(item.deadline_date);
   const ambil = item.status === "TAKEN";
   const mendesak = urgency === "urgent" || urgency === "today";
+  const kondisi = LABEL_KONDISI[item.condition] ?? item.condition;
 
   return (
     <Link
@@ -149,6 +150,10 @@ export function ListingCard({ item }: { item: KartuListing }) {
           <PlaceholderFoto pesan="Belum ada foto" />
         )}
 
+        <span className="absolute left-2 top-2 max-w-[calc(100%-5rem)] truncate rounded-pill bg-surface/95 px-2.5 py-1 text-[10px] font-semibold text-ink shadow-sm backdrop-blur-sm">
+          {kondisi}
+        </span>
+
         {/* Jumlah foto — scrim tetap gelap karena di bawahnya selalu foto */}
         {item.jumlah_foto > 1 && (
           <span className="absolute right-2 top-2 rounded-pill bg-scrim/75 px-2 py-[3px] text-[11px] font-medium text-white">
@@ -167,21 +172,21 @@ export function ListingCard({ item }: { item: KartuListing }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-1 flex-col gap-1.5 p-3.5">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-3.5">
+        <h3 className="kartu-judul clamp-2 min-h-[2.65em] text-[13px] font-semibold leading-snug text-ink-secondary sm:text-[13.5px]">
+          {item.title}
+        </h3>
+
         {/* Harga — elemen paling besar, sesuai keputusan hierarki di atas */}
         {item.is_free ? (
-          <span className="font-display text-[19px] font-bold leading-none tracking-tight text-primary-dark">
+          <span className="font-display text-[18px] font-bold leading-tight tracking-tight text-primary-dark sm:text-[19px]">
             Gratis
           </span>
         ) : (
-          <span className="font-display text-[19px] font-bold leading-none tracking-tight tabular-nums text-ink">
+          <span className="font-display text-[18px] font-bold leading-tight tracking-tight tabular-nums text-ink sm:text-[19px]">
             {formatRupiah(item.price)}
           </span>
         )}
-
-        <h3 className="kartu-judul clamp-2 text-[13.5px] font-semibold leading-snug text-ink-secondary">
-          {item.title}
-        </h3>
 
         <div className="flex items-center gap-1 text-[12px] text-ink-secondary">
           <IconPin size={13} className="shrink-0 text-ink-mono" />

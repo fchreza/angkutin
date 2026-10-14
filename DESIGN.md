@@ -54,7 +54,7 @@ Kontras teks, kontrol, dan state interaktif harus tetap mengikuti nilai terukur 
 
 Gunakan skala radius dari konfigurasi Tailwind aktif: radius kecil untuk kontrol, `rounded-md` untuk kartu/panel, `rounded-lg` untuk permukaan lebih besar, dan pill hanya untuk badge/chip. Pastikan radius kartu dan foto terasa menyatu melalui `overflow-hidden`.
 
-Katalog memakai grid responsif dua kolom pada ponsel dan menambah kolom seiring lebar layar. Kartu memakai rasio foto **4:3**, judul ringkas, harga menonjol, lalu lokasi dan tenggat. Hindari memperbesar satu kartu hingga memecah ritme grid.
+Katalog memakai grid responsif dua kolom pada ponsel dan menambah kolom seiring lebar layar. Kartu memakai rasio foto **4:3**; kondisi tampil sebagai label ringkas pada foto, lalu judul, harga menonjol, lokasi, dan tenggat. Hindari memperbesar satu kartu hingga memecah ritme grid.
 
 ## Elevasi dan interaksi
 
