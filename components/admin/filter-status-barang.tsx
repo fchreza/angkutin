@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ListingStatus } from "@/db/schema";
 import type { JumlahStatusBarangAdmin } from "@/lib/admin-barang";
 
@@ -34,8 +35,9 @@ export function FilterStatusBarang({
 
           return (
             <li key={filter.value ?? "ALL"}>
-              <a
+              <Link
                 href={`/admin${queryString ? `?${queryString}` : ""}`}
+                prefetch={false}
                 aria-current={aktif ? "page" : undefined}
                 className={`inline-flex min-h-[40px] items-center gap-2 rounded-pill border px-3.5 py-2 text-[13px] font-medium transition-colors ${
                   aktif
@@ -49,7 +51,7 @@ export function FilterStatusBarang({
                 >
                   {jumlahFilter.toLocaleString("id-ID")}
                 </span>
-              </a>
+              </Link>
             </li>
           );
         })}
