@@ -197,6 +197,19 @@ export function FeedClient({
     p.set("sort", sort);
     return p.toString();
   }, [lokasi, kategoriId, qDebounce, sort]);
+  // Hasil SSR hanya cocok untuk filter yang dipakai saat server membuatnya.
+  // Jangan gunakan `kunciFilter` aktif di efek cache di bawah: saat pengguna
+  // mengubah filter, itu akan menaruh feed awal di bawah kunci filter baru.
+  const kunciFeedAwal = useMemo(() => {
+    const p = new URLSearchParams();
+    if (regencyAwal) p.set("regency_code", regencyAwal);
+    else if (provinsiAwal) p.set("province_code", provinsiAwal);
+    if (kategoriAwal !== "semua") p.set("category_id", kategoriAwal);
+    const kueri = queryAwal.trim();
+    if (kueri) p.set("q", kueri);
+    p.set("sort", sortAwal);
+    return p.toString();
+  }, [regencyAwal, provinsiAwal, kategoriAwal, queryAwal, sortAwal]);
   const filterAktifRef = useRef(kunciFilter);
   filterAktifRef.current = kunciFilter;
 
@@ -215,8 +228,8 @@ export function FeedClient({
 
   // Cache SSR awal agar kembali ke filter asal tidak memanggil endpoint lagi.
   useEffect(() => {
-    simpanCacheFeed(kunciFilter, { data: feedAwal, total: totalAwal });
-  }, [kunciFilter, feedAwal, totalAwal]);
+    simpanCacheFeed(kunciFeedAwal, { data: feedAwal, total: totalAwal });
+  }, [kunciFeedAwal, feedAwal, totalAwal]);
 
   const muat = useCallback(async () => {
     const kunci = kunciFilter;
