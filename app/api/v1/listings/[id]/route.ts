@@ -3,6 +3,7 @@ import { listings } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { ambilDetail } from "@/lib/listing-query";
 import { ok, gagal } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export async function GET(
      */
     return ok(detail);
   } catch (e) {
-    console.error("[listing detail] gagal:", e);
+    logger.error("[listing detail] gagal:", e);
     return gagal("Gagal memuat detail barang.", 500);
   }
 }

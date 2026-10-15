@@ -6,6 +6,7 @@ import { periksaAkses } from "@/lib/lapak";
 import { tokenCocok } from "@/lib/token";
 import { stalls } from "@/db/schema";
 import { tokenSesiKelola } from "@/lib/manage-session";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     return ok({ jenis: "lapak", nama: akses.nama, barang });
   } catch (e) {
-    console.error("[lapak GET] gagal:", e);
+    logger.error("[lapak GET] gagal:", e);
     return gagal("Gagal memuat lapak.", 500);
   }
 }
@@ -126,7 +127,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return gagal("Tidak ada yang diubah.", 400);
   } catch (e) {
-    console.error("[lapak PATCH] gagal:", e);
+    logger.error("[lapak PATCH] gagal:", e);
     return gagal("Gagal memperbarui lapak.", 500);
   }
 }

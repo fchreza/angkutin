@@ -5,6 +5,7 @@ import { tanggalHariIniID } from "@/lib/format";
 import { ok, gagal } from "@/lib/api";
 import { bersihkanRateLimit } from "@/lib/rate-limit";
 import { bersihkanPageview } from "@/lib/analytics";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
       dijalankan_pada: new Date().toISOString(),
     });
   } catch (e) {
-    console.error("[cron expire] gagal:", e);
+    logger.error("[cron expire] gagal:", e);
     return gagal("Cron gagal dijalankan.", 500);
   }
 }

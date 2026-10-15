@@ -9,6 +9,7 @@ import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { kompresDiServer } from "@/lib/compress-image";
 import { tokenSesiKelola } from "@/lib/manage-session";
 import { lepaskanRateLimit, reservasiRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -238,7 +239,7 @@ export async function POST(
           }),
         );
       } catch (err) {
-        console.error("[images] gagal hapus foto lama di storage:", err);
+        logger.error("[images] gagal hapus foto lama di storage:", err);
       }
     }
 
@@ -253,17 +254,17 @@ export async function POST(
           }),
         );
       } catch (cleanupError) {
-        console.error("[images] gagal membersihkan unggahan parsial:", cleanupError);
+        logger.error("[images] gagal membersihkan unggahan parsial:", cleanupError);
       }
     }
     if (!dbCommitted && idReservasi) {
       try {
         await lepaskanRateLimit(idReservasi);
       } catch (releaseError) {
-        console.error("[images] gagal melepas reservasi rate limit:", releaseError);
+        logger.error("[images] gagal melepas reservasi rate limit:", releaseError);
       }
     }
-    console.error("[images POST] gagal:", e);
+    logger.error("[images POST] gagal:", e);
     if (e instanceof GambarUnggahanTidakValid) {
       return gagal(e.message, 400);
     }
@@ -287,7 +288,7 @@ export async function GET(
       .where(and(eq(listingImages.listingId, id)));
     return ok({ data: foto });
   } catch (e) {
-    console.error("[images GET] gagal:", e);
+    logger.error("[images GET] gagal:", e);
     return gagal("Gagal memuat foto.", 500);
   }
 }

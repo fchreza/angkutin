@@ -5,6 +5,7 @@ import { ok, gagal } from "@/lib/api";
 import { buatLapak, urlLapak } from "@/lib/lapak";
 import { generateSecretToken, tokenCocok } from "@/lib/token";
 import { tokenSesiKelola } from "@/lib/manage-session";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -99,7 +100,7 @@ export async function POST(req: Request) {
       201,
     );
   } catch (e) {
-    console.error("[lapak POST] gagal:", e);
+    logger.error("[lapak POST] gagal:", e);
     return gagal("Gagal membuat lapak. Coba lagi sebentar.", 500);
   }
 }
