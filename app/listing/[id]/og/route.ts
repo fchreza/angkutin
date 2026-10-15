@@ -2,6 +2,7 @@ import sharp from "sharp";
 import { db } from "@/db";
 import { listingImages } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /listing/:id/og — gambar untuk kartu link (Open Graph).
@@ -84,7 +85,7 @@ export async function GET(
       },
     });
   } catch (e) {
-    console.error("[og image] gagal:", e);
+    logger.error("[og image] gagal:", e);
     return new Response(null, { status: 404 });
   }
 }

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { after } from "next/server";
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { listings } from "@/db/schema";
@@ -7,12 +8,14 @@ import { eq, sql } from "drizzle-orm";
 import { ambilDetail, ambilRekomendasi } from "@/lib/listing-query";
 import { MediaCarousel } from "@/components/detail/media-carousel";
 import { DetailActions } from "@/components/detail/detail-actions";
+import { ReportButton } from "@/components/detail/report-button";
 import { ProductRecommendations } from "@/components/detail/product-recommendations";
 import { Badge } from "@/components/shared/badge";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { IconPin } from "@/components/shared/icons";
 import { formatRupiah, formatTanggalID } from "@/lib/format";
 import { LABEL_KONDISI, statusEfektif } from "@/lib/urgency";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +77,7 @@ export default async function DetailPage({
         .set({ viewCount: sql`${listings.viewCount} + 1` })
         .where(eq(listings.id, id));
     } catch (e) {
-      console.error("[view count] gagal:", e);
+      logger.error("[view count] gagal:", e);
     }
   });
 
@@ -87,8 +90,49 @@ export default async function DetailPage({
     regencyCode: d.regency_code,
   });
 
+  // JSON-LD Product/Offer (schema.org) untuk rich results mesin pencari.
+  //
+  // KENAPA DITAMBAHKAN: halaman detail adalah aset SEO utama — setiap barang
+  // punya URL unik yang bisa diindeks. Tanpa structured data, Google hanya
+  // menebak dari HTML; dengan JSON-LD, harga, ketersediaan, dan gambar
+  // terbaca eksplisit dan berpeluang tampil sebagai rich result.
+  //
+  // KENAPA URL ABSOLUT: schema.org dan validator Google menolak URL relatif.
+  // Origin diambil dari header request yang sebenarnya (mengikuti pola yang
+  // dipakai POST /api/v1/listings saat menyusun public_url).
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const origin = host ? `${proto}://${host}` : "";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: d.title,
+    description: d.description.slice(0, 500),
+    image: d.images.map((f) => f.image_url),
+    offers: {
+      "@type": "Offer",
+      url: origin ? `${origin}/listing/${d.id}` : `/listing/${d.id}`,
+      price: d.is_free ? "0" : d.price,
+      priceCurrency: "IDR",
+      availability:
+        status === "AVAILABLE"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+    },
+  };
+
   return (
     <>
+      {/* Structured data untuk mesin pencari — tidak terlihat pengguna.
+          `<` di-escape supaya judul/deskripsi yang mengandung "</script>"
+          tidak bisa memutus tag script ini (XSS via JSON-LD). */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <main className="shell w-full pb-[190px] pt-3 md:pb-24 md:pt-7">
         <Breadcrumb
           className="mb-5 md:mb-7"
@@ -156,6 +200,10 @@ export default async function DetailPage({
             <div className="mt-5 hidden md:block">
               <DetailActions listingId={d.id} deadline={d.deadline_date} status={status} />
             </div>
+
+            {/* Saluran laporan penyalahgunaan — ditaruh di kolom info supaya
+                terlihat tanpa mengganggu CTA utama. */}
+            <ReportButton listingId={d.id} />
           </div>
         </div>
 
