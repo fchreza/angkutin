@@ -281,6 +281,28 @@ export default function TentangPage() {
           </p>
         </section>
 
+        {/* ---------- Masa berlaku ----------
+            Menjawab pertanyaan yang paling sering membingungkan penjual:
+            "barang saya hilang dari katalog, ke mana?" */}
+        <section className="mt-10 border-t border-line pt-8 md:mt-14">
+          <h2 className="font-display text-[20px] font-medium tracking-[-0.01em] text-ink md:text-[22px]">
+            Berapa lama barang tayang
+          </h2>
+          <div className="mt-4 space-y-4 text-[15.5px] leading-[1.75] text-ink">
+            <p>
+              Setiap barang tayang paling lama{" "}
+              <strong className="font-semibold">14 hari</strong> sejak dipasang.
+              Setelah batas itu lewat, barang otomatis tidak muncul di katalog
+              lagi — datanya tidak hilang, hanya tidak tayang.
+            </p>
+            <p>
+              Kalau barangmu belum laku saat waktunya habis, buka tautan
+              kelolamu dan ubah tanggal batas pengambilannya: barangmu akan
+              tayang lagi seperti semula. Tidak perlu memasang ulang dari awal.
+            </p>
+          </div>
+        </section>
+
         {/* ---------- Tanda tangan ----------
             Penutup bergaya editorial: siapa yang bicara, bukan blok CTA. */}
         <div className="mt-12 border-t border-line pt-8 md:mt-16">
