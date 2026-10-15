@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { pageviews } from "@/db/schema";
 import { ok, gagal } from "@/lib/api";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
 
     return ok({ dicatat: true });
   } catch (e) {
-    console.error("[analytics] gagal:", e);
+    logger.error("[analytics] gagal:", e);
     /*
      * Mengembalikan 500 di sini tidak berguna: klien sengaja mengabaikan
      * kegagalan analytics, jadi statusnya tidak akan pernah dibaca siapa pun.

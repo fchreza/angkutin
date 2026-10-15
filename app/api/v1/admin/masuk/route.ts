@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { periksaSandi, cookieSesi, NAMA_COOKIE, adminSiap } from "@/lib/admin";
 import { ipKlien } from "@/lib/api";
 import { lepaskanRateLimit, reservasiRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/v1/admin/masuk — masuk ke halaman admin.
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
       try {
         await lepaskanRateLimit(idReservasi);
       } catch (releaseError) {
-        console.error("[admin login] gagal melepas reservasi rate limit:", releaseError);
+        logger.error("[admin login] gagal melepas reservasi rate limit:", releaseError);
       }
     }
     throw e;

@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { categories } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function GET() {
 
     return ok({ data, total: data.length });
   } catch (e) {
-    console.error("[categories] gagal:", e);
+    logger.error("[categories] gagal:", e);
     return gagal("Gagal memuat kategori.", 500);
   }
 }

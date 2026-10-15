@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { sudahMasuk, adminSiap, MIN_SANDI } from "@/lib/admin";
 import { daftarBarangAdmin, hitungStatusBarangAdmin } from "@/lib/admin-barang";
+import { daftarLaporan, LABEL_ALASAN_LAPORAN } from "@/lib/laporan";
 import { STATUS_VALUES } from "@/db/schema";
 import { MasukAdmin } from "@/components/admin/masuk-admin";
 import { CariBarang } from "@/components/admin/cari-barang";
 import { FilterStatusBarang } from "@/components/admin/filter-status-barang";
 import { TautanBarang } from "@/components/admin/tautan-barang";
+import { TandaiLaporan } from "@/components/admin/tandai-laporan";
 
 /**
  * Halaman admin — ringkasan kunjungan.
@@ -130,11 +132,14 @@ export default async function HalamanAdmin({
   const kueri = (q ?? "").trim();
   const statusAktif = STATUS_VALUES.find((nilai) => nilai === statusParam);
 
-  // Dijalankan bersamaan, bukan berurutan: keduanya tidak saling bergantung,
+  // Dijalankan bersamaan, bukan berurutan: ketiganya tidak saling bergantung,
   // jadi menunggunya satu per satu hanya menambah waktu muat halaman.
-  const [barang, jumlahStatus] = await Promise.all([
+  const [barang, jumlahStatus, laporan] = await Promise.all([
     daftarBarangAdmin(kueri, statusAktif),
     hitungStatusBarangAdmin(kueri),
+    // Laporan hanya diambil kalau tidak sedang mencari — antrian laporan
+    // adalah daftar kerja harian, bukan hasil pencarian.
+    kueri || statusAktif ? Promise.resolve([]) : daftarLaporan(),
   ]);
   const jumlahHasil = statusAktif
     ? jumlahStatus[statusAktif]
@@ -158,6 +163,68 @@ export default async function HalamanAdmin({
         kueri={kueri}
         jumlah={jumlahStatus}
       />
+
+      {/* ---------- Antrian laporan ----------
+          Hanya tampil saat tidak sedang mencari: ini daftar kerja harian,
+          bukan hasil pencarian. */}
+      {!kueri && !statusAktif && (
+        <section className="mt-10" aria-labelledby="laporan-heading">
+          <h2
+            id="laporan-heading"
+            className="font-display text-[20px] font-medium tracking-[-0.01em] text-ink md:text-[22px]"
+          >
+            Laporan{" "}
+            <span className="rounded-pill bg-accent-soft px-2.5 py-0.5 text-[13px] font-semibold text-accent-text">
+              {laporan.length} menunggu
+            </span>
+          </h2>
+          <p className="mt-2 max-w-baca text-[14px] leading-relaxed text-ink-secondary">
+            Laporan dari pengguna tentang listing yang bermasalah (spam,
+            penipuan, konten tidak pantas). Tinjau, lalu tandai ditinjau — atau
+            hapus/ubah status barangnya dari daftar di bawah bila perlu.
+          </p>
+
+          {laporan.length === 0 ? (
+            <p className="mt-4 rounded-lg border border-line bg-surface px-5 py-6 text-[14px] text-ink-secondary">
+              Tidak ada laporan yang menunggu. Antrian bersih.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {laporan.map((l) => (
+                <li
+                  key={l.id}
+                  className="rounded-lg border border-line bg-surface px-5 py-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-semibold text-ink">
+                        {LABEL_ALASAN_LAPORAN[l.reason] ?? l.reason}
+                      </p>
+                      <p className="mt-1 truncate text-[13px] text-ink-secondary">
+                        <a
+                          href={`/listing/${l.listingId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline decoration-dotted underline-offset-4 hover:text-ink"
+                        >
+                          {l.judulBarang}
+                        </a>{" "}
+                        · {tanggalID(l.dibuat)}
+                      </p>
+                      {l.detail && (
+                        <p className="mt-2 text-[13px] leading-relaxed text-ink">
+                          “{l.detail}”
+                        </p>
+                      )}
+                    </div>
+                    <TandaiLaporan laporanId={l.id} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {barang.length === 0 ? (
         <section className="mt-6 rounded-lg border border-line bg-surface px-6 py-10 text-center">
