@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { ok, gagal } from "@/lib/api";
 import { kecamatanKabupaten } from "@/lib/wilayah-server";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     return ok({ data, regency, ditemukan: true });
   } catch (e) {
-    console.error("[wilayah/kecamatan] gagal:", e);
+    logger.error("[wilayah/kecamatan] gagal:", e);
     return gagal("Gagal memuat daftar kecamatan.", 500);
   }
 }

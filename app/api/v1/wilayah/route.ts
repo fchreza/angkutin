@@ -3,6 +3,7 @@ import { listings } from "@/db/schema";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { ok, gagal } from "@/lib/api";
 import { PROVINSI } from "@/lib/wilayah";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export async function GET() {
 
     return ok({ data, total, provinsi_tersedia: PROVINSI.length });
   } catch (e) {
-    console.error("[wilayah] gagal:", e);
+    logger.error("[wilayah] gagal:", e);
     return gagal("Gagal memuat daftar wilayah.", 500);
   }
 }
