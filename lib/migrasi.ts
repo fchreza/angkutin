@@ -11,32 +11,29 @@
  * jalan otomatis saat server start, tetap tanpa langkah manual
  * (pola yang sama seperti Hermes/Cue: otomatis, bukan manual).
  *
- * KEAMANAN CONCURRENCY:
- *  - Kunci advisory Postgres (non-blocking + retry) supaya beberapa
- *    instance serverless yang cold-start bersamaan tidak menerapkan
- *    migrasi yang sama dua kali.
- *  - Setiap file dijalankan dalam SATU transaksi bersama pencatatan
- *    `_migrations`-nya: kalau SQL-nya gagal, catatannya ikut batal.
- *  - Semua file migrasi ditulis idempoten (IF NOT EXISTS).
+ * KEAMANAN CONCURRENCY (tanpa advisory lock):
+ * Neon pooler berjalan dalam PgBouncer "transaction mode". Di mode itu,
+ * advisory lock (yang bersifat per-sesi) TIDAK bisa diandalkan: tiap
+ * query bisa mendarat di backend yang berbeda, sehingga lock yang
+ * diambil bisa "nyangkut" di backend pool dan tidak pernah ter-release
+ * — semua percobaan migrasi berikutnya akan menggantung sampai timeout.
+ * (Ini bug nyata yang terjadi di produksi pada 2026-10-15.)
+ *
+ * Sebagai gantinya, klaim migrasi memakai PRIMARY KEY tabel `_migrations`:
+ *  - Tiap file dijalankan dalam SATU transaksi yang diawali INSERT ke
+ *    `_migrations`. Kalau dua instance balapan, satu akan menang;
+ *    yang kalah mendapat unique violation → dianggap "sudah dikerjakan
+ *    instance lain" dan dilewati.
+ *  - Kalau SQL-nya gagal, transaksi rollback dan klaimnya ikut batal,
+ *    jadi migrasi akan dicoba lagi di cold start berikutnya.
+ *  - Semua file migrasi ditulis idempoten (IF NOT EXISTS) sebagai
+ *    pertahanan lapis kedua.
  *  - Error TIDAK PERNAH menggagalkan boot server: migrasi yang gagal
  *    dicatat ke log dan akan dicoba lagi di cold start berikutnya.
- *
- * CATATAN VERCEL:
- *  - Isi SQL di-embed ke `lib/migrasi-data.ts` saat build (lihat
- *    `scripts/embed-migrasi.mjs`), jadi tidak ada ketergantungan pada
- *    file `.sql` di filesystem serverless.
- *  - `register()` di instrumentation.ts tidak dipanggil saat `next build`
- *    dan tidak jalan di Edge runtime — hanya di server Node.js yang live.
  */
 
-import postgres, { type Sql } from "postgres";
+import postgres from "postgres";
 import { MIGRASI_SQL } from "./migrasi-data";
-
-const LOCK_NAME = "angkutin_db_migrate";
-// Batas tunggu kunci: 60 x 500ms = 30 detik. Boot server tidak boleh
-// menggantung selamanya menunggu instance lain selesai migrasi.
-const KUNCI_PERCOBAAN_MAKS = 60;
-const KUNCI_TUNGGU_MS = 500;
 
 // Satu instance server cukup menjalankan migrasi sekali; cold start yang
 // datang saat migrasi masih jalan ikut menunggu promise yang sama.
@@ -70,63 +67,61 @@ async function migrasi(): Promise<void> {
   });
 
   try {
-    const terkunci = await cobaKunci(sql);
-    if (!terkunci) {
-      console.warn(
-        "[migrasi] tidak mendapat advisory lock dalam 30 detik — " +
-          "diduga instance lain sedang migrasi. Dilewati, dicoba lagi di cold start berikutnya.",
-      );
-      return;
-    }
+    await sql`
+      CREATE TABLE IF NOT EXISTS _migrations (
+        name TEXT PRIMARY KEY,
+        applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `;
 
-    try {
-      await sql`
-        CREATE TABLE IF NOT EXISTS _migrations (
-          name TEXT PRIMARY KEY,
-          applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
-        )
-      `;
+    const applied = new Set(
+      (await sql`SELECT name FROM _migrations`).map((r) => r.name as string),
+    );
 
-      const applied = new Set(
-        (await sql`SELECT name FROM _migrations`).map((r) => r.name as string),
-      );
+    const files = Object.keys(MIGRASI_SQL).sort();
 
-      const files = Object.keys(MIGRASI_SQL).sort();
-
-      let ran = 0;
-      for (const file of files) {
-        if (applied.has(file)) {
-          console.log(`[migrasi] lewati (sudah teraplikasi): ${file}`);
-          continue;
-        }
-        console.log(`[migrasi] menerapkan: ${file}`);
-        const content = MIGRASI_SQL[file];
+    let ran = 0;
+    for (const file of files) {
+      if (applied.has(file)) {
+        console.log(`[migrasi] lewati (sudah teraplikasi): ${file}`);
+        continue;
+      }
+      console.log(`[migrasi] menerapkan: ${file}`);
+      const content = MIGRASI_SQL[file];
+      try {
         await sql.begin(async (tx) => {
+          // Klaim dulu via PRIMARY KEY: kalau instance serverless lain
+          // sudah mengklaim file ini, INSERT ini gagal dengan unique
+          // violation dan kita lewati — tidak perlu advisory lock.
+          await tx`INSERT INTO _migrations (name) VALUES (${file})`;
           // unsafe() mengeksekusi string apa adanya — boleh multi-statement.
           // File migrasi adalah SQL tepercaya dari repo ini, bukan input pengguna.
           await tx.unsafe(content);
-          await tx`INSERT INTO _migrations (name) VALUES (${file})`;
         });
-        ran++;
-        console.log(`[migrasi] ok: ${file}`);
+      } catch (e) {
+        if (isUniqueViolation(e)) {
+          console.log(
+            `[migrasi] dilewati (sudah dikerjakan instance lain): ${file}`,
+          );
+          continue;
+        }
+        throw e;
       }
-      console.log(`[migrasi] selesai — ${ran} migrasi baru diterapkan.`);
-    } finally {
-      await sql`SELECT pg_advisory_unlock(hashtext(${LOCK_NAME}))`;
+      ran++;
+      console.log(`[migrasi] ok: ${file}`);
     }
+    console.log(`[migrasi] selesai — ${ran} migrasi baru diterapkan.`);
   } finally {
     await sql.end({ timeout: 5 });
   }
 }
 
-/** Coba ambil advisory lock tanpa blocking; kembalikan false bila timeout. */
-async function cobaKunci(sql: Sql): Promise<boolean> {
-  for (let i = 0; i < KUNCI_PERCOBAAN_MAKS; i++) {
-    const rows = await sql`
-      SELECT pg_try_advisory_lock(hashtext(${LOCK_NAME})) AS terkunci
-    `;
-    if (rows[0]?.terkunci === true) return true;
-    await new Promise((r) => setTimeout(r, KUNCI_TUNGGU_MS));
-  }
-  return false;
+/** True bila error adalah pelanggaran unique constraint (kode Postgres 23505). */
+function isUniqueViolation(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "code" in e &&
+    (e as { code: unknown }).code === "23505"
+  );
 }
