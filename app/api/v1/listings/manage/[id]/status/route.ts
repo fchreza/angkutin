@@ -7,6 +7,7 @@ import { periksaAkses, bolehKelolaBarang } from "@/lib/lapak";
 import { statusSchema } from "@/lib/validators";
 import { BUCKET, s3, s3Siap } from "@/lib/s3";
 import { tokenSesiKelola } from "@/lib/manage-session";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export async function PATCH(
             );
           }
         } catch (err) {
-          console.error("[status] gagal hapus foto di storage:", err);
+          logger.error("[status] gagal hapus foto di storage:", err);
         }
       }
 
@@ -101,7 +102,7 @@ export async function PATCH(
       updated_at: diubah.updatedAt.toISOString(),
     });
   } catch (e) {
-    console.error("[status PATCH] gagal:", e);
+    logger.error("[status PATCH] gagal:", e);
     return gagal("Gagal memperbarui status.", 500);
   }
 }

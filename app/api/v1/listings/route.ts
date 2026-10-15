@@ -11,6 +11,7 @@ import {
   lepaskanRateLimit,
   reservasiRateLimit,
 } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 import { buatLapak, urlLapak } from "@/lib/lapak";
 
@@ -46,6 +47,15 @@ export async function GET(req: Request) {
       ? sortRaw
       : "mendesak") as FilterFeed["sort"];
 
+    // limit/offset HARUS bilangan bulat valid. Tanpa validasi, `Number("abc")`
+    // menghasilkan NaN yang lolos ke Drizzle `.limit(NaN)` dan meledak jadi 500.
+    // Lebih baik tolak dengan 400 yang jelas daripada 500 yang misterius.
+    const limit = parseBilanganBulat(q.get("limit"));
+    const offset = parseBilanganBulat(q.get("offset"));
+    if (limit === null || offset === null) {
+      return gagal("Parameter limit dan offset harus bilangan bulat.", 400);
+    }
+
     const filter: FilterFeed = {
       regency_code: q.get("regency_code") ?? undefined,
       province_code: q.get("province_code") ?? undefined,
@@ -54,16 +64,28 @@ export async function GET(req: Request) {
       is_free: q.get("is_free") === "true" ? true : undefined,
       q: q.get("q") ?? undefined,
       sort,
-      limit: q.get("limit") ? Number(q.get("limit")) : undefined,
-      offset: q.get("offset") ? Number(q.get("offset")) : undefined,
+      limit,
+      offset,
     };
 
     const hasil = await ambilFeed(filter);
     return ok(hasil);
   } catch (e) {
-    console.error("[listings GET] gagal:", e);
+    logger.error("[listings GET] gagal:", e);
     return gagal("Gagal memuat daftar barang.", 500);
   }
+}
+
+/**
+ * Parse parameter query menjadi bilangan bulat, atau `undefined` bila tidak
+ * dikirim. Mengembalikan `null` bila dikirim tetapi bukan bilangan bulat
+ * valid — pemanggil memakai ini untuk membalas 400.
+ */
+function parseBilanganBulat(raw: string | null): number | undefined | null {
+  if (raw === null || raw === "") return undefined;
+  if (!/^-?\d+$/.test(raw.trim())) return null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) ? n : null;
 }
 
 export async function POST(req: Request) {
@@ -237,10 +259,10 @@ export async function POST(req: Request) {
       try {
         await lepaskanRateLimit(idReservasi);
       } catch (releaseError) {
-        console.error("[listings POST] gagal melepas reservasi rate limit:", releaseError);
+        logger.error("[listings POST] gagal melepas reservasi rate limit:", releaseError);
       }
     }
-    console.error("[listings POST] gagal:", e);
+    logger.error("[listings POST] gagal:", e);
     return gagal("Gagal menyimpan listing. Coba lagi sebentar.", 500);
   }
 }

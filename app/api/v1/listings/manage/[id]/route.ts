@@ -7,6 +7,7 @@ import { editSchema, validasiTenggat } from "@/lib/validators";
 import { validasiWilayah } from "@/lib/wilayah-server";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 import { tokenSesiKelola } from "@/lib/manage-session";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -103,7 +104,7 @@ export async function GET(
       },
     });
   } catch (e) {
-    console.error("[manage GET] gagal:", e);
+    logger.error("[manage GET] gagal:", e);
     return gagal("Gagal memuat data pengelolaan.", 500);
   }
 }
@@ -251,7 +252,7 @@ export async function PATCH(
       updated_at: diubah.updatedAt.toISOString(),
     });
   } catch (e) {
-    console.error("[manage PATCH] gagal:", e);
+    logger.error("[manage PATCH] gagal:", e);
     return gagal("Gagal menyimpan perubahan. Coba lagi sebentar.", 500);
   }
 }
