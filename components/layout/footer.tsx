@@ -47,6 +47,15 @@ export function Footer() {
           <Link href="/tentang" className="inline-flex h-11 items-center text-ink-secondary transition-colors hover:text-primary-dark">
             Tentang
           </Link>
+          <Link href="/privasi" className="inline-flex h-11 items-center text-ink-secondary transition-colors hover:text-primary-dark">
+            Privasi
+          </Link>
+          <Link href="/kontak" className="inline-flex h-11 items-center text-ink-secondary transition-colors hover:text-primary-dark">
+            Kontak
+          </Link>
+          <Link href="/kontak#laporkan" className="inline-flex h-11 items-center text-ink-secondary transition-colors hover:text-primary-dark">
+            Laporkan
+          </Link>
         </nav>
 
         {/*
