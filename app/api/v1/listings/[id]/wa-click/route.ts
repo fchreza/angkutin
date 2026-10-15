@@ -7,6 +7,7 @@ import {
   lepaskanRateLimit,
   reservasiRateLimit,
 } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { tanggalHariIniID } from "@/lib/format";
 
@@ -130,10 +131,10 @@ export async function POST(
       try {
         await lepaskanRateLimit(idReservasi);
       } catch (releaseError) {
-        console.error("[wa-click] gagal melepas reservasi rate limit:", releaseError);
+        logger.error("[wa-click] gagal melepas reservasi rate limit:", releaseError);
       }
     }
-    console.error("[wa-click] gagal:", e);
+    logger.error("[wa-click] gagal:", e);
     return gagal("Gagal membuka WhatsApp.", 500);
   }
 }
