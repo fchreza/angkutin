@@ -78,6 +78,40 @@ async function migrasi(): Promise<void> {
       (await sql`SELECT name FROM _migrations`).map((r) => r.name as string),
     );
 
+    // BOOTSTRAP untuk database yang sudah dimigrasi manual sebelum
+    // sistem otomatis ini ada (kasus produksi pada 2026-10-15):
+    // tabel `_migrations` masih kosong, tapi tabel-tabel dari migrasi
+    // lama sudah ada. Tanpa bootstrap, runner akan mencoba menerapkan
+    // ulang 001 — dan gagal karena 001 menyentuh tabel `clusters`
+    // yang sudah di-drop oleh 002.
+    //
+    // Deteksi level migrasi dari tabel penanda:
+    //  - `pageviews` ada  → 001–005 sudah teraplikasi (005 membuatnya).
+    //  - `reports` ada    → 006 juga sudah teraplikasi.
+    if (applied.size === 0) {
+      const [{ pageviewsAda }] = await sql`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables WHERE table_name = 'pageviews'
+        ) AS "pageviewsAda"
+      `;
+      const [{ reportsAda }] = await sql`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables WHERE table_name = 'reports'
+        ) AS "reportsAda"
+      `;
+      const files = Object.keys(MIGRASI_SQL).sort();
+      for (const file of files) {
+        const nomor = file.slice(0, 3);
+        const sudahDiDb =
+          (nomor <= "005" && pageviewsAda) || (nomor <= "006" && reportsAda);
+        if (sudahDiDb) {
+          await sql`INSERT INTO _migrations (name) VALUES (${file}) ON CONFLICT DO NOTHING`;
+          applied.add(file);
+          console.log(`[migrasi] bootstrap — tandai sudah teraplikasi: ${file}`);
+        }
+      }
+    }
+
     const files = Object.keys(MIGRASI_SQL).sort();
 
     let ran = 0;
