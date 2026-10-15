@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { listings, stalls, STATUS_VALUES, type ListingStatus } from "@/db/schema";
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { escapeLike } from "./listing-query";
 
 /**
  * Data barang untuk halaman admin.
@@ -87,11 +88,14 @@ export type JumlahStatusBarangAdmin = Record<ListingStatus, number>;
  */
 function syaratPencarian(kueri: string) {
   if (!kueri) return undefined;
+  // Escape wildcard LIKE supaya "%" atau "_" yang diketik admin tidak
+  // menjadi wildcard (lihat escapeLike di lib/listing-query.ts).
+  const aman = escapeLike(kueri);
   const varian = varianNomor(kueri);
   return or(
-    ilike(listings.title, `%${kueri}%`),
-    ilike(listings.sellerName, `%${kueri}%`),
-    ...varian.map((v) => ilike(listings.sellerWhatsapp, `%${v}%`)),
+    ilike(listings.title, `%${aman}%`),
+    ilike(listings.sellerName, `%${aman}%`),
+    ...varian.map((v) => ilike(listings.sellerWhatsapp, `%${escapeLike(v)}%`)),
   );
 }
 

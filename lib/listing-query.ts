@@ -20,6 +20,19 @@ import { tanggalHariIniID } from "./format";
 
 export type SortFeed = "mendesak" | "terbaru" | "termurah" | "gratis";
 
+/**
+ * Escape karakter wildcard LIKE (`%`, `_`, `\`).
+ *
+ * KENAPA: nilai pencarian dikirim sebagai parameter terikat (aman dari SQL
+ * injection), TAPI `%` dan `_` tetap berfungsi sebagai wildcard di dalam
+ * pola LIKE. Tanpa escape, pengguna yang mengetik "100%" akan cocok dengan
+ * "1000", "100x", dan seterusnya — hasil pencarian yang menyesatkan.
+ * PostgreSQL memakai backslash sebagai karakter escape bawaan di LIKE/ILIKE.
+ */
+export function escapeLike(teks: string): string {
+  return teks.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 export type KartuListing = {
   id: string;
   title: string;
@@ -84,7 +97,11 @@ export async function ambilFeed(f: FilterFeed): Promise<{
   }
   if (f.is_free === true) syarat.push(eq(listings.isFree, true));
   if (f.q && f.q.trim()) {
-    const kata = `%${f.q.trim()}%`;
+    // Escape wildcard LIKE (%, _, \) supaya input pengguna diperlakukan
+    // sebagai teks biasa. Tanpa ini, pencarian "100%" akan cocok dengan
+    // apa pun yang mengandung "100" diikuti karakter apa saja.
+    // PostgreSQL memakai backslash sebagai karakter escape bawaan di LIKE.
+    const kata = `%${escapeLike(f.q.trim())}%`;
     syarat.push(
       or(ilike(listings.title, kata), ilike(listings.pickupLandmark, kata))!,
     );
@@ -97,8 +114,13 @@ export async function ambilFeed(f: FilterFeed): Promise<{
     gratis: desc(listings.isFree),
   }[f.sort ?? "mendesak"];
 
-  const limit = Math.min(Math.max(f.limit ?? 24, 1), 60);
-  const offset = Math.max(f.offset ?? 0, 0);
+  // Pertahanan lapis kedua: kalau limit/offset lolos sebagai NaN (mis. dari
+  // pemanggil yang tidak memvalidasi), Math.max/min akan meneruskan NaN ke
+  // Drizzle dan menyebabkan 500. Di sini NaN dikembalikan ke nilai bawaan.
+  const limitMentah = Number.isFinite(f.limit) ? (f.limit as number) : 24;
+  const offsetMentah = Number.isFinite(f.offset) ? (f.offset as number) : 0;
+  const limit = Math.min(Math.max(limitMentah, 1), 60);
+  const offset = Math.max(offsetMentah, 0);
 
   // PENTING — kedua query dijalankan BERSAMAAN, bukan berurutan.
   // Database ada di Singapura: satu round-trip ~250 ms. Menjalankannya

@@ -43,6 +43,14 @@ const BATAS_AKSI: Record<string, KonfigurasiBatas> = {
   wa_click: { batas: 60, jendelaJam: 1 },
   image_upload: { batas: 30, jendelaJam: 1 },
   /**
+   * `report_listing`: 10 laporan per jam per IP.
+   *
+   * Cukup longgar untuk pemakaian wajar (seseorang yang menemukan beberapa
+   * listing spam berurutan), tetapi cukup sempit untuk menahan banjir
+   * laporan otomatis yang bertujuan mengacaukan antrian moderasi.
+   */
+  report_listing: { batas: 10, jendelaJam: 1 },
+  /**
    * `admin_login`: 10 percobaan per jam.
    *
    * Aksi ini TERPISAH dari yang lain, dan itu disengaja: kalau ia ikut memakai

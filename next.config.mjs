@@ -8,6 +8,12 @@
  * Kebijakan global strict-origin-when-cross-origin membatasi referrer lintas
  * origin pada origin saja.
  *
+ * Content-Security-Policy dijalankan dalam mode REPORT-ONLY (bukan enforcing):
+ * kebijakan enforcing berisiko memecahkan skrip inline Next.js bila ada
+ * aturan yang terlewat, sementara report-only mencatat pelanggaran ke konsol
+ * tanpa memblokir apa pun. Setelah pola pelanggaran dipetakan dan bersih,
+ * header ini bisa dinaikkan menjadi enforcing dengan mengganti nama headernya.
+ *
  * @type {import('next').NextConfig}
  */
 const nextConfig = {
@@ -19,6 +25,29 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
+          // Lapis pertahanan XSS tambahan. Report-only: hanya mencatat,
+          // tidak memblokir, supaya tidak ada risiko merusak halaman produksi.
+          {
+            key: "Content-Security-Policy-Report-Only",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "connect-src 'self'",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+            ].join("; "),
+          },
+          // Matikan API browser yang tidak dipakai produk ini.
+          {
+            key: "Permissions-Policy",
+            value:
+              "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+          },
         ],
       },
       {

@@ -136,6 +136,42 @@ export const rateLimits = pgTable("rate_limits", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/**
+ * Laporan penyalahgunaan dari pengguna.
+ *
+ * KENAPA ADA TABEL INI: marketplace tanpa akun tidak punya sistem reputasi
+ * atau identitas yang bisa diblokir, jadi satu-satunya pertahanan terhadap
+ * spam/penipuan adalah laporan dari pengguna + tinjauan admin. Tanpa tabel
+ * ini, tidak ada cara bagi pengguna untuk memberi tahu pengelola tentang
+ * listing yang bermasalah.
+ *
+ * KENAPA TANPA IDENTITAS PELAPOR: produk ini tanpa akun; meminta identitas
+ * pelapor akan menambah gesekan dan data pribadi yang harus dijaga. Yang
+ * penting adalah listing mana yang bermasalah dan alasannya, bukan siapa
+ * yang melapor.
+ */
+export const reports = pgTable("reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  listingId: uuid("listing_id")
+    .notNull()
+    .references(() => listings.id, { onDelete: "cascade" }),
+  reason: varchar("reason", { length: 32 }).notNull(),
+  detail: text("detail"),
+  /** OPEN = belum ditinjau, REVIEWED = sudah ditangani admin. */
+  status: varchar("status", { length: 12 }).default("OPEN").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const REPORT_REASON_VALUES = [
+  "SPAM",
+  "PENIPUAN",
+  "BARANG_SUDAH_TIDAK_ADA",
+  "KONTEN_TIDAK_PANTAS",
+  "LAINNYA",
+] as const;
+
+export type ReportReason = (typeof REPORT_REASON_VALUES)[number];
+
 export const CONDITION_VALUES = [
   "SEPERTI_BARU",
   "MINUS_PEMAKAIAN",
@@ -150,5 +186,6 @@ export type Listing = typeof listings.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Stall = typeof stalls.$inferSelect;
 export type Pageview = typeof pageviews.$inferSelect;
+export type Report = typeof reports.$inferSelect;
 
 export { sql };
