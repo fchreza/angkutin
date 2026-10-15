@@ -22,18 +22,16 @@
  *    dicatat ke log dan akan dicoba lagi di cold start berikutnya.
  *
  * CATATAN VERCEL:
- *  - File `db/migrations/*.sql` ikut ter-deploy (tidak ada .vercelignore
- *    yang mengecualikannya), jadi `process.cwd()/db/migrations` valid
- *    saat runtime.
+ *  - Isi SQL di-embed ke `lib/migrasi-data.ts` saat build (lihat
+ *    `scripts/embed-migrasi.mjs`), jadi tidak ada ketergantungan pada
+ *    file `.sql` di filesystem serverless.
  *  - `register()` di instrumentation.ts tidak dipanggil saat `next build`
  *    dan tidak jalan di Edge runtime — hanya di server Node.js yang live.
  */
 
-import { readdir, readFile } from "node:fs/promises";
-import path from "node:path";
 import postgres, { type Sql } from "postgres";
+import { MIGRASI_SQL } from "./migrasi-data";
 
-const MIGRATIONS_DIR = path.join(process.cwd(), "db", "migrations");
 const LOCK_NAME = "angkutin_db_migrate";
 // Batas tunggu kunci: 60 x 500ms = 30 detik. Boot server tidak boleh
 // menggantung selamanya menunggu instance lain selesai migrasi.
@@ -93,9 +91,7 @@ async function migrasi(): Promise<void> {
         (await sql`SELECT name FROM _migrations`).map((r) => r.name as string),
       );
 
-      const files = (await readdir(MIGRATIONS_DIR))
-        .filter((f) => f.endsWith(".sql"))
-        .sort();
+      const files = Object.keys(MIGRASI_SQL).sort();
 
       let ran = 0;
       for (const file of files) {
@@ -104,7 +100,7 @@ async function migrasi(): Promise<void> {
           continue;
         }
         console.log(`[migrasi] menerapkan: ${file}`);
-        const content = await readFile(path.join(MIGRATIONS_DIR, file), "utf8");
+        const content = MIGRASI_SQL[file];
         await sql.begin(async (tx) => {
           // unsafe() mengeksekusi string apa adanya — boleh multi-statement.
           // File migrasi adalah SQL tepercaya dari repo ini, bukan input pengguna.
