@@ -126,6 +126,15 @@ export function PhotoManager({
     }
     if (!blob) return file;
 
+    // VALIDASI: pastikan blob WebP hasil kompresi benar-benar bisa didecode.
+    // Lihat penjelasan di components/form/photo-uploader.tsx.
+    try {
+      const uji = await createImageBitmap(blob);
+      uji.close?.();
+    } catch {
+      return file;
+    }
+
     return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", {
       type: "image/webp",
     });

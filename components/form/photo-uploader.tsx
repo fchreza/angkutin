@@ -108,6 +108,18 @@ async function kompres(file: File): Promise<File> {
 
   if (!blob) return file;
 
+  // VALIDASI: pastikan blob WebP hasil kompresi benar-benar bisa didecode.
+  // Beberapa browser/perangkat menghasilkan output WebP yang cacat dari
+  // canvas.toBlob — tanpa cek ini, file rusak terkirim ke server dan ditolak
+  // sharp dengan error "tidak terbaca sebagai gambar WEBP yang valid".
+  // Kalau validasi gagal, pakai file asli (server akan kompres ulang).
+  try {
+    const uji = await createImageBitmap(blob);
+    uji.close?.();
+  } catch {
+    return file;
+  }
+
   return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", {
     type: "image/webp",
   });
