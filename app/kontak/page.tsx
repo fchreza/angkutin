@@ -28,10 +28,10 @@ export default function KontakPage() {
           Kehilangan tautan kelolamu, menemukan kejanggalan, atau sekadar ingin
           bertanya — kirim email ke{" "}
           <a
-            href="mailto:halo@angkutin.id"
+            href="mailto:semuatentangdunia@gmail.com"
             className="font-medium text-primary-dark underline decoration-dotted underline-offset-4"
           >
-            halo@angkutin.id
+            semuatentangdunia@gmail.com
           </a>
           .
         </p>
