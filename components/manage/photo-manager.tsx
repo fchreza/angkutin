@@ -97,7 +97,7 @@ export function PhotoManager({
 
   /** Kompres di perangkat dulu, sama seperti form pasang. */
   async function kompres(file: File): Promise<File> {
-    const MAKS = 500 * 1024;
+    const MAKS = 1024 * 1024;
     const SISI = 1080;
     if (file.size <= MAKS && file.type === "image/jpeg") return file;
 
@@ -303,7 +303,7 @@ export function PhotoManager({
 
       <p className="mt-2 text-[11.5px] leading-relaxed text-ink-secondary">
         Foto pertama jadi foto utama di katalog. Foto dikompresi otomatis di
-        perangkatmu (maks 500 KB).
+        perangkatmu (maks 1 MB).
       </p>
 
       {pesan && (

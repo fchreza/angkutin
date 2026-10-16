@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
  *  - Server Vercel membatasi body request 4.5 MB.
  *  - Pengguna di 3G tidak boleh mengunggah foto 4 MB dari kamera HP.
  *
- * Target: WebP, sisi terpanjang maks 1080px, < 500 KB per foto.
+ * Target: JPEG, sisi terpanjang maks 1080px, < 1 MB per foto.
  * Memakai Canvas API bawaan browser — tanpa library tambahan.
  *
  * ---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ import { cn } from "@/lib/cn";
  */
 
 const MAKS_FOTO = 3;
-const MAKS_BYTE = 500 * 1024;
+const MAKS_BYTE = 1024 * 1024;
 const SISI_MAKS = 1080;
 
 /**
@@ -481,7 +481,7 @@ export function PhotoUploader({
       />
 
       <p className="mt-2 max-w-[68ch] text-[14px] leading-relaxed text-ink-secondary">
-        Foto dikompresi otomatis di perangkatmu (maks 500 KB). Foto pertama
+        Foto dikompresi otomatis di perangkatmu (maks 1 MB). Foto pertama
         jadi foto utama.
       </p>
 

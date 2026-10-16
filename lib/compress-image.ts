@@ -9,7 +9,7 @@ import sharp from "sharp";
  * membuang metadata sensitif seperti koordinat GPS EXIF.
  */
 const SISI_MAKS = 1080;
-const BYTE_MAKS = 500 * 1024;
+const BYTE_MAKS = 1024 * 1024;
 const PIXEL_MAKS = 40_000_000;
 const KUALITAS = [82, 74, 66, 58, 50];
 

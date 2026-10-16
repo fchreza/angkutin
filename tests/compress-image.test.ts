@@ -20,7 +20,7 @@ describe("kompresDiServer", () => {
 
     expect(hasil.tipe).toBe("image/webp");
     expect(meta.format).toBe("webp");
-    expect(hasil.buf.length).toBeLessThanOrEqual(500 * 1024);
+    expect(hasil.buf.length).toBeLessThanOrEqual(1024 * 1024);
     expect(Math.max(meta.width ?? 0, meta.height ?? 0)).toBeLessThanOrEqual(1080);
   });
 

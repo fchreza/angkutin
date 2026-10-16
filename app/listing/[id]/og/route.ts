@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
  * GET /listing/:id/og — gambar untuk kartu link (Open Graph).
  *
  * KENAPA HARUS ADA ENDPOINT SENDIRI:
- * Foto listing disimpan sebagai WebP, dan ukurannya boleh sampai 500 KB.
+ * Foto listing disimpan sebagai WebP, dan ukurannya boleh sampai 1 MB.
  * WhatsApp menolak gambar di atas ~300 KB, dan WebP termasuk format yang paling
  * sering gagal dirender oleh pengurai link mereka. Akibatnya link listing yang
  * dibagikan ke WhatsApp tampil tanpa gambar sama sekali — padahal WhatsApp
