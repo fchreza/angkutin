@@ -8,6 +8,7 @@ import { CariBarang } from "@/components/admin/cari-barang";
 import { FilterStatusBarang } from "@/components/admin/filter-status-barang";
 import { TautanBarang } from "@/components/admin/tautan-barang";
 import { TandaiLaporan } from "@/components/admin/tandai-laporan";
+import { HapusBarang } from "@/components/admin/hapus-barang";
 
 /**
  * Halaman admin — ringkasan kunjungan.
@@ -326,8 +327,9 @@ export default async function HalamanAdmin({
                     </p>
                   )}
 
-                  <div className="mt-3.5">
+                  <div className="mt-3.5 flex flex-wrap items-center gap-3">
                     <TautanBarang listingId={b.id} />
+                    <HapusBarang listingId={b.id} judul={b.title} />
                   </div>
                 </li>
               );
