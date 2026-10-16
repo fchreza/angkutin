@@ -99,7 +99,7 @@ export function PhotoManager({
   async function kompres(file: File): Promise<File> {
     const MAKS = 500 * 1024;
     const SISI = 1080;
-    if (file.size <= MAKS && file.type === "image/webp") return file;
+    if (file.size <= MAKS && file.type === "image/jpeg") return file;
 
     const bitmap = await createImageBitmap(file);
     const skala = Math.min(1, SISI / Math.max(bitmap.width, bitmap.height));
@@ -114,11 +114,12 @@ export function PhotoManager({
     ctx.drawImage(bitmap, 0, 0, w, h);
     bitmap.close?.();
 
+    // JPEG, bukan WebP: lihat penjelasan di components/form/photo-uploader.tsx.
     let kualitas = 0.82;
     let blob: Blob | null = null;
     for (let i = 0; i < 5; i++) {
       blob = await new Promise<Blob | null>((res) =>
-        canvas.toBlob((b) => res(b), "image/webp", kualitas),
+        canvas.toBlob((b) => res(b), "image/jpeg", kualitas),
       );
       if (blob && blob.size <= MAKS) break;
       kualitas -= 0.14;
@@ -126,8 +127,7 @@ export function PhotoManager({
     }
     if (!blob) return file;
 
-    // VALIDASI: pastikan blob WebP hasil kompresi benar-benar bisa didecode.
-    // Lihat penjelasan di components/form/photo-uploader.tsx.
+    // VALIDASI: pastikan blob hasil kompresi benar-benar bisa didecode.
     try {
       const uji = await createImageBitmap(blob);
       uji.close?.();
@@ -135,8 +135,8 @@ export function PhotoManager({
       return file;
     }
 
-    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", {
-      type: "image/webp",
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", {
+      type: "image/jpeg",
     });
   }
 

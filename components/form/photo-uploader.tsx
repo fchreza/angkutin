@@ -75,10 +75,10 @@ export type FotoSiap = {
   ukuranAwal: number;
 };
 
-/** Kompres satu gambar memakai canvas. Mengembalikan File WebP. */
+/** Kompres satu gambar memakai canvas. Mengembalikan File JPEG. */
 async function kompres(file: File): Promise<File> {
-  // Kalau sudah kecil dan sudah webp, lewati kompresi
-  if (file.size <= MAKS_BYTE && file.type === "image/webp") return file;
+  // Kalau sudah kecil dan sudah jpeg, lewati kompresi
+  if (file.size <= MAKS_BYTE && file.type === "image/jpeg") return file;
 
   const bitmap = await createImageBitmap(file);
   const skala = Math.min(1, SISI_MAKS / Math.max(bitmap.width, bitmap.height));
@@ -93,13 +93,17 @@ async function kompres(file: File): Promise<File> {
   ctx.drawImage(bitmap, 0, 0, w, h);
   bitmap.close?.();
 
-  // Turunkan kualitas bertahap sampai di bawah 500 KB
+  // JPEG, bukan WebP: encoder WebP di canvas.toBlob pada beberapa
+  // browser/perangkat menghasilkan file cacat yang lolos createImageBitmap
+  // tapi ditolak sharp di server ("tidak terbaca sebagai gambar WEBP yang
+  // valid"). Encoder JPEG jauh lebih matang dan stabil di semua browser.
+  // Server tetap mengonversi ke WebP via sharp.
   let kualitas = 0.82;
   let blob: Blob | null = null;
 
   for (let i = 0; i < 5; i++) {
     blob = await new Promise<Blob | null>((res) =>
-      canvas.toBlob((b) => res(b), "image/webp", kualitas),
+      canvas.toBlob((b) => res(b), "image/jpeg", kualitas),
     );
     if (blob && blob.size <= MAKS_BYTE) break;
     kualitas -= 0.14;
@@ -108,11 +112,7 @@ async function kompres(file: File): Promise<File> {
 
   if (!blob) return file;
 
-  // VALIDASI: pastikan blob WebP hasil kompresi benar-benar bisa didecode.
-  // Beberapa browser/perangkat menghasilkan output WebP yang cacat dari
-  // canvas.toBlob — tanpa cek ini, file rusak terkirim ke server dan ditolak
-  // sharp dengan error "tidak terbaca sebagai gambar WEBP yang valid".
-  // Kalau validasi gagal, pakai file asli (server akan kompres ulang).
+  // VALIDASI: pastikan blob hasil kompresi benar-benar bisa didecode.
   try {
     const uji = await createImageBitmap(blob);
     uji.close?.();
@@ -120,8 +120,8 @@ async function kompres(file: File): Promise<File> {
     return file;
   }
 
-  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", {
-    type: "image/webp",
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", {
+    type: "image/jpeg",
   });
 }
 
