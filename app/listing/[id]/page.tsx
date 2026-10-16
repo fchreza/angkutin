@@ -250,7 +250,7 @@ export default async function DetailPage({
 
       <div
         className="fixed inset-x-0 z-20 border-t border-line bg-surface p-3 md:hidden"
-        style={{ bottom: "calc(60px + env(safe-area-inset-bottom))" }}
+        style={{ bottom: "calc(88px + env(safe-area-inset-bottom))" }}
       >
         <DetailActions listingId={d.id} deadline={d.deadline_date} status={status} ringkas />
       </div>

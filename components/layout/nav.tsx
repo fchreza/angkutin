@@ -231,7 +231,13 @@ export function MobileTabBar() {
 /** Tombol aksi mengambang di ponsel, dengan jarak aman di atas tab bar kapsul. */
 export function FabPasang() {
   const path = usePathname();
-  const sembunyi = path === "/pasang" || path.startsWith("/manage");
+  // Disembunyikan di halaman pasang, manage, DAN detail listing:
+  // di halaman detail sudah ada CTA WhatsApp yang sticky + tab "Pasang"
+  // di bottom nav, jadi FAB hanya menambah tumpukan visual.
+  const sembunyi =
+    path === "/pasang" ||
+    path.startsWith("/manage") ||
+    path.startsWith("/listing/");
 
   return (
     <Link
