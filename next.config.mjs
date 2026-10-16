@@ -35,7 +35,9 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self'",
+              // Sentry ingest harus diizinkan, kalau tidak laporan error
+              // dari browser tidak akan sampai ke dashboard Sentry.
+              "connect-src 'self' https://o4511552246644736.ingest.de.sentry.io",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",
