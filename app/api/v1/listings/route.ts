@@ -42,6 +42,18 @@ export async function GET(req: Request) {
     const u = new URL(req.url);
     const q = u.searchParams;
 
+    // OPTIMASI KECEPATAN (2026-10-16): cache hasil katalog selama 60 detik,
+    // dikunci oleh query string. Listing tidak berubah tiap detik, dan
+    // database di Singapura (~250ms/round-trip) membuat setiap query
+    // katalog mahal. Cache ini per-instance server (wajar untuk serverless);
+    // POST /listings mengosongkannya supaya barang baru langsung terlihat.
+    const kunciCache = [...q.entries()]
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([k, v]) => `${k}=${v}`)
+      .join("&");
+    const cached = bacaCacheKatalog(kunciCache);
+    if (cached) return ok(cached);
+
     const sortRaw = q.get("sort") ?? "mendesak";
     const sort = (["mendesak", "terbaru", "termurah", "gratis"].includes(sortRaw)
       ? sortRaw
@@ -69,11 +81,48 @@ export async function GET(req: Request) {
     };
 
     const hasil = await ambilFeed(filter);
+    tulisCacheKatalog(kunciCache, hasil);
     return ok(hasil);
   } catch (e) {
     logger.error("[listings GET] gagal:", e);
     return gagal("Gagal memuat daftar barang.", 500);
   }
+}
+
+/**
+ * Cache dalam-memori untuk GET /api/v1/listings (TTL 60 detik).
+ *
+ * KENAPA ADA: tiap request katalog = 2 query DB paralel (~250ms ke Singapura).
+ * Pengunjung membuka katalog berulang-ulang dengan filter yang sama
+ * (mis. reload, kembali dari halaman detail). Tanpa cache, setiap buka
+ * membayar 250ms+ lagi untuk data yang identik.
+ *
+ * KENAPA 60 DETIK: cukup pendek sehingga barang baru/hilang maksimal
+ * tertunda 1 menit; cukup panjang untuk memangkas query berulang.
+ * POST /listings mengosongkan cache agar barang yang baru dipasang
+ * langsung terlihat tanpa menunggu TTL.
+ */
+const TTL_KATALOG_MS = 60_000;
+const cacheKatalog = new Map<string, { hasil: unknown; kedaluwarsa: number }>();
+
+function bacaCacheKatalog(kunci: string): unknown | null {
+  const entri = cacheKatalog.get(kunci);
+  if (!entri) return null;
+  if (Date.now() > entri.kedaluwarsa) {
+    cacheKatalog.delete(kunci);
+    return null;
+  }
+  return entri.hasil;
+}
+
+function tulisCacheKatalog(kunci: string, hasil: unknown): void {
+  // Batasi ukuran supaya instance serverless tidak membengkak.
+  if (cacheKatalog.size > 200) cacheKatalog.clear();
+  cacheKatalog.set(kunci, { hasil, kedaluwarsa: Date.now() + TTL_KATALOG_MS });
+}
+
+export function kosongkanCacheKatalog(): void {
+  cacheKatalog.clear();
 }
 
 /**
@@ -240,6 +289,9 @@ export async function POST(req: Request) {
     // env dan nilainya belum diisi, tautan yang ditampilkan ke penjual akan
     // berbunyi "localhost" dan tidak bisa dibuka dari HP.
     const origin = new URL(req.url).origin;
+
+    // Barang baru harus langsung terlihat di katalog — kosongkan cache.
+    kosongkanCacheKatalog();
 
     return ok(
       {

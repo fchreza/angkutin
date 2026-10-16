@@ -192,17 +192,23 @@ export async function ambilFeed(f: FilterFeed): Promise<{
  * yang baru diubah tetap langsung terlihat.
  */
 export const ambilDetail = cache(async (id: string) => {
-  const [row] = await db
-    .select({
-      id: listings.id,
-      title: listings.title,
-      description: listings.description,
-      price: listings.price,
-      is_free: listings.isFree,
-      condition: listings.condition,
-      status: listings.status,
-      deadline_date: listings.deadlineDate,
-      pickup_landmark: listings.pickupLandmark,
+  // OPTIMASI KECEPATAN (2026-10-16): query baris listing dan foto dijalankan
+  // BERSAMAAN via Promise.all, bukan berurutan. Database di Singapura
+  // (~250ms/round-trip dari Vercel US), jadi ini memangkas ~250ms per
+  // buka halaman detail. Foto diambil walau baris belum pasti ada —
+  // kalau row null, hasilnya dibuang di bawah.
+  const [barisRow, foto] = await Promise.all([
+    db
+      .select({
+        id: listings.id,
+        title: listings.title,
+        description: listings.description,
+        price: listings.price,
+        is_free: listings.isFree,
+        condition: listings.condition,
+        status: listings.status,
+        deadline_date: listings.deadlineDate,
+        pickup_landmark: listings.pickupLandmark,
       /*
        * `access_notes` SENGAJA TIDAK DIAMBIL DI SINI.
        *
@@ -232,22 +238,23 @@ export const ambilDetail = cache(async (id: string) => {
       category_name: categories.name,
       view_count: listings.viewCount,
       created_at: listings.createdAt,
-    })
-    .from(listings)
-    .leftJoin(categories, eq(listings.categoryId, categories.id))
-    .where(and(eq(listings.id, id), sql`${listings.status} <> 'DELETED'`))
-    .limit(1);
+      })
+      .from(listings)
+      .leftJoin(categories, eq(listings.categoryId, categories.id))
+      .where(and(eq(listings.id, id), sql`${listings.status} <> 'DELETED'`))
+      .limit(1),
+    db
+      .select({
+        image_url: listingImages.imageUrl,
+        display_order: listingImages.displayOrder,
+      })
+      .from(listingImages)
+      .where(eq(listingImages.listingId, id))
+      .orderBy(asc(listingImages.displayOrder)),
+  ]);
 
+  const [row] = barisRow;
   if (!row) return null;
-
-  const foto = await db
-    .select({
-      image_url: listingImages.imageUrl,
-      display_order: listingImages.displayOrder,
-    })
-    .from(listingImages)
-    .where(eq(listingImages.listingId, id))
-    .orderBy(asc(listingImages.displayOrder));
 
   return {
     ...row,
