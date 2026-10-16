@@ -45,6 +45,12 @@ export function PhotoManager({
   const inputRef = useRef<HTMLInputElement>(null);
   const [sedang, setSedang] = useState(false);
   const [pesan, setPesan] = useState<string | null>(null);
+  // Operasi terakhir yang gagal — disimpan supaya tombol "Coba lagi" bisa
+  // mengulanginya tanpa pengguna harus memilih ulang file.
+  const [gagalTerakhir, setGagalTerakhir] = useState<{
+    pertahankan: string[];
+    baru: File[];
+  } | null>(null);
 
   /**
    * Kirim daftar foto final ke server.
@@ -54,6 +60,7 @@ export function PhotoManager({
   async function simpan(pertahankan: string[], baru: File[]) {
     setSedang(true);
     setPesan(null);
+    setGagalTerakhir(null);
     try {
       const fd = new FormData();
       pertahankan.forEach((url) => fd.append("keep", url));
@@ -71,6 +78,7 @@ export function PhotoManager({
 
       if (!r.ok) {
         setPesan(j.error ?? "Gagal menyimpan foto. Coba lagi.");
+        setGagalTerakhir({ pertahankan, baru });
         return false;
       }
 
@@ -79,6 +87,7 @@ export function PhotoManager({
       return true;
     } catch {
       setPesan("Gagal menghubungi server. Periksa koneksi lalu coba lagi.");
+      setGagalTerakhir({ pertahankan, baru });
       return false;
     } finally {
       setSedang(false);
@@ -288,7 +297,22 @@ export function PhotoManager({
         perangkatmu (maks 500 KB).
       </p>
 
-      {pesan && <p className="mt-1.5 text-[12px] text-danger">{pesan}</p>}
+      {pesan && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <p className="text-[12px] text-danger">{pesan}</p>
+          {gagalTerakhir && !sedang && (
+            <button
+              type="button"
+              onClick={() =>
+                void simpan(gagalTerakhir.pertahankan, gagalTerakhir.baru)
+              }
+              className="press inline-flex h-8 items-center rounded-md border border-line bg-surface px-3 text-[12px] font-semibold text-ink hover:border-primary hover:text-primary"
+            >
+              Coba lagi
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
