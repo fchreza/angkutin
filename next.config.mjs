@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
+
 /**
  * Header keamanan untuk seluruh aplikasi.
  *
@@ -76,4 +78,7 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Jangan gagalkan build kalau Sentry tidak terjangkau saat build.
+  silent: true,
+});
