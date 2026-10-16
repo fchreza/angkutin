@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { listings } from "@/db/schema";
 import { and, eq, lt } from "drizzle-orm";
+import { timingSafeEqual } from "node:crypto";
 import { tanggalHariIniID } from "@/lib/format";
 import { ok, gagal } from "@/lib/api";
 import { bersihkanRateLimit } from "@/lib/rate-limit";
@@ -36,7 +37,13 @@ export async function GET(req: Request) {
     }
 
     const auth = req.headers.get("authorization") ?? "";
-    const sah = auth === `Bearer ${secret}`;
+    // Perbandingan waktu-tetap supaya tidak bocor lewat analisis durasi.
+    // (Risiko praktisnya kecil untuk secret sepanjang ini, tapi konsistensi
+    // dengan perbandingan token/sandi di tempat lain itu gratis.)
+    const harapan = `Bearer ${secret}`;
+    const sah =
+      auth.length === harapan.length &&
+      timingSafeEqual(Buffer.from(auth), Buffer.from(harapan));
 
     if (!sah) return gagal("Tidak diizinkan.", 401);
 
