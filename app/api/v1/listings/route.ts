@@ -14,6 +14,7 @@ import {
 import { logger } from "@/lib/logger";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 import { buatLapak, urlLapak } from "@/lib/lapak";
+import { nomorDiblokir } from "@/lib/blokir";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -203,6 +204,19 @@ export async function POST(req: Request) {
           detail: { category_id: "Pilih kategori dari daftar." },
         });
       }
+    }
+
+    // 4b. Tolak nomor yang diblokir admin.
+    //
+    // KENAPA DI SINI, bukan di validasi skema: pemblokiran adalah keputusan
+    // operasional yang berubah-ubah, bukan aturan format data. Pengecekannya
+    // butuh query database, jadi tidak cocok di Zod.
+    //
+    // KENAPA PESANNYA UMUM: memberi tahu "nomormu diblokir" mengonfirmasi ke
+    // spammer bahwa mereka terdeteksi — mereka tinggal ganti nomor. Pesan
+    // umum membuat mereka menebak-nebak.
+    if (await nomorDiblokir(d.seller_whatsapp)) {
+      return gagal("Tidak dapat memasang barang saat ini. Coba lagi nanti.", 403);
     }
 
     // 5. Tentukan lapak.

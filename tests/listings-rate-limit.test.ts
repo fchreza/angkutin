@@ -47,6 +47,9 @@ vi.mock("@/lib/lapak", () => ({
   buatLapak,
   urlLapak: vi.fn(() => "https://angkutin.test/manage/stall?token=stall-secret"),
 }));
+vi.mock("@/lib/blokir", () => ({
+  nomorDiblokir: vi.fn(async () => false),
+}));
 
 import { POST } from "@/app/api/v1/listings/route";
 

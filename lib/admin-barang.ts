@@ -21,9 +21,13 @@ import { escapeLike } from "./listing-query";
 export type BarangAdmin = {
   id: string;
   title: string;
+  description: string;
   sellerName: string;
   /** Nomor WhatsApp BERTopeng. Lihat alasan di bawah. */
   waTopeng: string;
+  price: string;
+  isFree: boolean;
+  pickupLandmark: string;
   createdAt: string;
   /** 'YYYY-MM-DD' */
   deadlineDate: string;
@@ -34,6 +38,8 @@ export type BarangAdmin = {
   stallNama: string | null;
   /** Jumlah barang lain di lapak yang sama. 0 kalau tidak punya lapak. */
   barangLapakLain: number;
+  /** Jumlah laporan OPEN untuk barang ini. Dipakai untuk badge peringatan. */
+  jumlahLaporan: number;
 };
 
 /**
@@ -121,6 +127,7 @@ export async function daftarBarangAdmin(
     .select({
       id: listings.id,
       title: listings.title,
+      description: listings.description,
       sellerName: listings.sellerName,
       sellerWhatsapp: listings.sellerWhatsapp,
       createdAt: listings.createdAt,
@@ -129,6 +136,15 @@ export async function daftarBarangAdmin(
       viewCount: listings.viewCount,
       whatsappClicks: listings.whatsappClicks,
       stallId: listings.stallId,
+      price: listings.price,
+      isFree: listings.isFree,
+      pickupLandmark: listings.pickupLandmark,
+      // Jumlah laporan OPEN — subquery per baris, bukan join+group,
+      // supaya tidak mengubah kardinalitas hasil utama.
+      jumlahLaporan: sql<number>`(
+        select count(*)::int from reports r
+        where r.listing_id = ${listings.id} and r.status = 'OPEN'
+      )`,
     })
     .from(listings)
     .where(syarat)
@@ -166,8 +182,12 @@ export async function daftarBarangAdmin(
     return {
       id: b.id,
       title: b.title,
+      description: b.description,
       sellerName: b.sellerName,
       waTopeng: topengNomor(b.sellerWhatsapp),
+      price: b.price,
+      isFree: b.isFree,
+      pickupLandmark: b.pickupLandmark,
       createdAt: b.createdAt.toISOString(),
       deadlineDate: b.deadlineDate,
       status: b.status,
@@ -177,6 +197,7 @@ export async function daftarBarangAdmin(
       stallNama: lapak?.nama ?? null,
       // Dikurangi satu karena barang ini termasuk di dalam hitungan lapaknya.
       barangLapakLain: lapak ? Math.max(0, lapak.jumlah - 1) : 0,
+      jumlahLaporan: b.jumlahLaporan,
     };
   });
 }

@@ -188,4 +188,19 @@ export type Stall = typeof stalls.$inferSelect;
 export type Pageview = typeof pageviews.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 
+/**
+ * Nomor WhatsApp yang diblokir admin.
+ *
+ * `id` adalah hash SHA-256 heksadesimal dari nomor yang dinormalisasi
+ * (hanya digit) — bukan nomor aslinya, untuk menjaga data pribadi.
+ * Lihat lib/blokir.ts untuk normalisasi dan hashing.
+ */
+export const blockedNumbers = pgTable("blocked_numbers", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  alasan: text("alasan"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type BlockedNumber = typeof blockedNumbers.$inferSelect;
+
 export { sql };

@@ -9,6 +9,10 @@ import { FilterStatusBarang } from "@/components/admin/filter-status-barang";
 import { TautanBarang } from "@/components/admin/tautan-barang";
 import { TandaiLaporan } from "@/components/admin/tandai-laporan";
 import { HapusBarang } from "@/components/admin/hapus-barang";
+import { BlokirNomor } from "@/components/admin/blokir-nomor";
+import { DaftarBlokir } from "@/components/admin/daftar-blokir";
+import { EditBarang } from "@/components/admin/edit-barang";
+import { daftarBlokir } from "@/lib/blokir";
 
 /**
  * Halaman admin — ringkasan kunjungan.
@@ -135,12 +139,13 @@ export default async function HalamanAdmin({
 
   // Dijalankan bersamaan, bukan berurutan: ketiganya tidak saling bergantung,
   // jadi menunggunya satu per satu hanya menambah waktu muat halaman.
-  const [barang, jumlahStatus, laporan] = await Promise.all([
+  const [barang, jumlahStatus, laporan, blokir] = await Promise.all([
     daftarBarangAdmin(kueri, statusAktif),
     hitungStatusBarangAdmin(kueri),
     // Laporan hanya diambil kalau tidak sedang mencari — antrian laporan
     // adalah daftar kerja harian, bukan hasil pencarian.
     kueri || statusAktif ? Promise.resolve([]) : daftarLaporan(),
+    kueri || statusAktif ? Promise.resolve([]) : daftarBlokir(),
   ]);
   const jumlahHasil = statusAktif
     ? jumlahStatus[statusAktif]
@@ -227,6 +232,35 @@ export default async function HalamanAdmin({
         </section>
       )}
 
+      {/* ---------- Nomor diblokir ----------
+          Hanya tampil saat tidak sedang mencari. */}
+      {!kueri && !statusAktif && (
+        <section className="mt-10" aria-labelledby="blokir-heading">
+          <h2
+            id="blokir-heading"
+            className="font-display text-[20px] font-medium tracking-[-0.01em] text-ink md:text-[22px]"
+          >
+            Nomor diblokir{" "}
+            <span className="rounded-pill bg-surface2 px-2.5 py-0.5 text-[13px] font-semibold text-ink-secondary">
+              {blokir.length}
+            </span>
+          </h2>
+          <p className="mt-2 max-w-baca text-[14px] leading-relaxed text-ink-secondary">
+            Nomor WhatsApp yang tidak bisa memasang barang baru. Blokir dari
+            tombol “Blokir nomor” di tiap barang — nomor aslinya tidak disimpan,
+            hanya hash-nya.
+          </p>
+          <DaftarBlokir
+            awal={blokir.map((b) => ({
+              id: b.id,
+              hashPendek: b.id.slice(0, 8),
+              alasan: b.alasan,
+              createdAt: b.createdAt.toISOString(),
+            }))}
+          />
+        </section>
+      )}
+
       {barang.length === 0 ? (
         <section className="mt-6 rounded-lg border border-line bg-surface px-6 py-10 text-center">
           <p className="font-display text-[1.25rem] font-bold text-ink">
@@ -282,6 +316,14 @@ export default async function HalamanAdmin({
                     <span className="shrink-0 rounded-pill border border-line px-2.5 py-1 text-[12px] font-medium text-ink-secondary">
                       {LABEL_STATUS[b.status] ?? b.status}
                     </span>
+                    {b.jumlahLaporan > 0 && (
+                      <span
+                        className="shrink-0 rounded-pill bg-red-100 px-2.5 py-1 text-[12px] font-semibold text-red-700"
+                        title={`${b.jumlahLaporan} laporan menunggu ditinjau`}
+                      >
+                        {b.jumlahLaporan} laporan
+                      </span>
+                    )}
                   </div>
 
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[13px] sm:grid-cols-4">
@@ -329,7 +371,18 @@ export default async function HalamanAdmin({
 
                   <div className="mt-3.5 flex flex-wrap items-center gap-3">
                     <TautanBarang listingId={b.id} />
+                    <EditBarang
+                      barang={{
+                        id: b.id,
+                        title: b.title,
+                        description: b.description,
+                        price: b.price,
+                        isFree: b.isFree,
+                        pickupLandmark: b.pickupLandmark,
+                      }}
+                    />
                     <HapusBarang listingId={b.id} judul={b.title} />
+                    <BlokirNomor listingId={b.id} waTopeng={b.waTopeng} />
                   </div>
                 </li>
               );
